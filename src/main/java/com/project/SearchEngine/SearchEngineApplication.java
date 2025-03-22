@@ -8,7 +8,7 @@ public class SearchEngineApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(SearchEngineApplication.class, args);
-		System.err.println("Hello my Search Engine!");
+		System.out.println("Hello my Search Engine!");
 	}
 
 }

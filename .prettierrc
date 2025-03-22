@@ -1,0 +1,27 @@
+{
+  "tabWidth": 4,
+  "useTabs": false,
+  "printWidth": 100,
+  "singleQuote": true,
+  "trailingComma": "es5",
+  "arrowParens": "always",
+  "semi": true,
+  "java": {
+    "methodChainWrap": "wrapAlways",
+    "classBodyBlankLine": "after",
+    "wrapLongLines": true,
+    "importOrder": [
+      "java",
+      "javax",
+      "^com",
+      "^org",
+      "^[a-z]"
+    ],
+    "alignAssignment": true,
+    "alignMethodParameters": true,
+    "alignMethodChaining": true
+  },
+  "plugins": [
+    "prettier-plugin-java"
+  ]
+}
