@@ -11,7 +11,7 @@ public interface PageRepository extends MongoRepository<Page, String> {
     @Query("{ 'url' : ?0 }")
     Page findPageByUrl(String url);
 
-    
-    void createPage(Page page);
+
+    // void createPage(Page page);
 
 } 
