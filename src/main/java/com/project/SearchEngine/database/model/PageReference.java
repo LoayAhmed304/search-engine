@@ -1,5 +1,7 @@
 package com.project.SearchEngine.database.model;
 
+import java.util.*;
+
 public class PageReference {
 
     // Field names    
