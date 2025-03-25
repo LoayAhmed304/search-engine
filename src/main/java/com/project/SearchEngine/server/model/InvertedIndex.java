@@ -6,6 +6,7 @@ import java.util.*;
 
 @Document(collection = "words")
 public class InvertedIndex {
+    @Id
     private String word;
     private List<PageReference> pages;
     private int pageCount; // number of pages containing the word
