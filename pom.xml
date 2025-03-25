@@ -9,9 +9,9 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.project</groupId>
-	<artifactId>SearchEngine</artifactId>
+	<artifactId>searchengine</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>SearchEngine</name>
+	<name>searchengine</name>
 	<description>Search Engine Project</description>
 	<url/>
 	<licenses>

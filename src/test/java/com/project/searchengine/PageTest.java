@@ -1,10 +1,10 @@
-package com.project.SearchEngine;
+package com.project.searchengine;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 
-import com.project.SearchEngine.server.model.Page;
+import com.project.searchengine.server.model.Page;
 
 public class PageTest {
     

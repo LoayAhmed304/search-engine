@@ -1,4 +1,4 @@
-package com.project.SearchEngine;
+package com.project.searchengine;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -6,8 +6,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
 
-import com.project.SearchEngine.server.model.Page;
-import com.project.SearchEngine.server.repository.PageRepository;
+import com.project.searchengine.server.model.Page;
+import com.project.searchengine.server.repository.PageRepository;
 
 
 @DataMongoTest

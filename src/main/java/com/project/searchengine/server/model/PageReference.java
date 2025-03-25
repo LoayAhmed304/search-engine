@@ -1,4 +1,4 @@
-package com.project.SearchEngine.server.model;
+package com.project.searchengine.server.model;
 
 import java.util.*;
 

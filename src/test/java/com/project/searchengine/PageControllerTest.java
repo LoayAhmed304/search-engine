@@ -1,8 +1,8 @@
-package com.project.SearchEngine;
+package com.project.searchengine;
 
-import com.project.SearchEngine.server.controller.PageController;
-import com.project.SearchEngine.server.model.Page;
-import com.project.SearchEngine.server.repository.PageRepository;
+import com.project.searchengine.server.controller.PageController;
+import com.project.searchengine.server.model.Page;
+import com.project.searchengine.server.repository.PageRepository;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;

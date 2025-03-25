@@ -1,10 +1,10 @@
-package com.project.SearchEngine.server.controller;
+package com.project.searchengine.server.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.project.SearchEngine.server.model.Page;
-import com.project.SearchEngine.server.repository.PageRepository;
+import com.project.searchengine.server.model.Page;
+import com.project.searchengine.server.repository.PageRepository;
 
 import java.util.List;
 import org.springframework.web.bind.annotation.PostMapping;

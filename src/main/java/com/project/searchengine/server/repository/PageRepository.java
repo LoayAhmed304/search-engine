@@ -1,8 +1,8 @@
-package com.project.SearchEngine.server.repository;
+package com.project.searchengine.server.repository;
 
 import org.springframework.data.mongodb.repository.MongoRepository;
 
-import com.project.SearchEngine.server.model.Page;
+import com.project.searchengine.server.model.Page;
 
 
 public interface PageRepository extends MongoRepository<Page, String> {
