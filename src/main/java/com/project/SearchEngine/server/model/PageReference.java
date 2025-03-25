@@ -1,4 +1,4 @@
-package com.project.SearchEngine.database.model;
+package com.project.SearchEngine.server.model;
 
 import java.util.*;
 
@@ -54,5 +54,14 @@ public class PageReference {
 
     public void addWordCount(String field, int count) {
         wordCount.put(field, count);
+    }
+
+    @Override
+    public String toString() {
+        return "PageReference{" +
+                "pageId='" + pageId + '\'' +
+                ", wordPositions=" + wordPositions +
+                ", wordCount=" + wordCount +
+                '}';
     }
 }
