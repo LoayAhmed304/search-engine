@@ -22,6 +22,9 @@ public class URLExtractorTest {
         assertNotNull(testDocument, "Document should not be null for valid URL");
     }
 
+    /**
+     * Example specific test case to check if the URLs are extracted correctly.
+     */
     @Test
     void getURLs_shouldReturnExpectedUrls() {
         Set<String> urls = URLExtractor.getURLs(testDocument);
@@ -32,6 +35,9 @@ public class URLExtractorTest {
         assertTrue(urls.contains("https://habibayman.github.io/web-crawler/"));
     }
 
+    /**
+     * Check if the URLs are absolute URLs.
+     */
     @Test
     void getURLs_shouldReturnAbsoluteUrls() {
         Set<String> urls = URLExtractor.getURLs(testDocument);
@@ -50,6 +56,9 @@ public class URLExtractorTest {
         }
     }
 
+    /**
+     * Exclude JavaScript and mailto links from the set of URLs.
+     */
     @Test
     void filterURLs_shouldExcludeJavaScriptAndMailtoLinks() {
         Set<String> testUrls = new HashSet<>(Set.of(
