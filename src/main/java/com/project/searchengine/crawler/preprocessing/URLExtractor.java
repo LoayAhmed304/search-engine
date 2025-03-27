@@ -27,10 +27,10 @@ public class URLExtractor {
      * 
      * @param doc the document from which the URLs are to be extracted
      * @see filterURLs
-     * @return the list of filtered URLs extracted from the document
+     * @return the set of filtered URLs extracted from the document
      */
-    public static List<String> getURLs(Document doc) {
-        List<String> urls = new ArrayList<>();
+    public static Set<String> getURLs(Document doc) {
+        Set<String> urls = new HashSet<>();
         Elements links = doc.select("a[href]");
         for (Element link : links) {
             String absUrl = link.attr("abs:href");
@@ -42,11 +42,11 @@ public class URLExtractor {
     /**
      * Works as a filter to exclude fragments, JavaScript, or mailto links.
      * 
-     * @param urls list of URLs extracted from the document
-     * @return the filtered list of URLs
+     * @param urls set of URLs extracted from the document
+     * @return the filtered set of URLs
      */
-    public static List<String> filterURLs(List<String> urls) {
-        List<String> filteredURLs = new ArrayList<>();
+    public static Set<String> filterURLs(Set<String> urls) {
+        Set<String> filteredURLs = new HashSet<>();
         for (String url : urls)
             if (url.startsWith("javascript") || url.startsWith("mailto"))
                 continue;
@@ -57,7 +57,7 @@ public class URLExtractor {
 
     public static void main(String[] args) {
         Document doc = getDocument("https://habibayman.github.io/web-crawler/");
-        List<String> urls = getURLs(doc);
+        Set<String> urls = getURLs(doc);
         System.out.println("Document:" + doc);
         System.out.println("URLs extracted from the document:");
         for (String url : urls)

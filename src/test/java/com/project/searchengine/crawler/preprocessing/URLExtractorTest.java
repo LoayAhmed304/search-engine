@@ -5,7 +5,8 @@ import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.net.*;
-import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 
 public class URLExtractorTest {
     private static final String TEST_URL = "https://habibayman.github.io/web-crawler/";
@@ -23,7 +24,7 @@ public class URLExtractorTest {
 
     @Test
     void getURLs_shouldReturnExpectedUrls() {
-        List<String> urls = URLExtractor.getURLs(testDocument);
+        Set<String> urls = URLExtractor.getURLs(testDocument);
 
         // Check for some expected URLs
         assertTrue(urls.contains("https://adventuretime.fandom.com"));
@@ -33,7 +34,7 @@ public class URLExtractorTest {
 
     @Test
     void getURLs_shouldReturnAbsoluteUrls() {
-        List<String> urls = URLExtractor.getURLs(testDocument);
+        Set<String> urls = URLExtractor.getURLs(testDocument);
 
         for (String url : urls) {
             try {
@@ -51,13 +52,13 @@ public class URLExtractorTest {
 
     @Test
     void filterURLs_shouldExcludeJavaScriptAndMailtoLinks() {
-        List<String> testUrls = List.of(
+        Set<String> testUrls = new HashSet<>(Set.of(
                 "https://example.com",
                 "javascript:void(0)",
                 "mailto:test@example.com",
-                "https://another-example.com");
+                "https://another-example.com"));
 
-        List<String> filtered = URLExtractor.filterURLs(testUrls);
+        Set<String> filtered = URLExtractor.filterURLs(testUrls);
 
         assertEquals(2, filtered.size(), "Should filter out JavaScript and mailto links");
         assertFalse(filtered.contains("javascript:void(0)"), "JavaScript links should be filtered");
