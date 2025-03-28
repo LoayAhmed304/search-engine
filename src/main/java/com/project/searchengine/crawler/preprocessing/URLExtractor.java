@@ -1,5 +1,7 @@
 package com.project.searchengine.crawler.preprocessing;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.*;
 import org.jsoup.*;
 import org.jsoup.nodes.*;
@@ -32,35 +34,79 @@ public class URLExtractor {
     public static Set<String> getURLs(Document doc) {
         Set<String> urls = new HashSet<>();
         Elements links = doc.select("a[href]");
+        // output the length of the links
+        System.out.println("All URLs: " + links.size());
         for (Element link : links) {
             String absUrl = link.attr("abs:href");
+            System.out.println(absUrl);
             urls.add(absUrl);
         }
         return filterURLs(urls);
     }
 
     /**
-     * Works as a filter to exclude fragments, JavaScript, or mailto links.
+     * Filters URLs to exclude invalid schemes (javascript, mailto) and malformed
+     * URLs.
+     * Uses URI parsing for O(1) validation, better than regex.
      * 
-     * @param urls set of URLs extracted from the document
-     * @return the filtered set of URLs
+     * @param urls set of URLs to filter
+     * @return filtered set of valid URLs
      */
     public static Set<String> filterURLs(Set<String> urls) {
-        Set<String> filteredURLs = new HashSet<>();
-        for (String url : urls)
-            if (url.startsWith("javascript") || url.startsWith("mailto"))
+        Set<String> filteredUrls = new HashSet<>();
+
+        for (String url : urls) {
+            try {
+                URI uri = new URI(url);
+                String scheme = uri.getScheme();
+
+                if (isUnwantedScheme(scheme))
+                    continue;
+
+                if (isValidUri(uri))
+                    filteredUrls.add(url);
+
+            } catch (URISyntaxException e) {
+                System.err.println("Invalid URL syntax: " + url);
                 continue;
-            else
-                filteredURLs.add(url);
-        return filteredURLs;
+            }
+        }
+
+        return filteredUrls;
+    }
+
+    private static boolean isUnwantedScheme(String scheme) {
+        if (scheme == null)
+            return false; // Allow protocol-relative URLs -> handled in URLNormalizer
+
+        // List of unwanted schemes
+        return scheme.equalsIgnoreCase("javascript") ||
+                scheme.equalsIgnoreCase("mailto") ||
+                scheme.equalsIgnoreCase("tel") ||
+                scheme.equalsIgnoreCase("sms");
+    }
+
+    private static boolean isValidUri(URI uri) {
+        return (uri.getHost() != null) ||
+                (uri.getPath() != null && !uri.getPath().isEmpty());
     }
 
     public static void main(String[] args) {
         Document doc = getDocument("https://habibayman.github.io/web-crawler/");
         Set<String> urls = getURLs(doc);
-        System.out.println("Document:" + doc);
-        System.out.println("URLs extracted from the document:");
+        // System.out.println("Document:" + doc);
+        System.out.println("\nUnique URLs extracted from the document:" + urls.size());
         for (String url : urls)
             System.out.println(url);
+
+        // Normalizing the URLs
+        Set<String> normalizedURLs = new HashSet<>();
+        for (String url : urls) {
+            normalizedURLs.add(URLNormalizer.normalizeUrl(url));
+        }
+        System.out.println("\nNormalized URLs:" + normalizedURLs.size());
+        for (String url : normalizedURLs)
+            System.out.println(url);
     }
+
 }
