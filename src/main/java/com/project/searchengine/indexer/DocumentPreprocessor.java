@@ -13,15 +13,17 @@ public class DocumentPreprocessor {
         String title = document.title();
         String content = document.body().text();
 
-        // 1- Extract headers
+        // 1- Extract headers and tokenize them
         headers = extractHeaders(document);
         
         // 2- Convert to lower case
-        content = content.toLowerCase();
+        String lowerContent = content.toLowerCase();
 
         // 3- Remove punctuation and special characters
+        String cleanContent = lowerContent.replaceAll("[^\\w\\s]", "");
 
         // 4- Tokenize the content
+
 
         // 5- Remove stop words
 
