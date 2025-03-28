@@ -17,10 +17,10 @@ public class DocumentPreprocessor {
         headers = extractHeaders(document);
         
         // 2- Convert to lower case
-        String lowerContent = content.toLowerCase();
+       //  String lowerContent = content.toLowerCase();
 
         // 3- Remove punctuation and special characters
-        String cleanContent = lowerContent.replaceAll("[^\\w\\s]", "");
+       //  String cleanContent = lowerContent.replaceAll("[^\\w\\s]", "");
 
         // 4- Tokenize the content
 
