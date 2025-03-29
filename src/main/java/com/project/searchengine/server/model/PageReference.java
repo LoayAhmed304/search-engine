@@ -7,6 +7,8 @@ public class PageReference {
     private String pageId;
     private List<Integer> wordPositions;
     private Map<String, Integer> fieldWordCount; // field name -> word count
+    private int pageTokens;
+    private int pageRank;
 
     public PageReference(String pageId) {
         this.pageId = pageId;
@@ -44,6 +46,22 @@ public class PageReference {
 
     public void addfieldWordCount(String field, int count) {
         fieldWordCount.put(field, count);
+    }
+
+    public int getPageRank() {
+        return pageRank;
+    }
+
+    public void setPageRank(int pageRank) {
+        this.pageRank = pageRank;
+    }
+
+    public int getPageTokens() {
+        return pageTokens;
+    }
+
+    public void setPageTokens(int pageTokens) {
+        this.pageTokens = pageTokens;
     }
 
     @Override
