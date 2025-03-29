@@ -1,8 +1,9 @@
 package com.project.searchengine.indexer;
 
-import java.text.*;
 import java.util.*;
 import java.util.regex.*;
+import org.jsoup.nodes.*;
+import org.jsoup.select.Elements;
 
 public class Tokenizer {
 
@@ -67,6 +68,43 @@ public class Tokenizer {
         }
 
         return tokens;
+    }
+
+    public Map<String, Map<String, Integer>> tokenizeHeaders(Elements fieldTags) {
+        Map<String, Map<String, Integer>> headerTokens = new HashMap<>(); // token => header type => count
+
+        for (Element header : fieldTags) {
+            String headerText = header.text();
+            String headerType = header.tagName();
+            Map<String, List<Integer>> tokens = tokenize(headerText);
+            System.out.println("Header: " + headerText);
+            System.out.println("Header Type: " + headerType);
+
+            // check if the token exits in the map
+            for (Map.Entry<String, List<Integer>> entry : tokens.entrySet()) {
+                String token = entry.getKey();
+                Integer tokenCount = entry.getValue().size();
+
+                // check if the token exist in the map
+                if (headerTokens.containsKey(token)) {
+                    Map<String, Integer> headerTypeCount = headerTokens.get(token);
+                    if (headerTypeCount.containsKey(headerType)) {
+                        // update the count
+                        Integer count = headerTypeCount.get(headerType);
+                        headerTypeCount.put(headerType, count + tokenCount);
+                    } else {
+                        headerTypeCount.put(headerType, tokenCount);
+                    }
+                } else {
+                    // add the token to the map
+                    Map<String, Integer> headerTypeCount = new HashMap<>();
+                    headerTypeCount.put(headerType, tokenCount);
+                    headerTokens.put(token, headerTypeCount);
+                }
+            }
+        }
+        System.out.println("Headers: " + headerTokens);
+        return headerTokens;
     }
 
     private String cleanToken(String token) {
