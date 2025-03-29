@@ -44,6 +44,11 @@ public class Tokenizer {
 
     public Tokenizer() {}
 
+    /**
+     * Tokenizes the input text and returns a map of tokens with their positions.
+     * @param text The input text to tokenize.
+     * @return A map where the key is the token and the value is a list of positions.
+     */
     public Map<String, List<Integer>> tokenize(String text) {
         Map<String, List<Integer>> tokens = new HashMap<>();
         int position = 0;
@@ -70,6 +75,11 @@ public class Tokenizer {
         return tokens;
     }
 
+    /**
+     * Tokenizes the headers and returns a map of tokens with their header types and counts.
+     * @param fieldTags The field tags to tokenize.
+     * @return A map where the key is the token and the value is another map with header types and their counts.
+     */
     public Map<String, Map<String, Integer>> tokenizeHeaders(Elements fieldTags) {
         Map<String, Map<String, Integer>> headerTokens = new HashMap<>(); // token => header type => count
 
@@ -103,10 +113,15 @@ public class Tokenizer {
                 }
             }
         }
-        System.out.println("Headers: " + headerTokens);
         return headerTokens;
     }
 
+    /**
+     * Cleans the token by removing unwanted characters.
+     * Preserves special tokens like email, phone, hashtags, and hyphenated words.
+     * @param token The token to clean.
+     * @return The cleaned token.
+     */
     private String cleanToken(String token) {
         // Preserve special tokens
         if (
@@ -123,6 +138,7 @@ public class Tokenizer {
         return token.replaceAll("[^a-zA-Z]", "");
     }
 
+    // Main method for testing
     public static void main(String[] args) {
         // Example usage
         Tokenizer tokenizer = new Tokenizer();
