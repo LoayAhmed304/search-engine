@@ -67,22 +67,6 @@ public class PageReference {
         this.pageTokens = pageTokens;
     }
 
-    public int getPageRank() {
-        return pageRank;
-    }
-
-    public void setPageRank(int pageRank) {
-        this.pageRank = pageRank;
-    }
-
-    public int getPageTokens() {
-        return pageTokens;
-    }
-
-    public void setPageTokens(int pageTokens) {
-        this.pageTokens = pageTokens;
-    }
-
     @Override
     public String toString() {
         return (

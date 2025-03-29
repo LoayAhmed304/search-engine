@@ -87,8 +87,6 @@ public class Tokenizer {
             String headerText = header.text();
             String headerType = header.tagName();
             Map<String, List<Integer>> tokens = tokenize(headerText);
-            System.out.println("Header: " + headerText);
-            System.out.println("Header Type: " + headerType);
 
             // check if the token exits in the map
             for (Map.Entry<String, List<Integer>> entry : tokens.entrySet()) {

@@ -1,6 +1,5 @@
 package com.project.searchengine.indexer;
 
-import com.project.searchengine.server.model.InvertedIndex;
 import java.util.*;
 import org.jsoup.*;
 import org.jsoup.nodes.*;
