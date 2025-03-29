@@ -1,10 +1,11 @@
 package com.project.searchengine.indexer;
 
-import java.util.*;
 import java.text.*;
+import java.util.*;
 import java.util.regex.*;
 
 public class Tokenizer {
+
     // Define individual patterns (lowercase only)
     private final String WORD_PATTERN = "\\w+";
     private final String EMAIL_PATTERN = "[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,}";
@@ -15,17 +16,27 @@ public class Tokenizer {
 
     // Combine patterns with proper grouping
     private final Pattern pattern = Pattern.compile(
-        "(" + EMAIL_PATTERN + ")|" +
-        "(" + PHONE_PATTERN + ")|" +
-        "(" + HASHTAG_PATTERN + ")|" +
-        "(" + PLUS_COMBINED_PATTERN + ")|" +
-        "(" + HYPHENATED_PATTERN + ")|" +
-        "(" + WORD_PATTERN + ")"
+        "(" +
+        EMAIL_PATTERN +
+        ")|" +
+        "(" +
+        PHONE_PATTERN +
+        ")|" +
+        "(" +
+        HASHTAG_PATTERN +
+        ")|" +
+        "(" +
+        PLUS_COMBINED_PATTERN +
+        ")|" +
+        "(" +
+        HYPHENATED_PATTERN +
+        ")|" +
+        "(" +
+        WORD_PATTERN +
+        ")"
     );
 
-    public Tokenizer() {
-   
-    }
+    public Tokenizer() {}
 
     public Map<String, List<Integer>> tokenize(String text) {
         Map<String, List<Integer>> tokens = new HashMap<>();
@@ -35,13 +46,13 @@ public class Tokenizer {
 
         // Match the pattern
         Matcher matcher = pattern.matcher(text);
-   
+
         while (matcher.find()) {
             // Get the matched token
             String token = matcher.group();
             String cleanedToken = cleanToken(token);
 
-            if(!cleanedToken.isEmpty()) {
+            if (!cleanedToken.isEmpty()) {
                 // Add the token to the map
                 tokens.computeIfAbsent(cleanedToken, k -> new ArrayList<>()).add(position);
 
@@ -49,15 +60,19 @@ public class Tokenizer {
                 position++;
             }
         }
-        
+
         return tokens;
     }
 
     private String cleanToken(String token) {
         // Preserve special tokens
-        if(token.matches(EMAIL_PATTERN) || token.matches(PHONE_PATTERN) 
-        || token.matches(HYPHENATED_PATTERN) || token.matches(HASHTAG_PATTERN) 
-        || token.matches(PLUS_COMBINED_PATTERN)){
+        if (
+            token.matches(EMAIL_PATTERN) ||
+            token.matches(PHONE_PATTERN) ||
+            token.matches(HYPHENATED_PATTERN) ||
+            token.matches(HASHTAG_PATTERN) ||
+            token.matches(PLUS_COMBINED_PATTERN)
+        ) {
             return token;
         }
 
@@ -73,9 +88,9 @@ public class Tokenizer {
             "Hello, world! This is a test. 12345 test",
             "Hello, world! How's it going?",
             "Email me at user@domain.com or #hashtag!",
-            "C++, C# coding is FUN! Let's try 100% effort.",
+            "C++, coding is FUN! Let's try 100% effort.",
             "Visit https://cairo.edu or call +20123456789.",
-            "A+bB"
+            "A+bB",
         };
 
         for (String text : tests) {
@@ -84,7 +99,5 @@ public class Tokenizer {
             System.out.println("Tokens: " + tokenPositions);
             System.out.println();
         }
-
-
     }
 }

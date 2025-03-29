@@ -4,14 +4,14 @@ import java.util.*;
 
 public class PageReference {
 
-    // Field names    
+    // Field names
     public enum wordField {
         TITLE,
         H1,
         H2,
         H3,
         BODY,
-        URL
+        URL,
     }
 
     private String pageId;
@@ -58,10 +58,16 @@ public class PageReference {
 
     @Override
     public String toString() {
-        return "PageReference{" +
-                "pageId='" + pageId + '\'' +
-                ", wordPositions=" + wordPositions +
-                ", wordCount=" + wordCount +
-                '}';
+        return (
+            "PageReference{" +
+            "pageId='" +
+            pageId +
+            '\'' +
+            ", wordPositions=" +
+            wordPositions +
+            ", wordCount=" +
+            wordCount +
+            '}'
+        );
     }
 }
