@@ -27,14 +27,17 @@ public class Tokenizer {
         while(current != BreakIterator.DONE) {
             String token = text.substring(start, current).trim();
 
-            // Remove punctuations, numbers, and special characters
-            String cleanToken = token.replaceAll("[^a-zA-Z]", "");
+            // Convert to lower case
+            String lowerCaseToken = token.toLowerCase();
 
-            // Conevert to lower case
-            cleanToken = cleanToken.toLowerCase();
+            // Remove punctuations, numbers, and special characters
+            String cleanToken = cleanToken(lowerCaseToken);
 
             // Filter out empty tokens
             if (!cleanToken.isEmpty()) {
+                // Stemming
+
+                
                 tokens.computeIfAbsent(cleanToken, k -> new ArrayList<>()).add(position);
                 position++;
             }
@@ -45,6 +48,16 @@ public class Tokenizer {
         }
 
         return tokens;
+    }
+
+    private String cleanToken(String token) {
+        // Handle Hyphenated links
+        if (token.matches("(?=\\S*['-])([a-zA-Z'-]+)")) {
+            return token;
+        }
+
+        // Default: remove everything except letters
+        return token.replaceAll("[^a-z]", "");
     }
 
     public static void main(String[] args) {
@@ -65,19 +78,20 @@ public class Tokenizer {
         // Output: Tokens: [hello, world, how, s, it, going]
 
         // Test 3
-        text = "Email me at user@domain.com or #hashtag!";
+        text = "Email me at user@domain.com or #hashtag! +18143512533 https://stackoverflow.com/questions/31910955/regex-to-match-words-with-hyphens-and-or-apostrophes";
         tokens = tokenizer.tokenize(text);
         System.out.println("Tokens: " + tokens);
         // Output: Tokens: [email, me, at, user, domain, com, or, hashtag]
 
         // Test 4
-        text = "Café, résumé, naïve, façade!";
+        text = "C++ coding is FUN! Let's try 100% effort. hyphenated-word";
         tokens = tokenizer.tokenize(text);
         System.out.println("Tokens: " + tokens);
-        // Output: Tokens: [café, résumé, naïve, façade]
+        // Output: Tokens: [c++, coding, is, fun, let, s, try, effort]
 
-        // Test 5
-        text = "C++ coding is FUN! Let's try 100% effort.";
+
+        // Test 4
+        text = "Café, résumé";
         tokens = tokenizer.tokenize(text);
         System.out.println("Tokens: " + tokens);
         // Output: Tokens: [c++, coding, is, fun, let, s, try, effort]
