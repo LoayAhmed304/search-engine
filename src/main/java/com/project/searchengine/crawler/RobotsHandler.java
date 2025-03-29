@@ -98,6 +98,11 @@ public class RobotsHandler {
         return rules;
     }
 
+    /**
+     * @param key the domain key for the robots.txt file
+     * @param rules the BaseRobotRules object to cache
+     * Works as a cache manager for the class
+     */
     public static void addToCache(String key, BaseRobotRules rules) {
         if (SHARED_CACHE.size() < MAX_CACHE_SIZE) 
             SHARED_CACHE.putIfAbsent(key, rules);
@@ -113,12 +118,5 @@ public class RobotsHandler {
      */
     public static void clearSharedCache() {
         SHARED_CACHE.clear();
-    }
-
-    public static void main(String[] args) {
-        RobotsHandler handler = new RobotsHandler();
-        String url = "https://facebook.com";
-        boolean allowed = handler.isUrlAllowed(url);
-        System.out.println("Is URL allowed: " + allowed);
     }
 }
