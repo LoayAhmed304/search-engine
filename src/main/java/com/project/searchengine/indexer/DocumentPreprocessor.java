@@ -1,39 +1,25 @@
 package com.project.searchengine.indexer;
 
+
 import java.util.*;
 import org.jsoup.*;
 import org.jsoup.nodes.*;
 import org.jsoup.select.*;
 
+
 public class DocumentPreprocessor {
+    Tokenizer tokenizer = new Tokenizer();
     
     public Map<String, Object> preprocessDocument(String url, Document document) {
         Map<String, Object> pageData = new HashMap<>();
+        Map<String, List<Integer>> tokens = new HashMap<>();
         Map<String, List<String>> headers = new HashMap<>(); // word => header type
         String title = document.title();
         String content = document.body().text();
-
-        // 1- Extract headers and tokenize them
         headers = extractHeaders(document);
-        
-        // 2- Convert to lower case
-       //  String lowerContent = content.toLowerCase();
 
-        // 3- Remove punctuation and special characters
-       //  String cleanContent = lowerContent.replaceAll("[^\\w\\s]", "");
-
-        // 4- Tokenize the content
-
-
-        // 5- Remove stop words
-
-        // 6- Stemming
-
-        // 7- Remove numbers
-
-        // 8- Filter short tokens
-
-
+        tokenizer.tokenize(content);
+        tokens = tokenizer.tokenize(content);
 
         return pageData;
     } 
@@ -48,7 +34,7 @@ public class DocumentPreprocessor {
             String[] headerTokens = headerText.toLowerCase().split("[,\\s\\.\\?\\!\\-\\(\\)]+");
             headers.computeIfAbsent(headerType, k -> new ArrayList<>()).addAll(Arrays.asList(headerTokens));
         }
-        
+        System.out.println("Headers: " + headers);
         return headers;
     }
 
@@ -64,6 +50,5 @@ public class DocumentPreprocessor {
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
         }
-   
     }
 }
