@@ -14,6 +14,11 @@ public class Tokenizer {
     private final String HASHTAG_PATTERN = "#[a-z0-9_]+";
     private final String PLUS_COMBINED_PATTERN = "[a-z]+\\+{1,2}[a-z0-9]*"; // C++ like terms
 
+    // Field-specefic tokens
+    Map<String, List<Integer>> bodyTokens = new HashMap<>();
+    Map<String, List<Integer>> titleTokens = new HashMap<>();
+    Map<String, List<Integer>> headerTokens = new HashMap<>();
+
     // Combine patterns with proper grouping
     private final Pattern pattern = Pattern.compile(
         "(" +
