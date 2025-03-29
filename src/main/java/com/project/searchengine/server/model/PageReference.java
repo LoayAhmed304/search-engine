@@ -72,7 +72,9 @@ public class PageReference {
         return pageTokens;
     }
 
-    public void setPageTokens(int pageTokens) { this.pageTokens = pageTokens; }
+    public void setPageTokens(int pageTokens) {
+        this.pageTokens = pageTokens;
+    }
 
     @Override
     public String toString() {

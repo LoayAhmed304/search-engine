@@ -1,4 +1,5 @@
 package com.project.searchengine.server.model;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -9,14 +10,14 @@ public class Page {
     private String url;
     private String title;
     private String content;
-  
+
     public Page(String id, String url, String title, String content) {
         this.id = id;
         this.url = url;
         this.title = title;
         this.content = content;
-    }  
-    
+    }
+
     public String getId() {
         return id;
     }

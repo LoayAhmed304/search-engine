@@ -8,6 +8,6 @@ import com.project.searchengine.server.model.InvertedIndex;
 @Repository
 public interface InvertedIndexRepository extends MongoRepository<InvertedIndex, String> {
 
-   //  InvertedIndex findByWord(String word);
+   // InvertedIndex findByWord(String word);
 
 }

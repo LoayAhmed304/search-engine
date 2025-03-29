@@ -18,7 +18,7 @@ public class PageService {
      *
      * @return number of entries in Page collection
      */
-    public long getTotalDocuments(){
+    public long getTotalDocuments() {
         return pageRepository.count();
     }
 
