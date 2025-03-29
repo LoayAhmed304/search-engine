@@ -1,4 +1,5 @@
 package com.project.searchengine.server.controller;
+import com.project.searchengine.server.service.PageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -15,16 +16,16 @@ import org.springframework.web.bind.annotation.RequestBody;
 public class PageController {
 
     @Autowired  // spring boot creates an object and map it
-    private PageRepository pageRepository;
+    private PageService pageService;
 
     @GetMapping("/pages")
     public List<Page> getAllPages() {
-        return pageRepository.findAll();
+        return pageService.getAllPages();
     }
 
     @PostMapping("/page")
     public Page createPage(@RequestBody Page page) {
-        return pageRepository.save(page);
+        return pageService.createPage(page);
     }
     
 }

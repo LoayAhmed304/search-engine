@@ -4,7 +4,7 @@ import java.util.*;
 
 public class PageReference {
 
-    // Field names    
+    // Field names
     public enum wordField {
         TITLE,
         H1,
@@ -17,11 +17,15 @@ public class PageReference {
     private String pageId;
     private List<Integer> wordPositions;
     private Map<String, Integer> wordCount; // field name -> word count
+    private int pageTokens;
+    private int pageRank;
 
-    public PageReference(String pageId) {
+    public PageReference(String pageId, int pageTokens, int pageRank) {
         this.pageId = pageId;
         this.wordPositions = new ArrayList<>();
         this.wordCount = new HashMap<>();
+        this.pageTokens = pageTokens;
+        this.pageRank = pageRank;
     }
 
     public String getPageId() {
@@ -55,6 +59,20 @@ public class PageReference {
     public void addWordCount(String field, int count) {
         wordCount.put(field, count);
     }
+
+    public int getPageRank() {
+        return pageRank;
+    }
+
+    public void setPageRank(int pageRank) {
+        this.pageRank = pageRank;
+    }
+
+    public int getPageTokens() {
+        return pageTokens;
+    }
+
+    public void setPageTokens(int pageTokens) { this.pageTokens = pageTokens; }
 
     @Override
     public String toString() {
