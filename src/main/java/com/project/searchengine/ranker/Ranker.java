@@ -21,15 +21,27 @@ public class Ranker {
     /**
      * The main function, which handles the ranking for all the given results
      *
-     * @return ordered ranked list of the results pages IDs
+     * @return ranked list of the results pages IDs [String, ...]
      */
     public List<String> rank() {
+        Map<String, Double> scores = computeScores();
+
+        return sortedPages(scores); // return sorted pages ids (strings) according to their values in scores Map
+    }
+
+    /**
+     * Main for loop to process each token and compute pages scores Map
+     *
+     * @return Map with page_id as its key, and page score as its value
+     */
+    private Map<String, Double> computeScores() {
         Map<String, Double> scores = new HashMap<>();
+
         for (String token : queryTokens) {
             processToken(token, scores);
         }
 
-        return sortedPages(scores); // return sorted pages ids (strings) according to their values in scores Map
+        return scores; // return sorted pages ids (strings) according to their values in scores Map
     }
 
     /**
