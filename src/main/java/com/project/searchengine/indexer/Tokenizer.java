@@ -88,23 +88,22 @@ public class Tokenizer {
             String headerType = header.tagName();
             Map<String, List<Integer>> tokens = tokenize(headerText);
 
-            // check if the token exits in the map
             for (Map.Entry<String, List<Integer>> entry : tokens.entrySet()) {
                 String token = entry.getKey();
                 Integer tokenCount = entry.getValue().size();
 
-                // check if the token exist in the map
+                // Check if the token exists in the map
                 if (headerTokens.containsKey(token)) {
                     Map<String, Integer> headerTypeCount = headerTokens.get(token);
                     if (headerTypeCount.containsKey(headerType)) {
-                        // update the count
+                        // Update the count
                         Integer count = headerTypeCount.get(headerType);
                         headerTypeCount.put(headerType, count + tokenCount);
                     } else {
                         headerTypeCount.put(headerType, tokenCount);
                     }
                 } else {
-                    // add the token to the map
+                    // Add the token to the map
                     Map<String, Integer> headerTypeCount = new HashMap<>();
                     headerTypeCount.put(headerType, tokenCount);
                     headerTokens.put(token, headerTypeCount);

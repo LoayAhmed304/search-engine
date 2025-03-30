@@ -1,6 +1,9 @@
 package com.project.searchengine.indexer;
 
+import com.project.searchengine.crawler.preprocessing.*;
+import java.security.MessageDigest;
 import java.util.*;
+import javax.xml.bind.DatatypeConverter;
 import org.jsoup.*;
 import org.jsoup.nodes.*;
 import org.jsoup.select.*;
@@ -33,6 +36,8 @@ public class DocumentPreprocessor {
 
         return pageData;
     }
+
+    public void createPage(String id, String url, String title, String content) {}
 
     // Main method for testing
     public static void main(String[] args) {
