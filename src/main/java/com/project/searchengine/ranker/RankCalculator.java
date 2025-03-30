@@ -15,7 +15,7 @@ public class RankCalculator {
      * @return normalized TF value (double)
      */
     public static double calculateTF(PageReference pr) {
-        return 1.2;
+        return (double) pr.getWordPositions().size() / (double) pr.getPageTokens();
     }
 
     /**
@@ -28,6 +28,6 @@ public class RankCalculator {
      * @return the final score to be merged with scores Map (double)
      */
     public static double calculateScore(double tf, double idf, double pageRank) {
-        return 0.3;
+        return TF_IDF_COEFF * tf * idf + PAGE_RANK_COEFF * pageRank;
     }
 }
