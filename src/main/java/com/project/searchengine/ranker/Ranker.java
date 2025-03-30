@@ -2,6 +2,7 @@ package com.project.searchengine.ranker;
 
 import com.project.searchengine.server.model.PageReference;
 import com.project.searchengine.server.service.PageService;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -33,7 +34,7 @@ public class Ranker {
             processToken(token, scores);
         }
 
-        return null; // should return sorted page ids (strings) according to their values in scores Map
+        return sortedPages(scores); // return sorted pages ids (strings) according to their values in scores Map
     }
 
     /**
@@ -65,5 +66,17 @@ public class Ranker {
      */
     private double getIDF(int docsWithToken) {
         return Math.log((double) docsWithToken / totalDocuments);
+    }
+
+    /**
+     * Creates the sorted pages IDs according to their score in the scores Map <page ID, score>
+     *
+     * @param scores: Map of score corresponding to each page
+     * @return sorted array of page IDs ([String, ...])
+     */
+    private List<String> sortedPages(Map<String, Double> scores) {
+        List<String> result = new ArrayList<>(scores.keySet());
+        result.sort((page1, page2) -> Double.compare(scores.get(page2), scores.get(page1)));
+        return result;
     }
 }
