@@ -91,22 +91,4 @@ public class URLExtractor {
                 (uri.getPath() != null && !uri.getPath().isEmpty());
     }
 
-    public static void main(String[] args) {
-        Document doc = getDocument("https://habibayman.github.io/web-crawler/");
-        Set<String> urls = getURLs(doc);
-        // System.out.println("Document:" + doc);
-        System.out.println("\nUnique URLs extracted from the document:" + urls.size());
-        for (String url : urls)
-            System.out.println(url);
-
-        // Normalizing the URLs
-        Set<String> normalizedURLs = new HashSet<>();
-        for (String url : urls) {
-            normalizedURLs.add(URLNormalizer.normalizeUrl(url));
-        }
-        System.out.println("\nNormalized URLs:" + normalizedURLs.size());
-        for (String url : normalizedURLs)
-            System.out.println(url);
-    }
-
 }

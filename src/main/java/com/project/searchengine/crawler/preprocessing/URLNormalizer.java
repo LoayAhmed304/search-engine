@@ -9,6 +9,7 @@ import java.net.URISyntaxException;
  */
 
 public class URLNormalizer {
+    
     /**
      * Normalizes a URL by:
      * 1. converting to lowercase
