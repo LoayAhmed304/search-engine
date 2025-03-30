@@ -5,8 +5,10 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document(collection = "pages")
 public class Page {
+
     @Id
     private String id;
+
     private String url;
     private String title;
     private String content;
@@ -52,11 +54,21 @@ public class Page {
 
     @Override
     public String toString() {
-        return "Page{" +
-                "id='" + id + '\'' +
-                ", url='" + url + '\'' +
-                ", title='" + title + '\'' +
-                ", content='" + content + '\'' +
-                '}';
+        return (
+            "Page{" +
+            "id='" +
+            id +
+            '\'' +
+            ", url='" +
+            url +
+            '\'' +
+            ", title='" +
+            title +
+            '\'' +
+            ", content='" +
+            content +
+            '\'' +
+            '}'
+        );
     }
 }
