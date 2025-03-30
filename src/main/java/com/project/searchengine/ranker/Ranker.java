@@ -68,7 +68,7 @@ public class Ranker {
     /**
      * Simple computation for the normalized IDF value
      *
-     * @param docsWithToken: number of documents contianing the token
+     * @param docsWithToken: number of documents containing the token
      * @return normalized IDF value (double)
      */
     private double getIDF(int docsWithToken) {
