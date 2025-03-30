@@ -4,26 +4,17 @@ import java.util.*;
 
 public class PageReference {
 
-    // Field names
-    public enum wordField {
-        TITLE,
-        H1,
-        H2,
-        H3,
-        BODY,
-        URL
-    }
-
     private String pageId;
     private List<Integer> wordPositions;
-    private Map<String, Integer> wordCount; // field name -> word count
+    private Map<String, Integer> fieldWordCount; // field name -> word count
+
     private int pageTokens;
     private int pageRank;
 
     public PageReference(String pageId, int pageTokens, int pageRank) {
         this.pageId = pageId;
         this.wordPositions = new ArrayList<>();
-        this.wordCount = new HashMap<>();
+        this.fieldWordCount = new HashMap<>();
         this.pageTokens = pageTokens;
         this.pageRank = pageRank;
     }
@@ -45,19 +36,19 @@ public class PageReference {
     }
 
     public Map<String, Integer> getWordCount() {
-        return wordCount;
+        return fieldWordCount;
     }
 
-    public void setWordCount(Map<String, Integer> wordCount) {
-        this.wordCount = wordCount;
+    public void setfieldWordCount(Map<String, Integer> fieldWordCount) {
+        this.fieldWordCount = fieldWordCount;
     }
 
     public void addWordPosition(int position) {
         wordPositions.add(position);
     }
 
-    public void addWordCount(String field, int count) {
-        wordCount.put(field, count);
+    public void addfieldWordCount(String field, int count) {
+        fieldWordCount.put(field, count);
     }
 
     public int getPageRank() {
@@ -78,10 +69,16 @@ public class PageReference {
 
     @Override
     public String toString() {
-        return "PageReference{" +
-                "pageId='" + pageId + '\'' +
-                ", wordPositions=" + wordPositions +
-                ", wordCount=" + wordCount +
-                '}';
+        return (
+            "PageReference{" +
+            "pageId='" +
+            pageId +
+            '\'' +
+            ", wordPositions=" +
+            wordPositions +
+            ", fieldWordCount=" +
+            fieldWordCount +
+            '}'
+        );
     }
 }

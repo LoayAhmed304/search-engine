@@ -1,13 +1,17 @@
 package com.project.searchengine.server.model;
 
+
+import java.util.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-import java.util.*;
+
 
 @Document(collection = "words")
 public class InvertedIndex {
+
     @Id
     private String word;
+
     private List<PageReference> pages;
     private int pageCount; // number of pages containing the word
 
@@ -19,10 +23,16 @@ public class InvertedIndex {
 
     @Override
     public String toString() {
-        return "InvertedIndex{" +
-                "word='" + word + '\'' +
-                ", pages=" + pages +
-                ", pageCount=" + pageCount +
-                '}';
+        return (
+            "InvertedIndex{" +
+            "word='" +
+            word +
+            '\'' +
+            ", pages=" +
+            pages +
+            ", pageCount=" +
+            pageCount +
+            '}'
+        );
     }
 }
