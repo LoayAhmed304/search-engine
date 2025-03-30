@@ -39,6 +39,20 @@ public class DocumentPreprocessor {
 
     public void createPage(String id, String url, String title, String content) {}
 
+    private String hashUrl(String url) {
+        // Normalize the url first
+        URLNormalizer urlNormalizer = new URLNormalizer();
+        String normalizedUrl = urlNormalizer.normalizeUrl(url);
+
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(normalizedUrl.getBytes("UTF-8"));
+            return DatatypeConverter.printHexBinary(hash).toLowerCase();
+        } catch (Exception e) {
+            return Integer.toHexString(url.hashCode());
+        }
+    }
+
     // Main method for testing
     public static void main(String[] args) {
         DocumentPreprocessor dp = new DocumentPreprocessor();
