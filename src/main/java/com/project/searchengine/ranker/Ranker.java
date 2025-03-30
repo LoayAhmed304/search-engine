@@ -64,6 +64,6 @@ public class Ranker {
      * @return normalized IDF value (double)
      */
     private double getIDF(int docsWithToken) {
-        return 0;
+        return Math.log((double) docsWithToken / totalDocuments);
     }
 }
