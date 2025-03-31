@@ -3,5 +3,45 @@
 *::after {
   box-sizing: border-box;
   margin: 0;
+  padding: 0;
   font-weight: normal;
+}
+
+:root {
+  --background-color: #F6FFF8;
+
+  /* dora's theme */
+  --theme-dora-accent-color: #D96C92;
+  --theme-dora-title-color: #5A3222;
+  --theme-dora-link-color: #E67E22;
+  --theme-dora-search-background: #F6FFF8;
+  --theme-dora-divider-color: #E38B8B;
+
+  /* backpack's theme */
+  --theme-backpack-accent-color: #C49BFF;
+  --theme-backpack-title-color: #7B57A3;
+  --theme-backpack-link-color: #5C89C9;
+  --theme-backpack-search-background: #E8DAFF;
+  --theme-backpack-divider-color: #BFA3E6;
+
+  /* swiper's theme */
+  --theme-swiper-accent-color: #E67E22;
+  --theme-swiper-title-color: #C75C27;
+  --theme-swiper-link-color: #2D5E99;
+  --theme-swiper-search-background: #FFDCC3;
+  --theme-swiper-divider-color: #E5A076;
+
+
+  /* boots's theme */
+  --theme-boots-accent-color: #5A9FE3;
+  --theme-boots-title-color: #3569A3;
+  --theme-boots-link-color: #E4B12F;
+  --theme-boots-search-background: #D9ECFF;
+  --theme-boots-divider-color: #A3C7E8;
+}
+
+body {
+  background-color: var(--background-color);
+  font-family: 'Poppins', sans-serif;
+  color: #333;
 }
