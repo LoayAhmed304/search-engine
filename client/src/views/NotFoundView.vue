@@ -2,7 +2,6 @@
 </script>
 
 <template>
-
   <main>
     <p>not found</p>
   </main>
