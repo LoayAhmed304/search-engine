@@ -29,8 +29,6 @@ public class Tokenizer {
     @Autowired
     private InvertedIndexRepository invertedIndexRepository;
 
-    private PageReference pageReference;
-
     // Combine patterns with proper grouping
     private final Pattern pattern = Pattern.compile(
         "(" +
@@ -61,8 +59,8 @@ public class Tokenizer {
     public Map<String, List<Integer>> tokenizeContent(
         String text,
         String pageId,
-        Integer pageTokens,
-        String fieldType
+        String fieldType,
+        Double pageRank
     ) {
         Map<String, List<Integer>> tokens = new HashMap<>();
         int position = 0;
@@ -84,7 +82,15 @@ public class Tokenizer {
                 tokens.computeIfAbsent(cleanedToken, k -> new ArrayList<>()).add(position);
 
                 // Save the token to the inverted index
-                saveToken(cleanedToken, pageId, position, Map.of(fieldType, 1), pageTokens);
+                saveToken(
+                    cleanedToken,
+                    pageId,
+                    position,
+                    Map.of(fieldType, 1),
+                    tokenCount,
+                    pageRank
+                );
+                tokenCount++;
 
                 // Update the position
                 position++;
@@ -99,13 +105,22 @@ public class Tokenizer {
      * @param fieldTags The field tags to tokenize.
      * @return A map where the key is the token and the value is another map with header types and their counts.
      */
-    public Map<String, Map<String, Integer>> tokenizeHeaders(Elements fieldTags) {
+    public Map<String, Map<String, Integer>> tokenizeHeaders(
+        Elements fieldTags,
+        String pageId,
+        Double pageRank
+    ) {
         headerTokens = new HashMap<>(); // token => header type => count
 
         for (Element header : fieldTags) {
             String headerText = header.text();
             String headerType = header.tagName();
-            Map<String, List<Integer>> tokens = tokenizeContent(headerText);
+            Map<String, List<Integer>> tokens = tokenizeContent(
+                headerText,
+                pageId,
+                headerType,
+                pageRank
+            );
 
             for (Map.Entry<String, List<Integer>> entry : tokens.entrySet()) {
                 String token = entry.getKey();
@@ -137,7 +152,8 @@ public class Tokenizer {
         String pageId,
         Integer position,
         Map<String, Integer> fieldsCount,
-        Integer pageTokens
+        Integer pageTokens,
+        Double pageRank
     ) {
         // 1- Check if the token already exists in the database
         Optional<InvertedIndex> optIndex = invertedIndexRepository.findById(word);
@@ -197,26 +213,30 @@ public class Tokenizer {
         // Default: remove everything except letters
         return token.replaceAll("[^a-zA-Z]", "");
     }
-
     // Main method for testing
-    public static void main(String[] args) {
-        // Example usage
-        Tokenizer tokenizer = new Tokenizer();
+    // public static void main(String[] args) {
+    //     // Example usage
+    //     Tokenizer tokenizer = new Tokenizer();
 
-        String[] tests = {
-            "Hello, world! This is a test. 12345 test",
-            "Hello, world! How's it going?",
-            "Email me at user@domain.com or #hashtag!",
-            "C++, coding is FUN! Let's try 100% effort.",
-            "Visit https://cairo.edu or call +20123456789.",
-            "A+bB",
-        };
+    //     String[] tests = {
+    //         "Hello, world! This is a test. 12345 test",
+    //         "Hello, world! How's it going?",
+    //         "Email me at user@domain.com or #hashtag!",
+    //         "C++, coding is FUN! Let's try 100% effort.",
+    //         "Visit https://cairo.edu or call +20123456789.",
+    //         "A+bB",
+    //     };
 
-        for (String text : tests) {
-            Map<String, List<Integer>> tokenPositions = tokenizer.tokenizeContent(text);
-            System.out.println("Text: " + text);
-            System.out.println("Tokens: " + tokenPositions);
-            System.out.println();
-        }
-    }
+    //     for (String text : tests) {
+    //         Map<String, List<Integer>> tokenPositions = tokenizer.tokenizeContent(
+    //             text,
+    //             "pageId",
+    //             "body",
+    //             0.0
+    //         );
+    //         System.out.println("Text: " + text);
+    //         System.out.println("Tokens: " + tokenPositions);
+    //         System.out.println();
+    //     }
+    // }
 }

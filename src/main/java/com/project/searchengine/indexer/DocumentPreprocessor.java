@@ -4,9 +4,7 @@ import com.project.searchengine.crawler.preprocessing.*;
 import com.project.searchengine.server.model.Page;
 import com.project.searchengine.server.service.PageService;
 import java.security.MessageDigest;
-import java.util.*;
 import javax.xml.bind.DatatypeConverter;
-import org.jsoup.*;
 import org.jsoup.nodes.*;
 import org.jsoup.select.*;
 import org.springframework.beans.factory.annotation.*;
@@ -15,7 +13,8 @@ import org.springframework.stereotype.*;
 @Service
 public class DocumentPreprocessor {
 
-    Tokenizer tokenizer = new Tokenizer();
+    @Autowired
+    private Tokenizer tokenizer;
 
     @Autowired
     private PageService pageService;
@@ -28,10 +27,6 @@ public class DocumentPreprocessor {
      * @return A map containing the tokens and their positions, as well as header tokens. (To be changed)
      */
     public void preprocessDocument(String url, Document document) {
-        // Field-specefic tokens
-        Map<String, List<Integer>> bodyTokens = new HashMap<>(); // word => list of positions
-        Map<String, Map<String, Integer>> headerTokens = new HashMap<>(); // word => header type => count of occurrences
-
         // Extract raw text
         String title = document.title();
         String id = hashUrl(url);
@@ -42,10 +37,8 @@ public class DocumentPreprocessor {
         savePage(id, url, title, content);
 
         // Tokenize the document
-        headerTokens = tokenizer.tokenizeHeaders(fieldTags);
-        bodyTokens = tokenizer.tokenizeContent(content);
-        // Save the tokens to the database
-
+        tokenizer.tokenizeHeaders(fieldTags, id, 0.0);
+        tokenizer.tokenizeContent(content, id, "body", 0.0);
     }
 
     public void savePage(String id, String url, String title, String content) {

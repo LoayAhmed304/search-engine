@@ -1,6 +1,8 @@
 package com.project.searchengine;
 
 import com.project.searchengine.indexer.DocumentPreprocessor;
+import com.project.searchengine.indexer.Tokenizer;
+import com.project.searchengine.server.repository.InvertedIndexRepository;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.springframework.boot.SpringApplication;
@@ -18,10 +20,11 @@ public class searchengineApplication {
         // Test the indexer
         DocumentPreprocessor dp = context.getBean(DocumentPreprocessor.class);
         String url =
-            "https://medium.com/@shwetkhatri/my-journey-in-lfx-mentorship-program-summer22-39d861c97313";
+            "https://www.quora.com/How-do-I-read-medium-articles-for-free-I-found-a-few-methods-online-but-it-seems-like-everything-is-outdated";
         try {
             Document document = Jsoup.connect(url).get();
             dp.preprocessDocument(url, document);
+
             System.out.println("Indexed URL: " + url);
         } catch (Exception e) {
             System.err.println("Error indexing URL: " + url + " - " + e.getMessage());
