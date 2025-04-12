@@ -19,8 +19,7 @@ public class searchengineApplication {
 
         // Test the indexer
         DocumentPreprocessor dp = context.getBean(DocumentPreprocessor.class);
-        String url =
-            "https://www.quora.com/How-do-I-read-medium-articles-for-free-I-found-a-few-methods-online-but-it-seems-like-everything-is-outdated";
+        String url = "https://www.growandconvert.com/content-marketing/going-viral-medium/";
         try {
             Document document = Jsoup.connect(url).get();
             dp.preprocessDocument(url, document);

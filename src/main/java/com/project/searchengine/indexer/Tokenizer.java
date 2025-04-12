@@ -25,6 +25,7 @@ public class Tokenizer {
     Map<String, List<Integer>> bodyTokens = new HashMap<>();
     Map<String, List<Integer>> titleTokens = new HashMap<>();
     Map<String, Map<String, Integer>> headerTokens = new HashMap<>();
+    private Map<String, InvertedIndex> indexBuffer = new HashMap<>();
 
     @Autowired
     private InvertedIndexRepository invertedIndexRepository;
@@ -155,11 +156,9 @@ public class Tokenizer {
         Integer pageTokens,
         Double pageRank
     ) {
-        // 1- Check if the token already exists in the database
-        Optional<InvertedIndex> optIndex = invertedIndexRepository.findById(word);
-
-        // 2- If it does not exist, create a new InvertedIndex object
-        InvertedIndex invertedIndex = optIndex.orElseGet(() -> new InvertedIndex(word));
+        // Get or create inverted index from buffer
+        InvertedIndex invertedIndex = indexBuffer.computeIfAbsent(word, w -> new InvertedIndex(word)
+        );
 
         // 3- Update pageReference
         PageReference pageReference = invertedIndex
@@ -187,9 +186,13 @@ public class Tokenizer {
 
         // 6- Set number of pages that contains the token
         invertedIndex.setPageCount(invertedIndex.getPages().size());
+    }
 
-        // 7- Save the inverted index to the database
-        invertedIndexRepository.save(invertedIndex);
+    public void saveTokens() {
+        if (!indexBuffer.isEmpty()) {
+            invertedIndexRepository.saveAll(indexBuffer.values());
+            indexBuffer.clear();
+        }
     }
 
     /**
@@ -213,30 +216,4 @@ public class Tokenizer {
         // Default: remove everything except letters
         return token.replaceAll("[^a-zA-Z]", "");
     }
-    // Main method for testing
-    // public static void main(String[] args) {
-    //     // Example usage
-    //     Tokenizer tokenizer = new Tokenizer();
-
-    //     String[] tests = {
-    //         "Hello, world! This is a test. 12345 test",
-    //         "Hello, world! How's it going?",
-    //         "Email me at user@domain.com or #hashtag!",
-    //         "C++, coding is FUN! Let's try 100% effort.",
-    //         "Visit https://cairo.edu or call +20123456789.",
-    //         "A+bB",
-    //     };
-
-    //     for (String text : tests) {
-    //         Map<String, List<Integer>> tokenPositions = tokenizer.tokenizeContent(
-    //             text,
-    //             "pageId",
-    //             "body",
-    //             0.0
-    //         );
-    //         System.out.println("Text: " + text);
-    //         System.out.println("Tokens: " + tokenPositions);
-    //         System.out.println();
-    //     }
-    // }
 }
