@@ -2,10 +2,9 @@ package com.project.searchengine.server.service;
 
 import com.project.searchengine.server.model.Page;
 import com.project.searchengine.server.repository.PageRepository;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 public class PageService {

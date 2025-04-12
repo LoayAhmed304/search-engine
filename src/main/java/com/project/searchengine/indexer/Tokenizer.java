@@ -42,14 +42,12 @@ public class Tokenizer {
         ")"
     );
 
-    public Tokenizer() {}
-
     /**
      * Tokenizes the input text and returns a map of tokens with their positions.
      * @param text The input text to tokenize.
      * @return A map where the key is the token and the value is a list of positions.
      */
-    public Map<String, List<Integer>> tokenize(String text) {
+    public Map<String, List<Integer>> tokenizeContent(String text) {
         Map<String, List<Integer>> tokens = new HashMap<>();
         int position = 0;
         // Convert to lower case

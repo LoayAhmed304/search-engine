@@ -1,16 +1,24 @@
 package com.project.searchengine.indexer;
 
 import com.project.searchengine.crawler.preprocessing.*;
+import com.project.searchengine.server.model.Page;
+import com.project.searchengine.server.service.PageService;
 import java.security.MessageDigest;
 import java.util.*;
 import javax.xml.bind.DatatypeConverter;
 import org.jsoup.*;
 import org.jsoup.nodes.*;
 import org.jsoup.select.*;
+import org.springframework.beans.factory.annotation.*;
+import org.springframework.stereotype.*;
 
+@Service
 public class DocumentPreprocessor {
 
     Tokenizer tokenizer = new Tokenizer();
+
+    @Autowired
+    private PageService pageService;
 
     /**
      * Preprocesses the document by extracting tokens and their positions.
@@ -19,30 +27,34 @@ public class DocumentPreprocessor {
      * @param document The Jsoup Document object.
      * @return A map containing the tokens and their positions, as well as header tokens. (To be changed)
      */
-    public Map<String, Object> preprocessDocument(String url, Document document) {
-        Map<String, Object> pageData = new HashMap<>();
-
+    public void preprocessDocument(String url, Document document) {
         // Field-specefic tokens
         Map<String, List<Integer>> bodyTokens = new HashMap<>(); // word => list of positions
         Map<String, Map<String, Integer>> headerTokens = new HashMap<>(); // word => header => count of occurrences
 
         // Extract raw text
+        String title = document.title();
+        String id = hashUrl(url);
         String content = document.body().text();
         Elements fieldTags = document.select("h1, h2, h3, h4, h5, h6, title");
 
-        // Tokenize the document
-        bodyTokens = tokenizer.tokenize(content);
-        headerTokens = tokenizer.tokenizeHeaders(fieldTags);
+        // Create the page to be saved in the database
+        createPage(id, url, title, content);
 
-        return pageData;
+        // Tokenize the document
+        bodyTokens = tokenizer.tokenizeContent(content);
+        headerTokens = tokenizer.tokenizeHeaders(fieldTags);
     }
 
-    public void createPage(String id, String url, String title, String content) {}
+    public void createPage(String id, String url, String title, String content) {
+        Page page = new Page(id, url, title, content);
+
+        pageService.createPage(page);
+    }
 
     private String hashUrl(String url) {
         // Normalize the url first
-        URLNormalizer urlNormalizer = new URLNormalizer();
-        String normalizedUrl = urlNormalizer.normalizeUrl(url);
+        String normalizedUrl = URLNormalizer.normalizeUrl(url);
 
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
@@ -50,21 +62,6 @@ public class DocumentPreprocessor {
             return DatatypeConverter.printHexBinary(hash).toLowerCase();
         } catch (Exception e) {
             return Integer.toHexString(url.hashCode());
-        }
-    }
-
-    // Main method for testing
-    public static void main(String[] args) {
-        DocumentPreprocessor dp = new DocumentPreprocessor();
-        String url = "https://www.geeksforgeeks.org/basics-computer-networking/";
-
-        try {
-            Document document = Jsoup.connect(url).get();
-
-            Map<String, Object> pageData = new HashMap<>();
-            pageData = dp.preprocessDocument(url, document);
-        } catch (Exception e) {
-            System.out.println("Error: " + e.getMessage());
         }
     }
 }
