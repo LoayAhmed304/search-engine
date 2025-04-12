@@ -52,6 +52,8 @@ public class DocumentPreprocessor {
         pageService.createPage(page);
     }
 
+    public void createToken(String token) {}
+
     private String hashUrl(String url) {
         // Normalize the url first
         String normalizedUrl = URLNormalizer.normalizeUrl(url);
