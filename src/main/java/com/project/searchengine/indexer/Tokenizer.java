@@ -1,10 +1,16 @@
 package com.project.searchengine.indexer;
 
+import com.project.searchengine.server.model.InvertedIndex;
+import com.project.searchengine.server.model.PageReference;
+import com.project.searchengine.server.repository.InvertedIndexRepository;
 import java.util.*;
 import java.util.regex.*;
 import org.jsoup.nodes.*;
 import org.jsoup.select.Elements;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
+@Component
 public class Tokenizer {
 
     // Define individual patterns (lowercase only)
@@ -18,7 +24,12 @@ public class Tokenizer {
     // Field-specefic tokens
     Map<String, List<Integer>> bodyTokens = new HashMap<>();
     Map<String, List<Integer>> titleTokens = new HashMap<>();
-    Map<String, List<Integer>> headerTokens = new HashMap<>();
+    Map<String, Map<String, Integer>> headerTokens = new HashMap<>();
+
+    @Autowired
+    private InvertedIndexRepository invertedIndexRepository;
+
+    private PageReference pageReference;
 
     // Combine patterns with proper grouping
     private final Pattern pattern = Pattern.compile(
@@ -47,9 +58,16 @@ public class Tokenizer {
      * @param text The input text to tokenize.
      * @return A map where the key is the token and the value is a list of positions.
      */
-    public Map<String, List<Integer>> tokenizeContent(String text) {
+    public Map<String, List<Integer>> tokenizeContent(
+        String text,
+        String pageId,
+        Integer pageTokens,
+        String fieldType
+    ) {
         Map<String, List<Integer>> tokens = new HashMap<>();
         int position = 0;
+        int tokenCount = 0;
+
         // Convert to lower case
         text = text.toLowerCase();
 
@@ -65,6 +83,9 @@ public class Tokenizer {
                 // Add the token to the map
                 tokens.computeIfAbsent(cleanedToken, k -> new ArrayList<>()).add(position);
 
+                // Save the token to the inverted index
+                saveToken(cleanedToken, pageId, position, Map.of(fieldType, 1), pageTokens);
+
                 // Update the position
                 position++;
             }
@@ -79,7 +100,7 @@ public class Tokenizer {
      * @return A map where the key is the token and the value is another map with header types and their counts.
      */
     public Map<String, Map<String, Integer>> tokenizeHeaders(Elements fieldTags) {
-        Map<String, Map<String, Integer>> headerTokens = new HashMap<>(); // token => header type => count
+        headerTokens = new HashMap<>(); // token => header type => count
 
         for (Element header : fieldTags) {
             String headerText = header.text();
@@ -109,6 +130,50 @@ public class Tokenizer {
             }
         }
         return headerTokens;
+    }
+
+    private void saveToken(
+        String word,
+        String pageId,
+        Integer position,
+        Map<String, Integer> fieldsCount,
+        Integer pageTokens
+    ) {
+        // 1- Check if the token already exists in the database
+        Optional<InvertedIndex> optIndex = invertedIndexRepository.findById(word);
+
+        // 2- If it does not exist, create a new InvertedIndex object
+        InvertedIndex invertedIndex = optIndex.orElseGet(() -> new InvertedIndex(word));
+
+        // 3- Update pageReference
+        PageReference pageReference = invertedIndex
+            .getPages()
+            .stream()
+            .filter(p -> p.getPageId().equals(pageId))
+            .findFirst()
+            .orElseGet(() -> {
+                PageReference newPageReference = new PageReference(pageId, pageTokens, pageRank);
+                invertedIndex.getPages().add(newPageReference);
+                return newPageReference;
+            });
+
+        // 4- Update positions
+        pageReference.getWordPositions().add(position);
+
+        // 5- Update fieldsCount
+        if (fieldsCount != null) {
+            for (Map.Entry<String, Integer> entry : fieldsCount.entrySet()) {
+                String field = entry.getKey();
+                Integer count = entry.getValue();
+                pageReference.getFieldWordCount().merge(field, count, Integer::sum);
+            }
+        }
+
+        // 6- Set number of pages that contains the token
+        invertedIndex.setPageCount(invertedIndex.getPages().size());
+
+        // 7- Save the inverted index to the database
+        invertedIndexRepository.save(invertedIndex);
     }
 
     /**

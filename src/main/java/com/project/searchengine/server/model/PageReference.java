@@ -9,9 +9,9 @@ public class PageReference {
     private Map<String, Integer> fieldWordCount; // field name -> word count
 
     private int pageTokens;
-    private int pageRank;
+    private double pageRank;
 
-    public PageReference(String pageId, int pageTokens, int pageRank) {
+    public PageReference(String pageId, int pageTokens, double pageRank) {
         this.pageId = pageId;
         this.wordPositions = new ArrayList<>();
         this.fieldWordCount = new HashMap<>();
@@ -35,7 +35,7 @@ public class PageReference {
         this.wordPositions = wordPositions;
     }
 
-    public Map<String, Integer> getWordCount() {
+    public Map<String, Integer> getFieldWordCount() {
         return fieldWordCount;
     }
 
@@ -51,11 +51,11 @@ public class PageReference {
         fieldWordCount.put(field, count);
     }
 
-    public int getPageRank() {
+    public double getPageRank() {
         return pageRank;
     }
 
-    public void setPageRank(int pageRank) {
+    public void setPageRank(double pageRank) {
         this.pageRank = pageRank;
     }
 

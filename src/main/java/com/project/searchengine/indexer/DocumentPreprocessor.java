@@ -30,7 +30,7 @@ public class DocumentPreprocessor {
     public void preprocessDocument(String url, Document document) {
         // Field-specefic tokens
         Map<String, List<Integer>> bodyTokens = new HashMap<>(); // word => list of positions
-        Map<String, Map<String, Integer>> headerTokens = new HashMap<>(); // word => header => count of occurrences
+        Map<String, Map<String, Integer>> headerTokens = new HashMap<>(); // word => header type => count of occurrences
 
         // Extract raw text
         String title = document.title();
@@ -39,20 +39,20 @@ public class DocumentPreprocessor {
         Elements fieldTags = document.select("h1, h2, h3, h4, h5, h6, title");
 
         // Create the page to be saved in the database
-        createPage(id, url, title, content);
+        savePage(id, url, title, content);
 
         // Tokenize the document
-        bodyTokens = tokenizer.tokenizeContent(content);
         headerTokens = tokenizer.tokenizeHeaders(fieldTags);
+        bodyTokens = tokenizer.tokenizeContent(content);
+        // Save the tokens to the database
+
     }
 
-    public void createPage(String id, String url, String title, String content) {
+    public void savePage(String id, String url, String title, String content) {
         Page page = new Page(id, url, title, content);
 
         pageService.createPage(page);
     }
-
-    public void createToken(String token) {}
 
     private String hashUrl(String url) {
         // Normalize the url first
