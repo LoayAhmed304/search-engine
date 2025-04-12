@@ -84,7 +84,7 @@ public class Tokenizer {
         for (Element header : fieldTags) {
             String headerText = header.text();
             String headerType = header.tagName();
-            Map<String, List<Integer>> tokens = tokenize(headerText);
+            Map<String, List<Integer>> tokens = tokenizeContent(headerText);
 
             for (Map.Entry<String, List<Integer>> entry : tokens.entrySet()) {
                 String token = entry.getKey();
@@ -148,7 +148,7 @@ public class Tokenizer {
         };
 
         for (String text : tests) {
-            Map<String, List<Integer>> tokenPositions = tokenizer.tokenize(text);
+            Map<String, List<Integer>> tokenPositions = tokenizer.tokenizeContent(text);
             System.out.println("Text: " + text);
             System.out.println("Tokens: " + tokenPositions);
             System.out.println();
