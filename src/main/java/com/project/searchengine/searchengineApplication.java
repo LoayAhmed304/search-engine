@@ -20,7 +20,8 @@ public class searchengineApplication {
         // Test the indexer
         Document document = null;
         DocumentPreprocessor dp = context.getBean(DocumentPreprocessor.class);
-        String url = "https://gustavus.edu/academics/departments/english/whystudyliterature.php";
+        String url =
+            "https://blog.routledge.com/humanities-and-media-arts/12-reasons-to-study-english-literature-as-an-undergraduate/";
         try {
             document = Jsoup.connect(url).get();
 

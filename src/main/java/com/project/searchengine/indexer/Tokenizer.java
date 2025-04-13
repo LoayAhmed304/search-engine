@@ -80,7 +80,7 @@ public class Tokenizer {
 
             if (!cleanedToken.isEmpty()) {
                 // Save the token to the inverted index
-                saveToken(cleanedToken, pageId, position, fieldType, pageRank);
+                buildInvertedIndex(cleanedToken, pageId, position, fieldType, pageRank);
 
                 this.tokenCount++;
                 // Update the position
@@ -104,7 +104,7 @@ public class Tokenizer {
         }
     }
 
-    private void saveToken(
+    private void buildInvertedIndex(
         String word,
         String pageId,
         Integer position,
