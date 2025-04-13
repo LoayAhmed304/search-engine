@@ -33,15 +33,9 @@ public class DocumentPreprocessor {
         String content = document.body().text();
         Elements fieldTags = document.select("h1, h2, h3, h4, h5, h6, title");
 
-        // Create the page to be saved in the database
-        savePage(id, url, title, content);
-
         // Tokenize the document
         tokenizer.tokenizeHeaders(fieldTags, id, 0.0);
         tokenizer.tokenizeContent(content, id, "body", 0.0);
-
-        // Save tokens in bulk
-        tokenizer.saveTokens();
     }
 
     public void savePage(String id, String url, String title, String content) {

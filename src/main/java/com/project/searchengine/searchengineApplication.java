@@ -18,15 +18,20 @@ public class searchengineApplication {
         ApplicationContext context = SpringApplication.run(searchengineApplication.class, args);
 
         // Test the indexer
+        Document document = null;
         DocumentPreprocessor dp = context.getBean(DocumentPreprocessor.class);
-        String url = "https://www.growandconvert.com/content-marketing/going-viral-medium/";
+        String url = "https://en.wikipedia.org/wiki/Study_skills";
         try {
-            Document document = Jsoup.connect(url).get();
-            dp.preprocessDocument(url, document);
+            document = Jsoup.connect(url).get();
 
-            System.out.println("Indexed URL: " + url);
+            System.out.println("Connected to URL: " + url);
         } catch (Exception e) {
             System.err.println("Error indexing URL: " + url + " - " + e.getMessage());
         }
+
+        long start = System.currentTimeMillis();
+        dp.preprocessDocument(url, document);
+        long duration = System.currentTimeMillis() - start;
+        System.out.println("Indexing took: " + duration + " ms");
     }
 }

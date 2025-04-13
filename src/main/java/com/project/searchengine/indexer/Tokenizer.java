@@ -26,6 +26,7 @@ public class Tokenizer {
     Map<String, List<Integer>> titleTokens = new HashMap<>();
     Map<String, Map<String, Integer>> headerTokens = new HashMap<>();
     private Map<String, InvertedIndex> indexBuffer = new HashMap<>();
+    private Integer tokenCount = 0;
 
     @Autowired
     private InvertedIndexRepository invertedIndexRepository;
@@ -57,15 +58,8 @@ public class Tokenizer {
      * @param text The input text to tokenize.
      * @return A map where the key is the token and the value is a list of positions.
      */
-    public Map<String, List<Integer>> tokenizeContent(
-        String text,
-        String pageId,
-        String fieldType,
-        Double pageRank
-    ) {
-        Map<String, List<Integer>> tokens = new HashMap<>();
+    public void tokenizeContent(String text, String pageId, String fieldType, Double pageRank) {
         int position = 0;
-        int tokenCount = 0;
 
         // Convert to lower case
         text = text.toLowerCase();
@@ -79,26 +73,14 @@ public class Tokenizer {
             String cleanedToken = cleanToken(token);
 
             if (!cleanedToken.isEmpty()) {
-                // Add the token to the map
-                tokens.computeIfAbsent(cleanedToken, k -> new ArrayList<>()).add(position);
-
                 // Save the token to the inverted index
-                saveToken(
-                    cleanedToken,
-                    pageId,
-                    position,
-                    Map.of(fieldType, 1),
-                    tokenCount,
-                    pageRank
-                );
-                tokenCount++;
+                saveToken(cleanedToken, pageId, position, fieldType, pageRank);
 
+                this.tokenCount++;
                 // Update the position
                 position++;
             }
         }
-
-        return tokens;
     }
 
     /**
@@ -106,54 +88,21 @@ public class Tokenizer {
      * @param fieldTags The field tags to tokenize.
      * @return A map where the key is the token and the value is another map with header types and their counts.
      */
-    public Map<String, Map<String, Integer>> tokenizeHeaders(
-        Elements fieldTags,
-        String pageId,
-        Double pageRank
-    ) {
-        headerTokens = new HashMap<>(); // token => header type => count
 
+    public void tokenizeHeaders(Elements fieldTags, String pageId, Double pageRank) {
         for (Element header : fieldTags) {
             String headerText = header.text();
+            if (headerText == null || headerText.isBlank()) continue;
             String headerType = header.tagName();
-            Map<String, List<Integer>> tokens = tokenizeContent(
-                headerText,
-                pageId,
-                headerType,
-                pageRank
-            );
-
-            for (Map.Entry<String, List<Integer>> entry : tokens.entrySet()) {
-                String token = entry.getKey();
-                Integer tokenCount = entry.getValue().size();
-
-                // Check if the token exists in the map
-                if (headerTokens.containsKey(token)) {
-                    Map<String, Integer> headerTypeCount = headerTokens.get(token);
-                    if (headerTypeCount.containsKey(headerType)) {
-                        // Update the count
-                        Integer count = headerTypeCount.get(headerType);
-                        headerTypeCount.put(headerType, count + tokenCount);
-                    } else {
-                        headerTypeCount.put(headerType, tokenCount);
-                    }
-                } else {
-                    // Add the token to the map
-                    Map<String, Integer> headerTypeCount = new HashMap<>();
-                    headerTypeCount.put(headerType, tokenCount);
-                    headerTokens.put(token, headerTypeCount);
-                }
-            }
+            tokenizeContent(headerText, pageId, headerType, pageRank);
         }
-        return headerTokens;
     }
 
     private void saveToken(
         String word,
         String pageId,
         Integer position,
-        Map<String, Integer> fieldsCount,
-        Integer pageTokens,
+        String fieldType,
         Double pageRank
     ) {
         // Get or create inverted index from buffer
@@ -167,7 +116,7 @@ public class Tokenizer {
             .filter(p -> p.getPageId().equals(pageId))
             .findFirst()
             .orElseGet(() -> {
-                PageReference newPageReference = new PageReference(pageId, pageTokens, pageRank);
+                PageReference newPageReference = new PageReference(pageId, 0, pageRank);
                 invertedIndex.getPages().add(newPageReference);
                 return newPageReference;
             });
@@ -176,21 +125,24 @@ public class Tokenizer {
         pageReference.getWordPositions().add(position);
 
         // 5- Update fieldsCount
-        if (fieldsCount != null) {
-            for (Map.Entry<String, Integer> entry : fieldsCount.entrySet()) {
-                String field = entry.getKey();
-                Integer count = entry.getValue();
-                pageReference.getFieldWordCount().merge(field, count, Integer::sum);
-            }
-        }
+        pageReference.getFieldWordCount().merge(fieldType, 1, Integer::sum);
 
         // 6- Set number of pages that contains the token
         invertedIndex.setPageCount(invertedIndex.getPages().size());
+
+        // Save the buffer to the database if it reaches a certain size
+        if (indexBuffer.size() >= 1000) {
+            saveTokens();
+        }
     }
 
     public void saveTokens() {
+        System.out.println("Tokens: " + indexBuffer.keySet() + " size: " + indexBuffer.size());
         if (!indexBuffer.isEmpty()) {
+            long start = System.nanoTime();
             invertedIndexRepository.saveAll(indexBuffer.values());
+            long duration = (System.nanoTime() - start) / 1_000_000;
+            System.out.println("saveTokens took: " + duration + " ms");
             indexBuffer.clear();
         }
     }
