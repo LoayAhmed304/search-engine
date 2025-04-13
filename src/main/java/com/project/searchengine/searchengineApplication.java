@@ -20,7 +20,7 @@ public class searchengineApplication {
         // Test the indexer
         Document document = null;
         DocumentPreprocessor dp = context.getBean(DocumentPreprocessor.class);
-        String url = "https://en.wikipedia.org/wiki/Study_skills";
+        String url = "https://gustavus.edu/academics/departments/english/whystudyliterature.php";
         try {
             document = Jsoup.connect(url).get();
 

@@ -36,6 +36,8 @@ public class DocumentPreprocessor {
         // Tokenize the document
         tokenizer.tokenizeHeaders(fieldTags, id, 0.0);
         tokenizer.tokenizeContent(content, id, "body", 0.0);
+
+        tokenizer.saveTokens();
     }
 
     public void savePage(String id, String url, String title, String content) {

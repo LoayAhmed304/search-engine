@@ -8,6 +8,9 @@ import java.util.regex.*;
 import org.jsoup.nodes.*;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.*;
+import org.springframework.data.mongodb.core.query.*;
+import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -30,6 +33,9 @@ public class Tokenizer {
 
     @Autowired
     private InvertedIndexRepository invertedIndexRepository;
+
+    @Autowired
+    private MongoTemplate mongoTemplate;
 
     // Combine patterns with proper grouping
     private final Pattern pattern = Pattern.compile(
@@ -117,7 +123,7 @@ public class Tokenizer {
             .findFirst()
             .orElseGet(() -> {
                 PageReference newPageReference = new PageReference(pageId, 0, pageRank);
-                invertedIndex.getPages().add(newPageReference);
+                invertedIndex.addPage(newPageReference);
                 return newPageReference;
             });
 
@@ -129,18 +135,25 @@ public class Tokenizer {
 
         // 6- Set number of pages that contains the token
         invertedIndex.setPageCount(invertedIndex.getPages().size());
-
-        // Save the buffer to the database if it reaches a certain size
-        if (indexBuffer.size() >= 1000) {
-            saveTokens();
-        }
     }
 
     public void saveTokens() {
         System.out.println("Tokens: " + indexBuffer.keySet() + " size: " + indexBuffer.size());
         if (!indexBuffer.isEmpty()) {
             long start = System.nanoTime();
-            invertedIndexRepository.saveAll(indexBuffer.values());
+            BulkOperations bulkOps = mongoTemplate.bulkOps(
+                BulkOperations.BulkMode.UNORDERED,
+                InvertedIndex.class
+            );
+
+            for (InvertedIndex index : indexBuffer.values()) {
+                Query query = new Query(Criteria.where("word").is(index.getWord()));
+                Update update = new Update()
+                    .set("pages", index.getPages())
+                    .set("pageCount", index.getPageCount());
+                bulkOps.upsert(query, update);
+            }
+            bulkOps.execute();
             long duration = (System.nanoTime() - start) / 1_000_000;
             System.out.println("saveTokens took: " + duration + " ms");
             indexBuffer.clear();

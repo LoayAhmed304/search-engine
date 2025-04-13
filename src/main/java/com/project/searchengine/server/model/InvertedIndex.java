@@ -44,6 +44,13 @@ public class InvertedIndex {
         this.pageCount = pageCount;
     }
 
+    public void addPage(PageReference page) {
+        if (!pages.contains(page)) {
+            pages.add(page);
+            pageCount++;
+        }
+    }
+
     @Override
     public String toString() {
         return (
