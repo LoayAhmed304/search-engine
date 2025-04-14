@@ -1,8 +1,6 @@
 package com.project.searchengine;
 
 import com.project.searchengine.indexer.Indexer;
-import com.project.searchengine.indexer.Tokenizer;
-import com.project.searchengine.server.repository.InvertedIndexRepository;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.springframework.boot.SpringApplication;

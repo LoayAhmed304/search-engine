@@ -1,7 +1,6 @@
 package com.project.searchengine.server.model;
 
 import java.util.*;
-import org.springframework.data.mongodb.core.index.Indexed;
 
 public class PageReference {
 
