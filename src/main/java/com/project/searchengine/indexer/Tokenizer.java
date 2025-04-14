@@ -2,15 +2,10 @@ package com.project.searchengine.indexer;
 
 import com.project.searchengine.server.model.InvertedIndex;
 import com.project.searchengine.server.model.PageReference;
-import com.project.searchengine.server.repository.InvertedIndexRepository;
 import java.util.*;
 import java.util.regex.*;
 import org.jsoup.nodes.*;
 import org.jsoup.select.Elements;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.mongodb.core.*;
-import org.springframework.data.mongodb.core.query.*;
-import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -25,14 +20,8 @@ public class Tokenizer {
     private final String PLUS_COMBINED_PATTERN = "[a-z]+\\+{1,2}[a-z0-9]*"; // C++ like terms
 
     // Field-specefic tokens
-    Map<String, List<Integer>> bodyTokens = new HashMap<>();
-    Map<String, List<Integer>> titleTokens = new HashMap<>();
-    Map<String, Map<String, Integer>> headerTokens = new HashMap<>();
     private Map<String, InvertedIndex> indexBuffer = new HashMap<>();
     private Integer tokenCount = 0;
-
-    @Autowired
-    private MongoTemplate mongoTemplate;
 
     // Combine patterns with proper grouping
     private final Pattern pattern = Pattern.compile(
@@ -73,16 +62,13 @@ public class Tokenizer {
         Matcher matcher = pattern.matcher(text);
 
         while (matcher.find()) {
-            // Get the matched token
             String token = matcher.group();
             String cleanedToken = cleanToken(token);
 
             if (!cleanedToken.isEmpty()) {
-                // Save the token to the inverted index
                 buildInvertedIndex(cleanedToken, pageId, position, fieldType, pageRank);
 
                 tokenCount++;
-                // Update the position
                 position++;
             }
         }
@@ -144,29 +130,6 @@ public class Tokenizer {
         invertedIndex.setPageCount(invertedIndex.getPages().size());
     }
 
-    public void saveTokens() {
-        System.out.println("Tokens size: " + indexBuffer.size());
-        if (!indexBuffer.isEmpty()) {
-            long start = System.nanoTime();
-            BulkOperations bulkOps = mongoTemplate.bulkOps(
-                BulkOperations.BulkMode.UNORDERED,
-                InvertedIndex.class
-            );
-
-            for (InvertedIndex index : indexBuffer.values()) {
-                Query query = new Query(Criteria.where("word").is(index.getWord()));
-                Update update = new Update()
-                    .set("pages", index.getPages())
-                    .set("pageCount", index.getPageCount());
-                bulkOps.upsert(query, update);
-            }
-            bulkOps.execute();
-            long duration = (System.nanoTime() - start) / 1_000_000;
-            System.out.println("saving to the database took: " + duration + " ms");
-            indexBuffer.clear();
-        }
-    }
-
     /**
      * Cleans the token by removing unwanted characters.
      * Preserves special tokens like email, phone, hashtags, and hyphenated words.
@@ -187,5 +150,13 @@ public class Tokenizer {
 
         // Default: remove everything except letters
         return token.replaceAll("[^a-zA-Z]", "");
+    }
+
+    /**
+     * Return index buffer of all tokens of the current document
+     * @return Buffer of tokens
+     */
+    public Map<String, InvertedIndex> getIndexBuffer() {
+        return indexBuffer;
     }
 }

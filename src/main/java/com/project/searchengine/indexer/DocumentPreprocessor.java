@@ -1,13 +1,18 @@
 package com.project.searchengine.indexer;
 
 import com.project.searchengine.crawler.preprocessing.*;
+import com.project.searchengine.server.model.InvertedIndex;
 import com.project.searchengine.server.model.Page;
 import com.project.searchengine.server.service.PageService;
 import java.security.MessageDigest;
+import java.util.*;
 import javax.xml.bind.DatatypeConverter;
 import org.jsoup.nodes.*;
 import org.jsoup.select.*;
 import org.springframework.beans.factory.annotation.*;
+import org.springframework.data.mongodb.core.BulkOperations;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.*;
 import org.springframework.stereotype.*;
 
 @Service
@@ -18,6 +23,9 @@ public class DocumentPreprocessor {
 
     @Autowired
     private PageService pageService;
+
+    @Autowired
+    private MongoTemplate mongoTemplate;
 
     /**
      * Preprocesses the document by extracting tokens and saving the page.
@@ -37,7 +45,7 @@ public class DocumentPreprocessor {
         tokenizer.tokenizeHeaders(fieldTags, id, 0.0);
         long duration = (System.nanoTime() - start) / 1_000_000;
         System.out.println("Tokenization took: " + duration + " ms");
-        tokenizer.saveTokens();
+        saveTokens();
 
         savePage(id, url, title, content);
     }
@@ -55,9 +63,34 @@ public class DocumentPreprocessor {
         pageService.createPage(page);
     }
 
+    public void saveTokens() {
+        Map<String, InvertedIndex> indexBuffer = tokenizer.getIndexBuffer();
+        System.out.println("Tokens size: " + indexBuffer.size());
+
+        if (!indexBuffer.isEmpty()) {
+            long start = System.nanoTime();
+            BulkOperations bulkOps = mongoTemplate.bulkOps(
+                BulkOperations.BulkMode.UNORDERED,
+                InvertedIndex.class
+            );
+
+            for (InvertedIndex index : indexBuffer.values()) {
+                Query query = new Query(Criteria.where("word").is(index.getWord()));
+                Update update = new Update()
+                    .set("pages", index.getPages())
+                    .set("pageCount", index.getPageCount());
+                bulkOps.upsert(query, update);
+            }
+            bulkOps.execute();
+            long duration = (System.nanoTime() - start) / 1_000_000;
+            System.out.println("saving to the database took: " + duration + " ms");
+            indexBuffer.clear();
+        }
+    }
+
     /**
      * Hash the url to create a unique id using sha-256
-     * @param url
+     * @param url The url to be hashed
      * @return The hashed url as a string
      */
     private String hashUrl(String url) {
