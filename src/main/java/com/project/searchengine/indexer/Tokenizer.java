@@ -4,6 +4,7 @@ import com.project.searchengine.server.model.InvertedIndex;
 import com.project.searchengine.server.model.PageReference;
 import java.util.*;
 import java.util.regex.*;
+import opennlp.tools.stemmer.PorterStemmer;
 import org.jsoup.nodes.*;
 import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
@@ -22,6 +23,7 @@ public class Tokenizer {
     // Field-specefic tokens
     private Map<String, InvertedIndex> indexBuffer = new HashMap<>();
     private Integer tokenCount = 0;
+    private final PorterStemmer stemmer = new PorterStemmer();
 
     // Combine patterns with proper grouping
     private final Pattern pattern = Pattern.compile(
@@ -147,9 +149,15 @@ public class Tokenizer {
         ) {
             return token;
         }
+        String cleanedToken = token.replaceAll("[^a-zA-Z]", "");
+
+        // Apply stemming to regural words
+        if (!cleanedToken.isEmpty()) {
+            cleanedToken = stemmer.stem(cleanedToken);
+        }
 
         // Default: remove everything except letters
-        return token.replaceAll("[^a-zA-Z]", "");
+        return cleanedToken;
     }
 
     /**
