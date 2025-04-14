@@ -1,6 +1,6 @@
 package com.project.searchengine;
 
-import com.project.searchengine.indexer.DocumentPreprocessor;
+import com.project.searchengine.indexer.Indexer;
 import com.project.searchengine.indexer.Tokenizer;
 import com.project.searchengine.server.repository.InvertedIndexRepository;
 import org.jsoup.Jsoup;
@@ -19,7 +19,7 @@ public class searchengineApplication {
 
         // Test the indexer
         Document document = null;
-        DocumentPreprocessor dp = context.getBean(DocumentPreprocessor.class);
+        Indexer dp = context.getBean(Indexer.class);
         String url = "https://en.wikipedia.org/wiki/Computer_programming";
         try {
             document = Jsoup.connect(url).get();

@@ -16,7 +16,7 @@ import org.springframework.data.mongodb.core.query.*;
 import org.springframework.stereotype.*;
 
 @Service
-public class DocumentPreprocessor {
+public class Indexer {
 
     @Autowired
     private Tokenizer tokenizer;
