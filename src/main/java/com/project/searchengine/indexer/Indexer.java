@@ -63,6 +63,9 @@ public class Indexer {
         pageService.createPage(page);
     }
 
+    /**
+     * Save tokens in the index buffer to the database
+     */
     public void saveTokens() {
         Map<String, InvertedIndex> indexBuffer = tokenizer.getIndexBuffer();
         System.out.println("Tokens size: " + indexBuffer.size());
