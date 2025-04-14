@@ -32,9 +32,6 @@ public class Tokenizer {
     private Integer tokenCount = 0;
 
     @Autowired
-    private InvertedIndexRepository invertedIndexRepository;
-
-    @Autowired
     private MongoTemplate mongoTemplate;
 
     // Combine patterns with proper grouping
@@ -60,9 +57,11 @@ public class Tokenizer {
     );
 
     /**
-     * Tokenizes the input text and returns a map of tokens with their positions.
-     * @param text The input text to tokenize.
-     * @return A map where the key is the token and the value is a list of positions.
+     * Tokenizes the input text and build the inverted index
+     * @param text The input text to tokenize
+     * @param pageId The current page id
+     * @param fieldType The field type (e.g., body, title, h1, h2)
+     * @param pageRank The rank of the page computed by the ranker
      */
     public void tokenizeContent(String text, String pageId, String fieldType, Double pageRank) {
         int position = 0;
@@ -82,7 +81,7 @@ public class Tokenizer {
                 // Save the token to the inverted index
                 buildInvertedIndex(cleanedToken, pageId, position, fieldType, pageRank);
 
-                this.tokenCount++;
+                tokenCount++;
                 // Update the position
                 position++;
             }
@@ -90,9 +89,8 @@ public class Tokenizer {
     }
 
     /**
-     * Tokenizes the headers and returns a map of tokens with their header types and counts.
+     * Tokenizes the headers
      * @param fieldTags The field tags to tokenize.
-     * @return A map where the key is the token and the value is another map with header types and their counts.
      */
 
     public void tokenizeHeaders(Elements fieldTags, String pageId, Double pageRank) {
@@ -104,6 +102,15 @@ public class Tokenizer {
         }
     }
 
+    /**
+     * Build the inverted index to be saved to the database
+     * If it already exists update it
+     * @param word The Id of the inverted index
+     * @param pageId The Id of the page that contains the word
+     * @param position The position of the word in the page
+     * @param fieldType  The field type (e.g., body, title, h1, h2)
+     * @param pageRank  The rank of the page computed by the ranker
+     */
     private void buildInvertedIndex(
         String word,
         String pageId,
@@ -115,7 +122,7 @@ public class Tokenizer {
         InvertedIndex invertedIndex = indexBuffer.computeIfAbsent(word, w -> new InvertedIndex(word)
         );
 
-        // 3- Update pageReference
+        // Update or create pageReference
         PageReference pageReference = invertedIndex
             .getPages()
             .stream()
@@ -127,18 +134,18 @@ public class Tokenizer {
                 return newPageReference;
             });
 
-        // 4- Update positions
+        // Update positions
         pageReference.getWordPositions().add(position);
 
-        // 5- Update fieldsCount
+        // Update fieldsCount
         pageReference.getFieldWordCount().merge(fieldType, 1, Integer::sum);
 
-        // 6- Set number of pages that contains the token
+        // Set number of pages that contains the token
         invertedIndex.setPageCount(invertedIndex.getPages().size());
     }
 
     public void saveTokens() {
-        System.out.println("Tokens: " + indexBuffer.keySet() + " size: " + indexBuffer.size());
+        System.out.println("Tokens size: " + indexBuffer.size());
         if (!indexBuffer.isEmpty()) {
             long start = System.nanoTime();
             BulkOperations bulkOps = mongoTemplate.bulkOps(
@@ -155,7 +162,7 @@ public class Tokenizer {
             }
             bulkOps.execute();
             long duration = (System.nanoTime() - start) / 1_000_000;
-            System.out.println("saveTokens took: " + duration + " ms");
+            System.out.println("saving to the database took: " + duration + " ms");
             indexBuffer.clear();
         }
     }

@@ -20,11 +20,9 @@ public class DocumentPreprocessor {
     private PageService pageService;
 
     /**
-     * Preprocesses the document by extracting tokens and their positions.
-     * It also extracts header tokens and their occurrences.
+     * Preprocesses the document by extracting tokens and saving the page.
      * @param url The URL of the document.
      * @param document The Jsoup Document object.
-     * @return A map containing the tokens and their positions, as well as header tokens. (To be changed)
      */
     public void preprocessDocument(String url, Document document) {
         // Extract raw text
@@ -34,18 +32,34 @@ public class DocumentPreprocessor {
         Elements fieldTags = document.select("h1, h2, h3, h4, h5, h6, title");
 
         // Tokenize the document
-        tokenizer.tokenizeHeaders(fieldTags, id, 0.0);
+        long start = System.nanoTime();
         tokenizer.tokenizeContent(content, id, "body", 0.0);
-
+        tokenizer.tokenizeHeaders(fieldTags, id, 0.0);
+        long duration = (System.nanoTime() - start) / 1_000_000;
+        System.out.println("Tokenization took: " + duration + " ms");
         tokenizer.saveTokens();
+
+        savePage(id, url, title, content);
     }
 
+    /**
+     * Saves the page to the database.
+     * @param id The unique identifier for the page.
+     * @param url The URL of the page.
+     * @param title The title of the page.
+     * @param content The content of the page.
+     */
     public void savePage(String id, String url, String title, String content) {
         Page page = new Page(id, url, title, content);
 
         pageService.createPage(page);
     }
 
+    /**
+     * Hash the url to create a unique id using sha-256
+     * @param url
+     * @return The hashed url as a string
+     */
     private String hashUrl(String url) {
         // Normalize the url first
         String normalizedUrl = URLNormalizer.normalizeUrl(url);
