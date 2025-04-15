@@ -15,7 +15,7 @@ public class RankCalculator {
      * @return normalized TF value (double)
      */
     public static double calculateTF(PageReference pr) {
-        return (double) pr.getWordPositions().size() / (double) pr.getPageTokens();
+        return (double) pr.getWordPositions().size() / (double) pr.getPageTokenCount();
     }
 
     /**

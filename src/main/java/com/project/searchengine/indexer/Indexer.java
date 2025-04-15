@@ -42,12 +42,16 @@ public class Indexer {
 
         // Tokenize the document
         long start = System.nanoTime();
+
         tokenizer.tokenizeContent(content, id, "body");
         tokenizer.tokenizeHeaders(fieldTags, id);
+
         long duration = (System.nanoTime() - start) / 1_000_000;
         System.out.println("Tokenization took: " + duration + " ms");
-        saveTokens();
 
+        // Add the count of tokens before saving
+        tokenizer.setPageTokenCount();
+        saveTokens();
         savePage(id, url, title, content);
     }
 
@@ -91,7 +95,7 @@ public class Indexer {
             }
             bulkOps.execute();
             long duration = (System.nanoTime() - start) / 1_000_000;
-            System.out.println("saving to the database took: " + duration + " ms");
+            System.out.println("Saving to the database took: " + duration + " ms");
             indexBuffer.clear();
         }
     }

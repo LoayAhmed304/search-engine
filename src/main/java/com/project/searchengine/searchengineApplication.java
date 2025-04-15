@@ -19,7 +19,7 @@ public class searchengineApplication {
         Document document = null;
         Indexer dp = context.getBean(Indexer.class);
 
-        String url = "https://www.coursera.org/articles/what-is-programming";
+        String url = "https://www.snhu.edu/about-us/newsroom/stem/what-is-computer-programming";
         try {
             document = Jsoup.connect(url).get();
 

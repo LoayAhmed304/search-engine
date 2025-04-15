@@ -124,9 +124,6 @@ public class Tokenizer {
 
         // Update fieldsCount
         pageReference.getFieldWordCount().merge(fieldType, 1, Integer::sum);
-
-        // Set number of pages that contains the token
-        invertedIndex.setPageCount(invertedIndex.getPages().size());
     }
 
     /**
@@ -159,9 +156,18 @@ public class Tokenizer {
 
     /**
      * Return index buffer of all tokens of the current document
-     * @return Buffer of tokens
      */
     public Map<String, InvertedIndex> getIndexBuffer() {
         return indexBuffer;
+    }
+
+    /**
+     * Set the count of tokens for each page reference in the index buffer
+     */
+    void setPageTokenCount() {
+        for (InvertedIndex invertedIndex : indexBuffer.values()) {
+            PageReference pageReference = invertedIndex.getPages().get(0);
+            pageReference.setPageTokenCount(tokenCount);
+        }
     }
 }
