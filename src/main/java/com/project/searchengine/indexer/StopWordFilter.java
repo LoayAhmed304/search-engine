@@ -5,6 +5,10 @@ import java.nio.file.*;
 import java.util.*;
 import org.springframework.stereotype.Component;
 
+/**
+ * This class is responsible for filtering out stop words from the tokenized text.
+ * It loads a list of stop words from a file and provides a method to check if a token is a stop word.
+ */
 @Component
 public class StopWordFilter {
 
@@ -20,9 +24,6 @@ public class StopWordFilter {
             System.err.println("Error loading stop words: " + e.getMessage());
             throw new RuntimeException("Failed to load stop words", e);
         }
-
-        System.out.println("Stop words loaded: " + this.stopWords + "\n");
-        System.out.println("Stop words size: " + this.stopWords.size() + "\n");
     }
 
     /**
