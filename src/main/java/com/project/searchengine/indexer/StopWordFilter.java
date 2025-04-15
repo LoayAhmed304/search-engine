@@ -9,11 +9,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class StopWordFilter {
 
-    Set<String> stopWords;
+    private final Set<String> stopWords;
 
     public StopWordFilter(@Value("${stop-words}") String stopWords) {
         this.stopWords = new HashSet<>(Arrays.asList(stopWords.split(",")));
-        System.out.println("Stop words loaded: " + this.stopWords);
+        System.out.println("Stop words loaded: " + this.stopWords + "\n");
+        System.out.println("Stop words size: " + this.stopWords.size() + "\n");
     }
 
     public boolean isStopWord(String token) {
