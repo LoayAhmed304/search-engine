@@ -1,13 +1,13 @@
-<script setup>
-import SearchBar from "../components/ui/SearchBar.vue"
-</script>
-
 <template>
   <div class="container">
     <img src="../assets/images/dora-the-explorer.png" alt="dora the explorer" />
     <SearchBar />
   </div>
 </template>
+
+<script setup>
+import SearchBar from "../components/ui/SearchBar.vue"
+</script>
 
 <style scoped>
 .container {
