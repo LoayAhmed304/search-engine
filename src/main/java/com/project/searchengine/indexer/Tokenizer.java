@@ -52,9 +52,8 @@ public class Tokenizer {
      * @param text The input text to tokenize
      * @param pageId The current page id
      * @param fieldType The field type (e.g., body, title, h1, h2)
-     * @param pageRank The rank of the page computed by the ranker
      */
-    public void tokenizeContent(String text, String pageId, String fieldType, Double pageRank) {
+    public void tokenizeContent(String text, String pageId, String fieldType) {
         int position = 0;
 
         // Convert to lower case
@@ -68,7 +67,7 @@ public class Tokenizer {
             String cleanedToken = cleanToken(token);
 
             if (!cleanedToken.isEmpty()) {
-                buildInvertedIndex(cleanedToken, pageId, position, fieldType, pageRank);
+                buildInvertedIndex(cleanedToken, pageId, position, fieldType);
 
                 tokenCount++;
                 position++;
@@ -81,12 +80,12 @@ public class Tokenizer {
      * @param fieldTags The field tags to tokenize.
      */
 
-    public void tokenizeHeaders(Elements fieldTags, String pageId, Double pageRank) {
+    public void tokenizeHeaders(Elements fieldTags, String pageId) {
         for (Element header : fieldTags) {
             String headerText = header.text();
             if (headerText == null || headerText.isBlank()) continue;
             String headerType = header.tagName();
-            tokenizeContent(headerText, pageId, headerType, pageRank);
+            tokenizeContent(headerText, pageId, headerType);
         }
     }
 
@@ -97,14 +96,12 @@ public class Tokenizer {
      * @param pageId The Id of the page that contains the word
      * @param position The position of the word in the page
      * @param fieldType  The field type (e.g., body, title, h1, h2)
-     * @param pageRank  The rank of the page computed by the ranker
      */
     private void buildInvertedIndex(
         String word,
         String pageId,
         Integer position,
-        String fieldType,
-        Double pageRank
+        String fieldType
     ) {
         // Get or create inverted index from buffer
         InvertedIndex invertedIndex = indexBuffer.computeIfAbsent(word, w -> new InvertedIndex(word)
@@ -117,7 +114,7 @@ public class Tokenizer {
             .filter(p -> p.getPageId().equals(pageId))
             .findFirst()
             .orElseGet(() -> {
-                PageReference newPageReference = new PageReference(pageId, 0, pageRank);
+                PageReference newPageReference = new PageReference(pageId, 0, 0.0);
                 invertedIndex.addPage(newPageReference);
                 return newPageReference;
             });

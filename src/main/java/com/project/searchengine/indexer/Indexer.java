@@ -42,8 +42,8 @@ public class Indexer {
 
         // Tokenize the document
         long start = System.nanoTime();
-        tokenizer.tokenizeContent(content, id, "body", 0.0);
-        tokenizer.tokenizeHeaders(fieldTags, id, 0.0);
+        tokenizer.tokenizeContent(content, id, "body");
+        tokenizer.tokenizeHeaders(fieldTags, id);
         long duration = (System.nanoTime() - start) / 1_000_000;
         System.out.println("Tokenization took: " + duration + " ms");
         saveTokens();
