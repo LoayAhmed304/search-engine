@@ -6,7 +6,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 
 @Document(collection = "urlsfrontier")
-public class UrlsFrontier {
+public class UrlDocument {
 
     @Id
     private String id;
@@ -19,7 +19,7 @@ public class UrlsFrontier {
     private List<String> linkedPages;
     private Date lastCrawled;
 
-    public UrlsFrontier(String normalizedUrl, long frequency, boolean isCrawled,
+    public UrlDocument(String normalizedUrl, long frequency, boolean isCrawled,
             String document, String hashedDocContent,
             List<String> linkedPages, Date lastCrawled) {
         this.normalizedUrl = normalizedUrl;
