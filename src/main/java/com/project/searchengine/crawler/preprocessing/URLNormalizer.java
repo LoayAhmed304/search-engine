@@ -26,9 +26,14 @@ public class URLNormalizer {
 
             // Handle protocol-relative URLs
             String scheme = uri.getScheme();
-            if (scheme == null && url.startsWith("//")) {
+            if (scheme == null) {
+                if(url.startsWith("//")) {
                 uri = new URI("https:" + url);
                 scheme = uri.getScheme();
+                } else {
+                    System.out.println("No schema provided for:" + url);
+                    return null; // Invalid URL
+                }
             }
 
             // Rebuild the URL from parts
