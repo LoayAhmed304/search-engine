@@ -11,6 +11,7 @@ public class StopWordFilter {
     private final Set<String> stopWords;
 
     public StopWordFilter() {
+        // Load stop words from a file
         try {
             this.stopWords = new HashSet<>(
                 Files.readAllLines(Paths.get("src/main/resources/stopwords.txt"))
@@ -24,6 +25,11 @@ public class StopWordFilter {
         System.out.println("Stop words size: " + this.stopWords.size() + "\n");
     }
 
+    /**
+     * Check if a token is a stop word.
+     * @param token
+     * @return true if the token is a stop word, false otherwise
+     */
     public boolean isStopWord(String token) {
         return stopWords.contains(token);
     }
