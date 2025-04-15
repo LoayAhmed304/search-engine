@@ -7,6 +7,7 @@ import java.util.regex.*;
 import opennlp.tools.stemmer.PorterStemmer;
 import org.jsoup.nodes.*;
 import org.jsoup.select.Elements;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -22,8 +23,13 @@ public class Tokenizer {
 
     // Field-specefic tokens
     private Map<String, InvertedIndex> indexBuffer = new HashMap<>();
-    private Integer tokenCount = 0;
+
     private final PorterStemmer stemmer = new PorterStemmer();
+
+    @Autowired
+    private final StopWordFilter stopWordFilter;
+
+    private Integer tokenCount = 0;
 
     // Combine patterns with proper grouping
     private final Pattern pattern = Pattern.compile(
@@ -46,6 +52,10 @@ public class Tokenizer {
         WORD_PATTERN +
         ")"
     );
+
+    public Tokenizer(StopWordFilter stopWordFilter) {
+        this.stopWordFilter = stopWordFilter;
+    }
 
     /**
      * Tokenizes the input text and build the inverted index
@@ -139,6 +149,10 @@ public class Tokenizer {
      * @return The cleaned token.
      */
     private String cleanToken(String token) {
+        // Skip stop words
+        if (stopWordFilter.isStopWord(token)) {
+            return "";
+        }
         // Preserve special tokens
         if (
             token.matches(EMAIL_PATTERN) ||
@@ -149,12 +163,11 @@ public class Tokenizer {
         ) {
             return token;
         }
-        String cleanedToken = token.replaceAll("[^a-zA-Z]", "");
 
         // Apply stemming to regural words
-        if (!cleanedToken.isEmpty()) {
-            cleanedToken = stemmer.stem(cleanedToken);
-        }
+        token = stemmer.stem(token);
+
+        String cleanedToken = token.replaceAll("[^a-zA-Z]", "");
 
         // Default: remove everything except letters
         return cleanedToken;
