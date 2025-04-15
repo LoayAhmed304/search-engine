@@ -16,7 +16,12 @@ public class URLExtractor {
      */
     public static Document getDocument(String url) {
         try {
-            Document doc = Jsoup.connect(url).get();
+            Connection.Response res = Jsoup.connect(url).execute();
+            if(res.contentType() == null || !res.contentType().contains("text/html")) {
+                System.out.println("Not a valid HTML document: " + url);
+                return null;
+            }
+            Document doc = res.parse();
             return doc;
         } catch (Exception e) {
             System.out.println("Error fetching the document from the URL: " + url);
@@ -34,11 +39,8 @@ public class URLExtractor {
     public static Set<String> getURLs(Document doc) {
         Set<String> urls = new HashSet<>();
         Elements links = doc.select("a[href]");
-        // output the length of the links
-        System.out.println("All URLs: " + links.size());
         for (Element link : links) {
             String absUrl = link.attr("abs:href");
-            System.out.println(absUrl);
             urls.add(absUrl);
         }
         return filterURLs(urls);
