@@ -3,6 +3,7 @@ package com.project.searchengine.indexer;
 import com.project.searchengine.crawler.preprocessing.*;
 import com.project.searchengine.server.model.InvertedIndex;
 import com.project.searchengine.server.model.Page;
+import com.project.searchengine.server.model.PageReference;
 import com.project.searchengine.server.service.PageService;
 import java.security.MessageDigest;
 import java.util.*;
@@ -41,12 +42,16 @@ public class Indexer {
 
         // Tokenize the document
         long start = System.nanoTime();
-        tokenizer.tokenizeContent(content, id, "body", 0.0);
-        tokenizer.tokenizeHeaders(fieldTags, id, 0.0);
+
+        tokenizer.tokenizeContent(content, id, "body");
+        tokenizer.tokenizeHeaders(fieldTags, id);
+
         long duration = (System.nanoTime() - start) / 1_000_000;
         System.out.println("Tokenization took: " + duration + " ms");
-        saveTokens();
 
+        // Add the count of tokens before saving
+        tokenizer.setPageTokenCount();
+        saveTokens();
         savePage(id, url, title, content);
     }
 
@@ -78,15 +83,29 @@ public class Indexer {
             );
 
             for (InvertedIndex index : indexBuffer.values()) {
-                Query query = new Query(Criteria.where("word").is(index.getWord()));
-                Update update = new Update()
-                    .set("pages", index.getPages())
-                    .set("pageCount", index.getPageCount());
-                bulkOps.upsert(query, update);
+                for (PageReference newPage : index.getPages()) {
+                    // Add the new page to the existing pages
+                    Query pageQuery = new Query(
+                        Criteria.where("word")
+                            .is(index.getWord())
+                            .and("pages.pageId")
+                            .ne(newPage.getPageId())
+                    );
+
+                    Update update = new Update().addToSet("pages", newPage).inc("pageCount", 1);
+
+                    bulkOps.upsert(pageQuery, update);
+                }
             }
-            bulkOps.execute();
+
+            try {
+                bulkOps.execute();
+            } catch (Exception e) {
+                System.err.println("Error saving tokens: " + e.getMessage());
+            }
+
             long duration = (System.nanoTime() - start) / 1_000_000;
-            System.out.println("saving to the database took: " + duration + " ms");
+            System.out.println("Saving to the database took: " + duration + " ms");
             indexBuffer.clear();
         }
     }

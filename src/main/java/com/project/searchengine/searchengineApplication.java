@@ -14,22 +14,22 @@ public class searchengineApplication {
         //  SpringApplication.run(searchengineApplication.class, args);
         System.out.println("Hello my Search Engine!");
         ApplicationContext context = SpringApplication.run(searchengineApplication.class, args);
-
         // Test the indexer
-        Document document = null;
-        Indexer dp = context.getBean(Indexer.class);
-        String url = "https://en.wikipedia.org/wiki/Computer_programming";
-        try {
-            document = Jsoup.connect(url).get();
+        // Document document = null;
+        // Indexer dp = context.getBean(Indexer.class);
 
-            System.out.println("Connected to URL: " + url);
-        } catch (Exception e) {
-            System.err.println("Error indexing URL: " + url + " - " + e.getMessage());
-        }
+        // String url = "https://www.freecodecamp.org/news/what-is-programming/";
+        // try {
+        //     document = Jsoup.connect(url).get();
 
-        long start = System.currentTimeMillis();
-        dp.preprocessDocument(url, document);
-        long duration = System.currentTimeMillis() - start;
-        System.out.println("Indexing took: " + duration + " ms");
+        //     System.out.println("Connected to URL: " + url);
+        // } catch (Exception e) {
+        //     System.err.println("Error indexing URL: " + url + " - " + e.getMessage());
+        // }
+
+        // long start = System.currentTimeMillis();
+        // dp.preprocessDocument(url, document);
+        // long duration = System.currentTimeMillis() - start;
+        // System.out.println("Indexing took: " + duration + " ms");
     }
 }
