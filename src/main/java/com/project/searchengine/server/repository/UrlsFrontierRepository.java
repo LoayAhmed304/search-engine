@@ -38,15 +38,6 @@ public interface UrlsFrontierRepository extends MongoRepository<UrlDocument, Str
     boolean existsByNormalizedUrl(String normalizedUrl);
 
     /**
-     * Inserts a new document with the given normalizedUrl and default values.
-     * Note: This is handled by save() in MongoRepository, provided for clarity.
-     *
-     * @param document The UrlDocument to insert
-     * @return The saved UrlDocument
-     */
-    UrlDocument save(UrlDocument document);
-
-    /**
      * Increments frequency by 1 if the normalizedUrl exists; otherwise, creates a
      * new document
      * with frequency = 1 and default values.
