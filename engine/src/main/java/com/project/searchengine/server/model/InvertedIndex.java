@@ -1,21 +1,64 @@
-package com.project.searchengine.server.service;
+package com.project.searchengine.server.model;
 
-import com.project.searchengine.server.model.InvertedIndex;
-import com.project.searchengine.server.repository.InvertedIndexRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import java.util.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
-public class InvertedIndexService {
+@Document(collection = "words")
+public class InvertedIndex {
 
-    @Autowired
-    private InvertedIndexRepository invertedIndexRepository;
+    @Id
+    private String word;
 
-    /**
-     * Gets the inverted index for a given word.
-     *
-     * @param word The word to get the inverted index for.
-     * @return The inverted index for the given word.
-     */
-    public InvertedIndex getInvertedIndex(String word) {
-        return invertedIndexRepository.findById(word).orElse(null);
+    private List<PageReference> pages;
+    private int pageCount; // number of pages containing the word
+
+    public InvertedIndex(String word) {
+        this.word = word;
+        this.pages = new ArrayList<>();
+        this.pageCount = 0;
+    }
+
+    public String getWord() {
+        return word;
+    }
+
+    public void setWord(String word) {
+        this.word = word;
+    }
+
+    public List<PageReference> getPages() {
+        return pages;
+    }
+
+    public void setPages(List<PageReference> pages) {
+        this.pages = pages;
+        this.pageCount = pages.size();
+    }
+
+    public int getPageCount() {
+        return pageCount;
+    }
+
+    public void setPageCount(int pageCount) {
+        this.pageCount = pageCount;
+    }
+
+    public void addPage(PageReference page) {
+        pages.add(page);
+        pageCount++;
+    }
+
+    @Override
+    public String toString() {
+        return ("InvertedIndex{" +
+                "word='" +
+                word +
+                '\'' +
+                ", pages=" +
+                pages +
+                ", pageCount=" +
+                pageCount +
+                '}');
     }
 }
