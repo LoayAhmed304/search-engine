@@ -83,17 +83,27 @@ public class Indexer {
             );
 
             for (InvertedIndex index : indexBuffer.values()) {
-                Query query = new Query(Criteria.where("word").is(index.getWord()));
-
                 for (PageReference newPage : index.getPages()) {
                     // Add the new page to the existing pages
-                    Update update = new Update()
-                        .addToSet("pages", newPage)
-                        .inc("pageCount", index.getPageCount());
-                    bulkOps.upsert(query, update);
+                    Query pageQuery = new Query(
+                        Criteria.where("word")
+                            .is(index.getWord())
+                            .and("pages.pageId")
+                            .ne(newPage.getPageId())
+                    );
+
+                    Update update = new Update().addToSet("pages", newPage).inc("pageCount", 1);
+
+                    bulkOps.upsert(pageQuery, update);
                 }
             }
-            bulkOps.execute();
+
+            try {
+                bulkOps.execute();
+            } catch (Exception e) {
+                System.err.println("Error saving tokens: " + e.getMessage());
+            }
+
             long duration = (System.nanoTime() - start) / 1_000_000;
             System.out.println("Saving to the database took: " + duration + " ms");
             indexBuffer.clear();
