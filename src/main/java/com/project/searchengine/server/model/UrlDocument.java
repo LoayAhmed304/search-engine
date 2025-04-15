@@ -19,6 +19,10 @@ public class UrlDocument {
     private List<String> linkedPages;
     private Date lastCrawled;
 
+    public UrlDocument() {
+        this.linkedPages = new ArrayList<>();
+    }
+
     public UrlDocument(String normalizedUrl, long frequency, boolean isCrawled,
             String document, String hashedDocContent,
             List<String> linkedPages, Date lastCrawled) {
