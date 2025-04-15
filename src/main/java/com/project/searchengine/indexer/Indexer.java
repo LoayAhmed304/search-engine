@@ -3,6 +3,7 @@ package com.project.searchengine.indexer;
 import com.project.searchengine.crawler.preprocessing.*;
 import com.project.searchengine.server.model.InvertedIndex;
 import com.project.searchengine.server.model.Page;
+import com.project.searchengine.server.model.PageReference;
 import com.project.searchengine.server.service.PageService;
 import java.security.MessageDigest;
 import java.util.*;
@@ -79,10 +80,14 @@ public class Indexer {
 
             for (InvertedIndex index : indexBuffer.values()) {
                 Query query = new Query(Criteria.where("word").is(index.getWord()));
-                Update update = new Update()
-                    .set("pages", index.getPages())
-                    .set("pageCount", index.getPageCount());
-                bulkOps.upsert(query, update);
+
+                for (PageReference newPage : index.getPages()) {
+                    // Add the new page to the existing pages
+                    Update update = new Update()
+                        .addToSet("pages", newPage)
+                        .inc("pageCount", index.getPageCount());
+                    bulkOps.upsert(query, update);
+                }
             }
             bulkOps.execute();
             long duration = (System.nanoTime() - start) / 1_000_000;
