@@ -1,3 +1,15 @@
+<template>
+  <form @submit.prevent="submitSearchQuery" class="search-container">
+    <div class="search">
+      <font-awesome-icon icon="fa-solid fa-magnifying-glass" />
+      <input class="search-input" id="search" type="search" placeholder="Explore your way!" v-model="searchQuery" />
+    </div>
+  </form>
+  <base-button @button-click="handleButtonClick">
+    Explore!
+  </base-button>
+</template>
+
 <script setup>
 import {ref } from "vue"
 import BaseButton from "./BaseButton.vue";
@@ -12,18 +24,6 @@ const submitSearchQuery = () => {
   console.log("search query entered: " + searchQuery.value);
 }
 </script>
-
-<template>
-  <form @submit.prevent="submitSearchQuery" class="search-container">
-    <div class="search">
-      <font-awesome-icon icon="fa-solid fa-magnifying-glass" />
-      <input class="search-input" id="search" type="search" placeholder="Explore your way!" v-model="searchQuery" />
-    </div>
-  </form>
-  <base-button @button-click="handleButtonClick">
-    Explore!
-  </base-button>
-</template>
 
 <style scoped>
 .search-container {

@@ -29,7 +29,8 @@ public class Indexer {
 
     /**
      * Preprocesses the document by extracting tokens and saving the page.
-     * @param url The URL of the document.
+     * 
+     * @param url      The URL of the document.
      * @param document The Jsoup Document object.
      */
     public void preprocessDocument(String url, Document document) {
@@ -52,9 +53,10 @@ public class Indexer {
 
     /**
      * Saves the page to the database.
-     * @param id The unique identifier for the page.
-     * @param url The URL of the page.
-     * @param title The title of the page.
+     * 
+     * @param id      The unique identifier for the page.
+     * @param url     The URL of the page.
+     * @param title   The title of the page.
      * @param content The content of the page.
      */
     public void savePage(String id, String url, String title, String content) {
@@ -73,15 +75,14 @@ public class Indexer {
         if (!indexBuffer.isEmpty()) {
             long start = System.nanoTime();
             BulkOperations bulkOps = mongoTemplate.bulkOps(
-                BulkOperations.BulkMode.UNORDERED,
-                InvertedIndex.class
-            );
+                    BulkOperations.BulkMode.UNORDERED,
+                    InvertedIndex.class);
 
             for (InvertedIndex index : indexBuffer.values()) {
                 Query query = new Query(Criteria.where("word").is(index.getWord()));
                 Update update = new Update()
-                    .set("pages", index.getPages())
-                    .set("pageCount", index.getPageCount());
+                        .set("pages", index.getPages())
+                        .set("pageCount", index.getPageCount());
                 bulkOps.upsert(query, update);
             }
             bulkOps.execute();
@@ -93,6 +94,7 @@ public class Indexer {
 
     /**
      * Hash the url to create a unique id using sha-256
+     * 
      * @param url The url to be hashed
      * @return The hashed url as a string
      */

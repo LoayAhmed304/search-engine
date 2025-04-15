@@ -1,3 +1,18 @@
+<template>
+  <footer>
+    <div class="theme-selector">
+      <font-awesome-icon icon="fa-solid fa-palette" class="palette-icon" @click="toggleDropdown" />
+
+      <div v-if="isDropdownVisible" class="dropdown">
+        <h4>Select theme</h4>
+        <div v-for="theme in themes" :key="theme" @click="changeTheme(theme)">
+          {{ theme }}
+        </div>
+      </div>
+    </div>
+  </footer>
+</template>
+
 <script setup>
 import { ref, watch } from 'vue';
 
@@ -26,21 +41,6 @@ watch(selectedTheme, (newTheme) => {
   localStorage.setItem("theme", newTheme);
 });
 </script>
-
-<template>
-  <footer>
-    <div class="theme-selector">
-      <font-awesome-icon icon="fa-solid fa-palette" class="palette-icon" @click="toggleDropdown" />
-
-      <div v-if="isDropdownVisible" class="dropdown">
-        <h4>Select theme</h4>
-        <div v-for="theme in themes" :key="theme" @click="changeTheme(theme)">
-          {{ theme }}
-        </div>
-      </div>
-    </div>
-  </footer>
-</template>
 
 <style scoped>
 footer {

@@ -7,6 +7,7 @@ import java.util.regex.*;
 import opennlp.tools.stemmer.PorterStemmer;
 import org.jsoup.nodes.*;
 import org.jsoup.select.Elements;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -22,37 +23,46 @@ public class Tokenizer {
 
     // Field-specefic tokens
     private Map<String, InvertedIndex> indexBuffer = new HashMap<>();
-    private Integer tokenCount = 0;
+
     private final PorterStemmer stemmer = new PorterStemmer();
+
+    @Autowired
+    private final StopWordFilter stopWordFilter;
+
+    private Integer tokenCount = 0;
 
     // Combine patterns with proper grouping
     private final Pattern pattern = Pattern.compile(
-        "(" +
-        EMAIL_PATTERN +
-        ")|" +
-        "(" +
-        PHONE_PATTERN +
-        ")|" +
-        "(" +
-        HASHTAG_PATTERN +
-        ")|" +
-        "(" +
-        PLUS_COMBINED_PATTERN +
-        ")|" +
-        "(" +
-        HYPHENATED_PATTERN +
-        ")|" +
-        "(" +
-        WORD_PATTERN +
-        ")"
-    );
+            "(" +
+                    EMAIL_PATTERN +
+                    ")|" +
+                    "(" +
+                    PHONE_PATTERN +
+                    ")|" +
+                    "(" +
+                    HASHTAG_PATTERN +
+                    ")|" +
+                    "(" +
+                    PLUS_COMBINED_PATTERN +
+                    ")|" +
+                    "(" +
+                    HYPHENATED_PATTERN +
+                    ")|" +
+                    "(" +
+                    WORD_PATTERN +
+                    ")");
+
+    public Tokenizer(StopWordFilter stopWordFilter) {
+        this.stopWordFilter = stopWordFilter;
+    }
 
     /**
      * Tokenizes the input text and build the inverted index
-     * @param text The input text to tokenize
-     * @param pageId The current page id
+     * 
+     * @param text      The input text to tokenize
+     * @param pageId    The current page id
      * @param fieldType The field type (e.g., body, title, h1, h2)
-     * @param pageRank The rank of the page computed by the ranker
+     * @param pageRank  The rank of the page computed by the ranker
      */
     public void tokenizeContent(String text, String pageId, String fieldType, Double pageRank) {
         int position = 0;
@@ -78,13 +88,15 @@ public class Tokenizer {
 
     /**
      * Tokenizes the headers
+     * 
      * @param fieldTags The field tags to tokenize.
      */
 
     public void tokenizeHeaders(Elements fieldTags, String pageId, Double pageRank) {
         for (Element header : fieldTags) {
             String headerText = header.text();
-            if (headerText == null || headerText.isBlank()) continue;
+            if (headerText == null || headerText.isBlank())
+                continue;
             String headerType = header.tagName();
             tokenizeContent(headerText, pageId, headerType, pageRank);
         }
@@ -93,34 +105,33 @@ public class Tokenizer {
     /**
      * Build the inverted index to be saved to the database
      * If it already exists update it
-     * @param word The Id of the inverted index
-     * @param pageId The Id of the page that contains the word
-     * @param position The position of the word in the page
-     * @param fieldType  The field type (e.g., body, title, h1, h2)
+     * 
+     * @param word      The Id of the inverted index
+     * @param pageId    The Id of the page that contains the word
+     * @param position  The position of the word in the page
+     * @param fieldType The field type (e.g., body, title, h1, h2)
      * @param pageRank  The rank of the page computed by the ranker
      */
     private void buildInvertedIndex(
-        String word,
-        String pageId,
-        Integer position,
-        String fieldType,
-        Double pageRank
-    ) {
+            String word,
+            String pageId,
+            Integer position,
+            String fieldType,
+            Double pageRank) {
         // Get or create inverted index from buffer
-        InvertedIndex invertedIndex = indexBuffer.computeIfAbsent(word, w -> new InvertedIndex(word)
-        );
+        InvertedIndex invertedIndex = indexBuffer.computeIfAbsent(word, w -> new InvertedIndex(word));
 
         // Update or create pageReference
         PageReference pageReference = invertedIndex
-            .getPages()
-            .stream()
-            .filter(p -> p.getPageId().equals(pageId))
-            .findFirst()
-            .orElseGet(() -> {
-                PageReference newPageReference = new PageReference(pageId, 0, pageRank);
-                invertedIndex.addPage(newPageReference);
-                return newPageReference;
-            });
+                .getPages()
+                .stream()
+                .filter(p -> p.getPageId().equals(pageId))
+                .findFirst()
+                .orElseGet(() -> {
+                    PageReference newPageReference = new PageReference(pageId, 0, pageRank);
+                    invertedIndex.addPage(newPageReference);
+                    return newPageReference;
+                });
 
         // Update positions
         pageReference.getWordPositions().add(position);
@@ -135,26 +146,28 @@ public class Tokenizer {
     /**
      * Cleans the token by removing unwanted characters.
      * Preserves special tokens like email, phone, hashtags, and hyphenated words.
+     * 
      * @param token The token to clean.
      * @return The cleaned token.
      */
     private String cleanToken(String token) {
+        // Skip stop words
+        if (stopWordFilter.isStopWord(token)) {
+            return "";
+        }
         // Preserve special tokens
-        if (
-            token.matches(EMAIL_PATTERN) ||
-            token.matches(PHONE_PATTERN) ||
-            token.matches(HYPHENATED_PATTERN) ||
-            token.matches(HASHTAG_PATTERN) ||
-            token.matches(PLUS_COMBINED_PATTERN)
-        ) {
+        if (token.matches(EMAIL_PATTERN) ||
+                token.matches(PHONE_PATTERN) ||
+                token.matches(HYPHENATED_PATTERN) ||
+                token.matches(HASHTAG_PATTERN) ||
+                token.matches(PLUS_COMBINED_PATTERN)) {
             return token;
         }
-        String cleanedToken = token.replaceAll("[^a-zA-Z]", "");
 
         // Apply stemming to regural words
-        if (!cleanedToken.isEmpty()) {
-            cleanedToken = stemmer.stem(cleanedToken);
-        }
+        token = stemmer.stem(token);
+
+        String cleanedToken = token.replaceAll("[^a-zA-Z]", "");
 
         // Default: remove everything except letters
         return cleanedToken;
@@ -162,6 +175,7 @@ public class Tokenizer {
 
     /**
      * Return index buffer of all tokens of the current document
+     * 
      * @return Buffer of tokens
      */
     public Map<String, InvertedIndex> getIndexBuffer() {

@@ -9,7 +9,8 @@ public class RankCalculator {
 
     /**
      * Calculates the weighted Term Frequency
-     * TF(weighted) = number of token occurence in document / total tokens in document
+     * TF(weighted) = number of token occurence in document / total tokens in
+     * document
      *
      * @param pr: PageReference that the token is part of
      * @return normalized TF value (double)
@@ -22,8 +23,8 @@ public class RankCalculator {
      * Calculates the final score to be used for ranking
      * Score = (weight) * TF * IDF + (1-weight) * page rank
      *
-     * @param tf: weighted term frequency
-     * @param idf: normalized IDF
+     * @param tf:       weighted term frequency
+     * @param idf:      normalized IDF
      * @param pageRank: rank of the page relative to other pages
      * @return the final score to be merged with scores Map (double)
      */

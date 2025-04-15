@@ -1,13 +1,13 @@
-<script setup>
-const emit = defineEmits(['button-click']);
-
-</script>
-
 <template>
   <button class="base-button" @click="$emit('button-click')">
     <slot />
   </button>
 </template>
+
+<script setup>
+const emit = defineEmits(['button-click']);
+
+</script>
 
 <style scoped>
 button {
