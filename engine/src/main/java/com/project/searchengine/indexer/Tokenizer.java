@@ -1,10 +1,15 @@
 package com.project.searchengine.indexer;
 
+import com.project.searchengine.server.model.InvertedIndex;
+import com.project.searchengine.server.model.PageReference;
 import java.util.*;
 import java.util.regex.*;
+import opennlp.tools.stemmer.PorterStemmer;
 import org.jsoup.nodes.*;
 import org.jsoup.select.Elements;
+import org.springframework.stereotype.Component;
 
+@Component
 public class Tokenizer {
 
     // Define individual patterns (lowercase only)
@@ -16,9 +21,9 @@ public class Tokenizer {
     private final String PLUS_COMBINED_PATTERN = "[a-z]+\\+{1,2}[a-z0-9]*"; // C++ like terms
 
     // Field-specefic tokens
-    Map<String, List<Integer>> bodyTokens = new HashMap<>();
-    Map<String, List<Integer>> titleTokens = new HashMap<>();
-    Map<String, List<Integer>> headerTokens = new HashMap<>();
+    private Map<String, InvertedIndex> indexBuffer = new HashMap<>();
+    private Integer tokenCount = 0;
+    private final PorterStemmer stemmer = new PorterStemmer();
 
     // Combine patterns with proper grouping
     private final Pattern pattern = Pattern.compile(
@@ -42,16 +47,16 @@ public class Tokenizer {
         ")"
     );
 
-    public Tokenizer() {}
-
     /**
-     * Tokenizes the input text and returns a map of tokens with their positions.
-     * @param text The input text to tokenize.
-     * @return A map where the key is the token and the value is a list of positions.
+     * Tokenizes the input text and build the inverted index
+     * @param text The input text to tokenize
+     * @param pageId The current page id
+     * @param fieldType The field type (e.g., body, title, h1, h2)
+     * @param pageRank The rank of the page computed by the ranker
      */
-    public Map<String, List<Integer>> tokenize(String text) {
-        Map<String, List<Integer>> tokens = new HashMap<>();
+    public void tokenizeContent(String text, String pageId, String fieldType, Double pageRank) {
         int position = 0;
+
         // Convert to lower case
         text = text.toLowerCase();
 
@@ -59,59 +64,72 @@ public class Tokenizer {
         Matcher matcher = pattern.matcher(text);
 
         while (matcher.find()) {
-            // Get the matched token
             String token = matcher.group();
             String cleanedToken = cleanToken(token);
 
             if (!cleanedToken.isEmpty()) {
-                // Add the token to the map
-                tokens.computeIfAbsent(cleanedToken, k -> new ArrayList<>()).add(position);
+                buildInvertedIndex(cleanedToken, pageId, position, fieldType, pageRank);
 
-                // Update the position
+                tokenCount++;
                 position++;
             }
         }
-
-        return tokens;
     }
 
     /**
-     * Tokenizes the headers and returns a map of tokens with their header types and counts.
+     * Tokenizes the headers
      * @param fieldTags The field tags to tokenize.
-     * @return A map where the key is the token and the value is another map with header types and their counts.
      */
-    public Map<String, Map<String, Integer>> tokenizeHeaders(Elements fieldTags) {
-        Map<String, Map<String, Integer>> headerTokens = new HashMap<>(); // token => header type => count
 
+    public void tokenizeHeaders(Elements fieldTags, String pageId, Double pageRank) {
         for (Element header : fieldTags) {
             String headerText = header.text();
+            if (headerText == null || headerText.isBlank()) continue;
             String headerType = header.tagName();
-            Map<String, List<Integer>> tokens = tokenize(headerText);
-
-            // check if the token exits in the map
-            for (Map.Entry<String, List<Integer>> entry : tokens.entrySet()) {
-                String token = entry.getKey();
-                Integer tokenCount = entry.getValue().size();
-
-                // check if the token exist in the map
-                if (headerTokens.containsKey(token)) {
-                    Map<String, Integer> headerTypeCount = headerTokens.get(token);
-                    if (headerTypeCount.containsKey(headerType)) {
-                        // update the count
-                        Integer count = headerTypeCount.get(headerType);
-                        headerTypeCount.put(headerType, count + tokenCount);
-                    } else {
-                        headerTypeCount.put(headerType, tokenCount);
-                    }
-                } else {
-                    // add the token to the map
-                    Map<String, Integer> headerTypeCount = new HashMap<>();
-                    headerTypeCount.put(headerType, tokenCount);
-                    headerTokens.put(token, headerTypeCount);
-                }
-            }
+            tokenizeContent(headerText, pageId, headerType, pageRank);
         }
-        return headerTokens;
+    }
+
+    /**
+     * Build the inverted index to be saved to the database
+     * If it already exists update it
+     * @param word The Id of the inverted index
+     * @param pageId The Id of the page that contains the word
+     * @param position The position of the word in the page
+     * @param fieldType  The field type (e.g., body, title, h1, h2)
+     * @param pageRank  The rank of the page computed by the ranker
+     */
+    private void buildInvertedIndex(
+        String word,
+        String pageId,
+        Integer position,
+        String fieldType,
+        Double pageRank
+    ) {
+        // Get or create inverted index from buffer
+        InvertedIndex invertedIndex = indexBuffer.computeIfAbsent(word, w -> new InvertedIndex(word)
+        );
+
+        // Update or create pageReference
+        PageReference pageReference = invertedIndex
+            .getPages()
+            .stream()
+            .filter(p -> p.getPageId().equals(pageId))
+            .findFirst()
+            .orElseGet(() -> {
+                PageReference newPageReference = new PageReference(pageId, 0, pageRank);
+                invertedIndex.addPage(newPageReference);
+                return newPageReference;
+            });
+
+        // Update positions
+        pageReference.getWordPositions().add(position);
+
+        // Update fieldsCount
+        pageReference.getFieldWordCount().merge(fieldType, 1, Integer::sum);
+
+        // Set number of pages that contains the token
+        invertedIndex.setPageCount(invertedIndex.getPages().size());
     }
 
     /**
@@ -131,30 +149,22 @@ public class Tokenizer {
         ) {
             return token;
         }
+        String cleanedToken = token.replaceAll("[^a-zA-Z]", "");
+
+        // Apply stemming to regural words
+        if (!cleanedToken.isEmpty()) {
+            cleanedToken = stemmer.stem(cleanedToken);
+        }
 
         // Default: remove everything except letters
-        return token.replaceAll("[^a-zA-Z]", "");
+        return cleanedToken;
     }
 
-    // Main method for testing
-    public static void main(String[] args) {
-        // Example usage
-        Tokenizer tokenizer = new Tokenizer();
-
-        String[] tests = {
-            "Hello, world! This is a test. 12345 test",
-            "Hello, world! How's it going?",
-            "Email me at user@domain.com or #hashtag!",
-            "C++, coding is FUN! Let's try 100% effort.",
-            "Visit https://cairo.edu or call +20123456789.",
-            "A+bB",
-        };
-
-        for (String text : tests) {
-            Map<String, List<Integer>> tokenPositions = tokenizer.tokenize(text);
-            System.out.println("Text: " + text);
-            System.out.println("Tokens: " + tokenPositions);
-            System.out.println();
-        }
+    /**
+     * Return index buffer of all tokens of the current document
+     * @return Buffer of tokens
+     */
+    public Map<String, InvertedIndex> getIndexBuffer() {
+        return indexBuffer;
     }
 }
