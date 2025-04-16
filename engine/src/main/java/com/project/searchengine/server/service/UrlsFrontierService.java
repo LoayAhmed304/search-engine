@@ -1,6 +1,6 @@
 package com.project.searchengine.server.service;
 
-import com.project.searchengine.server.model.UrlDocument;
+// import com.project.searchengine.server.model.UrlDocument;
 import com.project.searchengine.server.repository.UrlsFrontierRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -22,8 +22,8 @@ public class UrlsFrontierService {
      *
      * @return List of up to 100 UrlDocument objects
      */
-    public List<UrlDocument> getTop100UrlsByFrequency() {
-        List<UrlDocument> topUrls = urlsFrontierRepository.findTop100ByFrequency();
+    public List<String> getTop100UrlsByFrequency() {
+        List<String> topUrls = urlsFrontierRepository.findTop100ByFrequency();
         return topUrls;
     }
 

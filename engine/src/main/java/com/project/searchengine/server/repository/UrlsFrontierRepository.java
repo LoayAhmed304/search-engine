@@ -13,12 +13,13 @@ import java.util.List;
 public interface UrlsFrontierRepository extends MongoRepository<UrlDocument, String> {
 
     /**
-     * Retrieves the top 100 documents sorted by frequency in descending order.
+     * Finds the top 100 URLs sorted by frequency in descending order, returning
+     * only the normalizedUrl field.
      *
-     * @return List of up to 100 UrlDocument documents
+     * @return List of up to 100 normalized URLs
      */
-    @Query(value = "{}", sort = "{ 'frequency': -1 }")
-    List<UrlDocument> findTop100ByFrequency();
+    @Query(value = "{}", fields = "{ 'normalizedUrl': 1, '_id': 0 }", sort = "{ 'frequency': -1 }")
+    List<String> findTop100ByFrequency();
 
     /**
      * Increments the frequency of a document with the given normalizedUrl.
