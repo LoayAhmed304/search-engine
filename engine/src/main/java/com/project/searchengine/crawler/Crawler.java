@@ -57,6 +57,7 @@ public class Crawler {
                 Set<String> linkedPagesSet = URLExtractor.getURLs(pageContent);
                 List<String> linkedPages = new ArrayList<>(linkedPagesSet);
                 System.out.println("Linked Pages: " + linkedPages.size());
+
                 for (String linkedUrl : linkedPages) {
 
                     String normalizedUrl = URLNormalizer.normalizeUrl(linkedUrl);
