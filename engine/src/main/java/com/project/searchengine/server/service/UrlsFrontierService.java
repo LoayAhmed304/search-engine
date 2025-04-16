@@ -67,4 +67,12 @@ public class UrlsFrontierService {
         }
     }
 
+    /**
+     * Checks if the frontier is empty.
+     * @return
+     */
+    public boolean isEmpty() {
+        return urlsFrontierRepository.count() == 0;
+    }
+
 }
