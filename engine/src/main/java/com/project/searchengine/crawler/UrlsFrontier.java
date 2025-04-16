@@ -17,7 +17,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class UrlsFrontier {
     private UrlsFrontierService urlsFrontierService;
-    private UrlDocument urlDocument;
 
     private final String SEEDS_FILE_PATH = Paths.get("src/main/resources/seeds.txt").toString();
     public static final int BATCH_SIZE = 100;
@@ -30,9 +29,8 @@ public class UrlsFrontier {
      * @param urlsFrontierService Service to manage URLs in the frontier
      */
     @Autowired
-    public UrlsFrontier(UrlsFrontierService urlsFrontierService, UrlDocument urlDocument) {
+    public UrlsFrontier(UrlsFrontierService urlsFrontierService) {
         this.urlsFrontierService = urlsFrontierService;
-        this.urlDocument = urlDocument;
     }
     /**
      * Initializes the frontier with a list of seed URLs.
@@ -100,12 +98,13 @@ public class UrlsFrontier {
     }
 
     public void saveCrawledDocument(String normalizedUrl, String document, String hashedContent, boolean isCrawled ,List<String> linkedPages) {
+        UrlDocument urlDocument = new UrlDocument();
         urlDocument.setNormalizedUrl(normalizedUrl);
         urlDocument.setDocument(document);
         urlDocument.setHashedDocContent(hashedContent);
         urlDocument.setCrawled(isCrawled);
         urlDocument.setLinkedPages(linkedPages);
-        // urlsFrontierService.saveCrawledDocument(urlDocument); ======== TODO
+        urlsFrontierService.updateUrlDocument(urlDocument);
     }
     
 }

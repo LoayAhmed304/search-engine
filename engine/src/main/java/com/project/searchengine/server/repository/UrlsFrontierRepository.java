@@ -56,10 +56,27 @@ public interface UrlsFrontierRepository extends MongoRepository<UrlDocument, Str
             newDocument.setNormalizedUrl(normalizedUrl);
             newDocument.setFrequency(1L);
             newDocument.setCrawled(false);
+            newDocument.setDocument("");
+            newDocument.setHashedDocContent("");
             newDocument.setLinkedPages(new ArrayList<>() {});
             System.out.println("New document created: " + newDocument + "\n");
             save(newDocument);
             return true;
         }
     }
+
+    /**
+     * Updates a document with the given normalizedUrl with the provided fields.
+     *
+     * @param normalizedUrl    The normalized URL of the document to update
+     * @param document         The new HTML content of the page
+     * @param hashedDocContent The new hashed content of the page
+     * @param linkedPages      The new list of linked URLs
+     * @param isCrawled        The new crawled status
+     * @param lastCrawled      The new last crawled date
+     */
+    @Query("{ 'normalizedUrl': ?0 }")
+    @Update("{ '$set': { 'document': ?1, 'hashedDocContent': ?2, 'linkedPages': ?3, 'isCrawled': ?4, 'lastCrawled': ?5 } }")
+    void updateUrlDocument(String normalizedUrl, String document, String hashedDocContent, List<String> linkedPages,
+            boolean isCrawled, String lastCrawled);
 }

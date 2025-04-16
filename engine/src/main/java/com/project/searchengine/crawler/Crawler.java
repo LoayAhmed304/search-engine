@@ -16,11 +16,13 @@ import com.project.searchengine.utils.HashManager;
 public class Crawler {
 
     private final UrlsFrontier urlsFrontier;
+    private RobotsHandler robotsHandler;
     private static int currentBatch = 1;
 
     @Autowired
     public Crawler(UrlsFrontier urlsFrontier) {
         this.urlsFrontier = urlsFrontier;
+        this.robotsHandler = new RobotsHandler();
     }
 
     /**
@@ -38,7 +40,8 @@ public class Crawler {
     public void crawl() {
         System.out.println("Starting the crawling process...");
         initCrawling();
-        if(urlsFrontier.getNextUrlsBatch())
+    
+        while(urlsFrontier.getNextUrlsBatch())
         {
             System.out.println("Processing batch of URLs number: " + currentBatch++);
 
@@ -48,11 +51,18 @@ public class Crawler {
                 Document pageContent = URLExtractor.getDocument(url);
 
                 String hashedDocument = HashManager.hash(pageContent.toString()); 
+                System.out.println("Hashed Document: " + hashedDocument);
                    // if the hash is in the database, remove the url from the frontier db urlsFrontier.removeDuplicates(hashedDocument);
 
-                List<String> linkedPages = (List<String>) URLExtractor.getURLs(pageContent);
+                Set<String> linkedPagesSet = URLExtractor.getURLs(pageContent);
+                List<String> linkedPages = new ArrayList<>(linkedPagesSet);
+                System.out.println("Linked Pages: " + linkedPages.size());
                 for (String linkedUrl : linkedPages) {
+
                     String normalizedUrl = URLNormalizer.normalizeUrl(linkedUrl);
+                    if(!robotsHandler.isUrlAllowed(url))
+                        continue;
+                    
                     urlsFrontier.handleUrl(normalizedUrl);
                 }
                 
@@ -62,6 +72,7 @@ public class Crawler {
         System.out.println("Finished processing totoal batch of URLs of count: " + (currentBatch - 1));
         System.out.println("Crawling process completed.");
     }
+
 }
 
     /**
