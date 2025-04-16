@@ -1,10 +1,9 @@
-https://www.wikipedia.org
 https://github.com
 https://medium.com
 https://www.geeksforgeeks.org
 https://cu.edu.eg/Home
-https://en.wikipedia.org/wiki/Cairo_University
+https://www.findcourse.com/en/highereducation/university/15565
 https://www.topuniversities.com/universities/cairo-university
-https://en.wikipedia.org/wiki/Dora_the_Explorer
+https://dora.fandom.com/wiki/Dora_the_Explorer
 https://www.imdb.com/title/tt0235917
-https://en.wikipedia.org/wiki/Dora_and_the_Lost_City_of_Gold
+https://www.discovermagazine.com/planet-earth/20-of-the-most-adorable-animals-to-help-make-anyones-day
