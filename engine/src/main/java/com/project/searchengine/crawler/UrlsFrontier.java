@@ -4,7 +4,7 @@ package com.project.searchengine.crawler;
 // It will handle the URLs to be crawled, the URLs that have been crawled, and the URLs that are in the process of being crawled.
 // It will also deal with the server side related modules to deal with the database
 
-// import com.project.searchengine.server.model.UrlDocument;
+import com.project.searchengine.server.model.UrlDocument;
 import com.project.searchengine.server.service.UrlsFrontierService;
 
 import java.io.*;
@@ -17,6 +17,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class UrlsFrontier {
     private UrlsFrontierService urlsFrontierService;
+    private UrlDocument urlDocument;
+
     private final String SEEDS_FILE_PATH = Paths.get("src/main/resources/seeds.txt").toString();
     public static final int BATCH_SIZE = 100;
     public static final int MAX_URLS = 6000;
@@ -28,8 +30,9 @@ public class UrlsFrontier {
      * @param urlsFrontierService Service to manage URLs in the frontier
      */
     @Autowired
-    public UrlsFrontier(UrlsFrontierService urlsFrontierService) {
+    public UrlsFrontier(UrlsFrontierService urlsFrontierService, UrlDocument urlDocument) {
         this.urlsFrontierService = urlsFrontierService;
+        this.urlDocument = urlDocument;
     }
     /**
      * Initializes the frontier with a list of seed URLs.
@@ -94,6 +97,15 @@ public class UrlsFrontier {
      */
     public boolean shouldInitializeFrontier() {
         return urlsFrontierService.isEmpty();
+    }
+
+    public void saveCrawledDocument(String normalizedUrl, String document, String hashedContent, boolean isCrawled ,List<String> linkedPages) {
+        urlDocument.setNormalizedUrl(normalizedUrl);
+        urlDocument.setDocument(document);
+        urlDocument.setHashedDocContent(hashedContent);
+        urlDocument.setCrawled(isCrawled);
+        urlDocument.setLinkedPages(linkedPages);
+        // urlsFrontierService.saveCrawledDocument(urlDocument); ======== TODO
     }
     
 }
