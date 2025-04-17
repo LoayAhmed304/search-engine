@@ -11,16 +11,34 @@ public class PageRank {
 
     private final UrlsFrontierService urlFrontier;
     private final List<UrlDocument> allUrls;
+    private final List<Page> allPages;
+    private final PageService pageService;
 
-    public PageRank(UrlsFrontierService urlFrontier) {
+    public PageRank(UrlsFrontierService urlFrontier, PageService pageService) {
         this.urlFrontier = urlFrontier;
+        this.pageService = pageService;
 
         this.allUrls = this.urlFrontier.getAllUrls();
+        this.allPages = pageService.getAllPages();
     }
 
     public boolean computePagesRank() {
         Map<String, List<String>> incomingLinks = computeIncomingLinks();
-        // initializePagesRank();
+        initializePagesRank();
+        return true;
+    }
+
+    /**
+     * Sets all pages rank initially to 1 / N
+     * N: Total number of pages in the database
+     */
+    boolean initializePagesRank() {
+        int N = allPages.size();
+
+        for (Page page : allPages) {
+            page.setRank((double) 1 / N);
+        }
+
         return true;
     }
 
