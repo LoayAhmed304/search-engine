@@ -18,6 +18,12 @@ public class PageRank {
         this.allUrls = this.urlFrontier.getAllUrls();
     }
 
+    public boolean computePagesRank() {
+        Map<String, List<String>> incomingLinks = computeIncomingLinks();
+        // initializePagesRank();
+        return true;
+    }
+
     /**
      * Computes the incoming links hashmap for each URL in the URL frontier collection
      * @return Adjacency list of all ingoing links for each page
