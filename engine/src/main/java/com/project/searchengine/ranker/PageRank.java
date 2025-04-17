@@ -41,6 +41,7 @@ public class PageRank {
             if (!computePagesRank()) return false;
         }
         // bulk update the pages here
+        this.pageService.saveAll(new ArrayList<>(allPages.values()));
 
         //⚠️⚠️ implement using bulkOps ⚠️⚠️
         // Tasneem please do it for me thank you
