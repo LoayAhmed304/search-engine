@@ -1,7 +1,7 @@
 <template>
   <div class="search-result">
     <div class="search-result__info">
-      <img src="@/assets/images/map.png" alt="icon" class="search-result__icon" />
+      <img src="/images/map.png" alt="icon" class="search-result__icon" />
 
       <div class="search-result__text">
         <a class="search-result__link" :href="url" target="_blank">{{ url }}</a>
@@ -27,8 +27,8 @@ defineProps({
 .search-result {
   display: flex;
   flex-direction: column;
-  gap: 1.2rem;
-  padding: 1rem 1.2rem;
+  gap: 0.5rem;
+  padding: 1.5rem 0;
 }
 
 .search-result__info {
@@ -37,7 +37,7 @@ defineProps({
 }
 
 .search-result__icon {
-  width: 50px;
+  width: 45px;
   height: auto;
   object-fit: contain;
   margin-right: 1rem;
@@ -63,7 +63,7 @@ defineProps({
 }
 
 .search-result__title {
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   margin: 0;
   color: var(--title-color);
   font-weight: 500;
@@ -80,6 +80,6 @@ defineProps({
   font-weight: 300;
   margin-top: 0.1rem;
   line-height: 1.5;
-  padding: 0 1rem;
+  padding: 0 0.8rem;
 }
 </style>

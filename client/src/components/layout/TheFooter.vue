@@ -14,7 +14,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch} from 'vue';
 
 const themes = ["dora", "backpack", "swiper", "boots"];
 const isDropdownVisible = ref(false);  
@@ -24,7 +24,7 @@ document.documentElement.setAttribute("data-theme", selectedTheme.value);
 
 const changeTheme = (theme) => {
   selectedTheme.value = theme;  
-  console.log("Applied theme: ", selectedTheme.value);
+  // console.log("Applied theme: ", selectedTheme.value);
   document.documentElement.setAttribute('data-theme', selectedTheme.value);
   localStorage.setItem("theme", selectedTheme.value);
   isDropdownVisible.value = false;

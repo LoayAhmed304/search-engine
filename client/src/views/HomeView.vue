@@ -1,12 +1,13 @@
 <template>
   <div class="container">
-    <img src="../assets/images/dora-the-explorer.png" alt="dora the explorer" />
-    <SearchBar />
+    <img src="/images/dora-the-explorer.png" alt="dora the explorer"  />
+    <SearchBar :is-icon-shown="false"/>
   </div>
+  <TheFooter />
 </template>
 
 <script setup>
-import SearchBar from '@/components/ui/SearchBar.vue';
+import SearchBar from '@/components/ui/SearchBar.vue'
 </script>
 
 <style scoped>

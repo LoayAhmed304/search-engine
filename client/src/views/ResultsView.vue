@@ -1,7 +1,7 @@
 <template>
   <div class="container">
     <div class="search">
-      <SearchBar />
+      <SearchBar :is-icon-shown="true"/>
     </div>
     <SearchResult
       v-for="(result, index) in mockResults"
@@ -16,7 +16,6 @@
 <script setup>
 import SearchBar from '@/components/ui/SearchBar.vue'
 import SearchResult from '@/components/ui/SearchResult.vue'
-
 const mockResults = [
   {
     title: 'Discovering Exoplanets',
@@ -35,12 +34,13 @@ const mockResults = [
     url: 'https://jwst.nasa.gov/tech',
     content:
       'An in-depth look at how space telescopes like the James Webb Space Telescope are revolutionizing our view of the universe.',
-  }, 
+  },
   {
     title: 'Wiki',
     url: '',
-    content: 'Pierre Boulez (26 March 1925 – 5 January 2016) was a French composer and conductor. He was one of the dominant figures of post-war contemporary classical music.As a composer, he played a leading role in the development of integral serialism in the 1950s, and the electronic transformation of instrumental music in real time from the 1970s. Boulez conducted many of...'
-  }
+    content:
+      'Pierre Boulez (26 March 1925 – 5 January 2016) was a French composer and conductor. He was one of the dominant figures of post-war contemporary classical music.As a composer, he played a leading role in the development of integral serialism in the 1950s, and the electronic transformation of instrumental music in real time from the 1970s. Boulez conducted many of...',
+  },
 ]
 </script>
 

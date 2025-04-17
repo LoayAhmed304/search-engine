@@ -2,8 +2,7 @@
   <div class="container">
     <div class="search-bar">
       <div class="search-bar__form-wrapper">
-          <img src="@/assets/images/dora.png" alt="Dora icon" class="search-bar__dora-icon" />
-
+        <img v-if="isIconShown" :src="iconSource" alt="icon" class="search-bar__dora-icon" />
         <form @submit.prevent="submitSearchQuery" class="search-bar__form">
           <div class="search-bar__input-group">
             <font-awesome-icon
@@ -47,10 +46,14 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
 import BaseButton from './BaseButton.vue'
+
+defineProps({
+  isIconShown: Boolean,
+})
 
 const router = useRouter()
 
@@ -58,6 +61,25 @@ const searchQuery = ref('')
 const suggestions = ref([])
 const showSuggestions = ref(false)
 const highlightedQueryIndex = ref(-1)
+
+const selectedTheme = ref('dora')
+const iconSource = ref(`/images/${selectedTheme.value}.png`)
+
+document.documentElement.setAttribute('data-theme', selectedTheme.value)
+
+const changeTheme = (theme) => {
+  selectedTheme.value = theme
+  document.documentElement.setAttribute('data-theme', selectedTheme.value)
+  localStorage.setItem('theme', selectedTheme.value)
+  iconSource.value = `/images/${selectedTheme.value}.png`
+  console.log('Applied theme: ', selectedTheme.value, 'icon source', iconSource)
+}
+
+onMounted(() => {
+  const savedTheme = localStorage.getItem('theme')
+  if (savedTheme) selectedTheme.value = savedTheme
+  changeTheme(selectedTheme.value)
+})
 
 const submitSearchQuery = () => {
   console.log('search query entered: ' + searchQuery.value)
@@ -142,7 +164,7 @@ const voiceSearchQuery = () => {
 }
 
 .search-bar__input {
-  /* flex: 1; */
+  flex: 1;
   color: #333;
   margin-left: 10px;
   outline: none;
