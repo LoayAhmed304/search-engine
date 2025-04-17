@@ -124,6 +124,11 @@ public class Tokenizer {
         return cleanedToken;
     }
 
+    /**
+     * Load the tokenizer model from the specified input stream.
+     *
+     * @param modelInputStream The input stream containing the tokenizer model.
+     */
     void loadTokenizerModel(InputStream modelInputStream) {
         try (InputStream modelIn = getClass().getResourceAsStream("/models/en-token.bin")) {
             if (modelIn == null) {
