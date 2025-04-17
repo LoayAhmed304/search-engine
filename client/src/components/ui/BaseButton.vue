@@ -13,9 +13,8 @@ const emit = defineEmits(['button-click']);
 .base-button {
   background-color: var(--accent-color);
   border: none;
-  padding: 10px 16px;
+  padding:  14px;
   font-size: 1.2rem;
-  /* margin: 1rem ; */
   cursor: pointer;
   border-radius: 5px;
   color: var(--background-color);

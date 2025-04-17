@@ -2,6 +2,8 @@
   <div class="container">
     <div class="search-bar">
       <div class="search-bar__form-wrapper">
+          <img src="@/assets/images/dora.png" alt="Dora icon" class="search-bar__dora-icon" />
+
         <form @submit.prevent="submitSearchQuery" class="search-bar__form">
           <div class="search-bar__input-group">
             <font-awesome-icon
@@ -113,7 +115,6 @@ const voiceSearchQuery = () => {
 .container,
 .search-bar {
   width: 100%;
-  max-width: 600px;
   margin: 0 auto;
 }
 
@@ -141,7 +142,7 @@ const voiceSearchQuery = () => {
 }
 
 .search-bar__input {
-  flex: 1;
+  /* flex: 1; */
   color: #333;
   margin-left: 10px;
   outline: none;
@@ -201,6 +202,12 @@ base-button {
 .search-bar__suggestion-text {
   flex: 1;
   font-size: 0.95rem;
+}
+
+.search-bar__dora-icon {
+  width: 60px;
+  height: auto;
+  object-fit: contain;
 }
 
 @media (max-width: 650px) {
