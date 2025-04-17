@@ -36,10 +36,7 @@
           }"
           @click="highlightedQueryIndex = index"
         >
-          <font-awesome-icon
-            icon="fa-solid fa-magnifying-glass"
-            class="search-bar__search-icon"
-          />
+          <font-awesome-icon icon="fa-solid fa-magnifying-glass" class="search-bar__search-icon" />
           <span class="search-bar__suggestion-text">{{ suggestion }}</span>
         </li>
       </ul>
@@ -48,71 +45,68 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
-import { useRouter } from "vue-router";
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 
-import BaseButton from "./BaseButton.vue";
+import BaseButton from './BaseButton.vue'
 
-const router = useRouter();
+const router = useRouter()
 
-const searchQuery = ref("");
-const suggestions = ref([]);
-const showSuggestions = ref(false);
-const highlightedQueryIndex = ref(-1);
+const searchQuery = ref('')
+const suggestions = ref([])
+const showSuggestions = ref(false)
+const highlightedQueryIndex = ref(-1)
 
 const submitSearchQuery = () => {
-  console.log("search query entered: " + searchQuery.value);
-  router.push({ path: "/search", query: { q: searchQuery.value } });
+  console.log('search query entered: ' + searchQuery.value)
+  router.push({ path: '/search', query: { q: searchQuery.value } })
 
-  showSuggestions.value = false;
-  suggestions.value = [];
-};
+  showSuggestions.value = false
+  suggestions.value = []
+}
 
 const fetchSuggestions = async (query) => {
-  return ["temp 1", "temp 2"];
-};
-
+  return ['temp 1', 'temp 2']
+}
 
 const handleKeyNavigation = (event) => {
   if (!Array.isArray(suggestions.value) || suggestions.value.length === 0) {
-    return;
+    return
   }
 
-  if (event.key === "ArrowDown" && highlightedQueryIndex.value < suggestions.value.length - 1) {
-      highlightedQueryIndex.value++;
+  if (event.key === 'ArrowDown' && highlightedQueryIndex.value < suggestions.value.length - 1) {
+    highlightedQueryIndex.value++
+  } else if (event.key === 'ArrowUp' && highlightedQueryIndex.value > -1) {
+    highlightedQueryIndex.value--
+  } else {
+    return
   }
-  else if (event.key === "ArrowUp" && highlightedQueryIndex.value > -1) {
-      highlightedQueryIndex.value--;
-  }
-  else {
-    return;
-  }
-  const selectedQuery = suggestions.value[highlightedQueryIndex.value];
+  const selectedQuery = suggestions.value[highlightedQueryIndex.value]
 
-  if(selectedQuery) {
-    searchQuery.value = selectedQuery;
+  if (selectedQuery) {
+    searchQuery.value = selectedQuery
   }
-};
+}
 
 const onQueryChange = async () => {
-  const query = searchQuery.value.trim();
+  const query = searchQuery.value.trim()
 
   if (query.length === 0) {
-    showSuggestions.value = false;
-    suggestions.value = [];
-    return;
+    showSuggestions.value = false
+    suggestions.value = []
+    return
   }
 
-  suggestions.value = await fetchSuggestions(query);
+  suggestions.value = await fetchSuggestions(query)
 
   if (suggestions.value.length > 0) {
-    showSuggestions.value = true;
+    showSuggestions.value = true
   }
-};
+}
 
 const voiceSearchQuery = () => {
-  console.log("voice search");
-};
+  console.log('voice search')
+}
 </script>
 
 <style scoped>

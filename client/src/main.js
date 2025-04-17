@@ -1,19 +1,20 @@
-// import './assets/styles/main.css'
+import './assets/styles/main.css'
 import router from './router'
 
 import { createApp } from 'vue'
 import App from './App.vue'
 
 import TheNavBar from '@/components/layout/TheNavBar.vue'
-import TheFooter from './components/layout/TheFooter.vue'
+import TheFooter from '@/components/layout/TheFooter.vue'
 
-// needed icons
+
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons'
 import { faPalette } from '@fortawesome/free-solid-svg-icons'
+import { faMicrophone } from '@fortawesome/free-solid-svg-icons'
 
-library.add(faMagnifyingGlass, faPalette);
+library.add(faMagnifyingGlass, faPalette, faMicrophone);
 
 const app = createApp(App);
 
