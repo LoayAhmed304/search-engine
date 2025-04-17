@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 public class PageRank {
 
     private static final double DAMPING_FACTOR = 0.8;
+    private static final short MAX_ITERATIONS = 50;
 
     private final UrlsFrontierService urlFrontier;
     private final Map<String, UrlDocument> allUrls;
@@ -30,10 +31,27 @@ public class PageRank {
     }
 
     /**
+     * Main function to call, which computes all pages ranks
+     * @return status boolean (to be implemented later)
+     */
+    public boolean computeAllRanks() {
+        boolean converged = false; // to be implemented later
+
+        for (int i = 0; i < MAX_ITERATIONS && !converged; i++) {
+            if (!computePagesRank()) return false;
+        }
+        // bulk update the pages here
+
+        //⚠️⚠️ implement using bulkOps ⚠️⚠️
+        // Tasneem please do it for me thank you
+        return true;
+    }
+
+    /**
      * Computes the rank for each page in the database (only 1 run)
      * @return status boolean (to be updated later)
      */
-    public boolean computePagesRank() {
+    private boolean computePagesRank() {
         Map<String, List<String>> incomingLinks = computeIncomingLinks();
 
         if (!initializePagesRank()) {
