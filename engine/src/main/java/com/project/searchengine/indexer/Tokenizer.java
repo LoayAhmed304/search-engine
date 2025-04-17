@@ -14,9 +14,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class Tokenizer {
 
-    // Field-specefic tokens
     private Map<String, InvertedIndex> indexBuffer = new HashMap<>();
-
     private final PorterStemmer stemmer = new PorterStemmer();
     SimpleTokenizer tokenizer = SimpleTokenizer.INSTANCE;
 
