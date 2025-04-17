@@ -2,10 +2,12 @@ package com.project.searchengine.indexer;
 
 import com.project.searchengine.server.model.InvertedIndex;
 import com.project.searchengine.server.model.PageReference;
+import java.io.InputStream;
 import java.util.*;
 import java.util.regex.*;
 import opennlp.tools.stemmer.PorterStemmer;
-import opennlp.tools.tokenize.SimpleTokenizer;
+import opennlp.tools.tokenize.*;
+import opennlp.tools.tokenize.TokenizerModel;
 import org.jsoup.nodes.*;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +18,10 @@ public class Tokenizer {
 
     private Map<String, InvertedIndex> indexBuffer = new HashMap<>();
     private final PorterStemmer stemmer = new PorterStemmer();
-    SimpleTokenizer tokenizer = SimpleTokenizer.INSTANCE;
+
+    private final SimpleTokenizer tokenizer = SimpleTokenizer.INSTANCE;
+
+    //   private final TokenizerME tokenizer;
 
     @Autowired
     private final StopWordFilter stopWordFilter;
@@ -117,6 +122,18 @@ public class Tokenizer {
         String cleanedToken = token.replaceAll("[^a-z]", "");
 
         return cleanedToken;
+    }
+
+    void loadTokenizerModel(InputStream modelInputStream) {
+        try (InputStream modelIn = getClass().getResourceAsStream("/models/en-token.bin")) {
+            if (modelIn == null) {
+                throw new IllegalArgumentException("Model file not found");
+            }
+            TokenizerModel model = new TokenizerModel(modelIn);
+            tokenizer = new TokenizerME(model);
+        } catch (Exception e) {
+            throw new RuntimeException("Error loading tokenizer model", e);
+        }
     }
 
     /**

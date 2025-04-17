@@ -18,7 +18,8 @@ public class searchengineApplication {
         Document document = null;
         Indexer dp = context.getBean(Indexer.class);
 
-        String url = "https://www.freecodecamp.org/news/what-is-programming/";
+        String url =
+            "https://www.simplilearn.com/best-programming-languages-start-learning-today-article";
         try {
             document = Jsoup.connect(url).get();
 
