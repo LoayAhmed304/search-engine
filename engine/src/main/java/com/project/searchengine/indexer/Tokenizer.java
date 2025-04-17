@@ -19,7 +19,7 @@ public class Tokenizer {
     private Map<String, InvertedIndex> indexBuffer = new HashMap<>();
     private final PorterStemmer stemmer = new PorterStemmer();
 
-    private final SimpleTokenizer tokenizer = SimpleTokenizer.INSTANCE;
+    SimpleTokenizer tokenizer = SimpleTokenizer.INSTANCE;
 
     //   private final TokenizerME tokenizer;
 
@@ -128,7 +128,7 @@ public class Tokenizer {
      * Load the tokenizer model from the specified input stream.
      *
      * @param modelInputStream The input stream containing the tokenizer model.
-     */
+     
     void loadTokenizerModel(InputStream modelInputStream) {
         try (InputStream modelIn = getClass().getResourceAsStream("/models/en-token.bin")) {
             if (modelIn == null) {
@@ -140,6 +140,7 @@ public class Tokenizer {
             throw new RuntimeException("Error loading tokenizer model", e);
         }
     }
+    */
 
     /**
      * Return index buffer of all tokens of the current document
