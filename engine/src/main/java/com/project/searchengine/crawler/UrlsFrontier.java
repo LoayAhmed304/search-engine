@@ -1,8 +1,5 @@
 package com.project.searchengine.crawler;
 
-// This class will have all the methods to manage the URLs in the frontier in the crawler.java filer
-// It will handle the URLs to be crawled, the URLs that have been crawled, and the URLs that are in the process of being crawled.
-// It will also deal with the server side related modules to deal with the database
 
 import com.project.searchengine.server.model.UrlDocument;
 import com.project.searchengine.server.service.UrlsFrontierService;

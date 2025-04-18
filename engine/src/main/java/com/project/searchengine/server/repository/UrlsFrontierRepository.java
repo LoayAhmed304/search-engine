@@ -51,7 +51,6 @@ public interface UrlsFrontierRepository extends MongoRepository<UrlDocument, Str
             incrementFrequency(normalizedUrl);
             return false;
         } else {
-            // if database has less than 6000 document create a new document
             if(count() < 1000)
             {
                 System.out.println("Creating new document for URL: " + normalizedUrl + "\n");
