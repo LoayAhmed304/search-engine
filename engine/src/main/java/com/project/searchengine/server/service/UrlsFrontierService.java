@@ -1,9 +1,8 @@
 package com.project.searchengine.server.service;
 
 import com.project.searchengine.server.model.UrlDocument;
-import com.project.searchengine.utils.JsonParserUtil;
-
 import com.project.searchengine.server.repository.UrlsFrontierRepository;
+import com.project.searchengine.utils.JsonParserUtil;
 import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -25,8 +24,7 @@ public class UrlsFrontierService {
      */
     public List<String> getTop100UrlsByFrequency() {
         List<String> topUrls = urlsFrontierRepository.findTop100ByFrequency();
-        
-        
+
         return JsonParserUtil.parseNormalizedUrls(topUrls);
     }
 
@@ -78,6 +76,7 @@ public class UrlsFrontierService {
         return urlsFrontierRepository.findAll();
     }
 
+    /**
      * Checks if the frontier is empty.
      * @return
      */
@@ -98,11 +97,13 @@ public class UrlsFrontierService {
         urlsFrontierRepository.updateUrlDocument(
             doc.getNormalizedUrl(),
             doc.getDocument(),
-            doc.getHashedDocContent(), 
-            doc.getLinkedPages(), 
+            doc.getHashedDocContent(),
+            doc.getLinkedPages(),
             doc.isCrawled(),
-            new Date().toString());
+            new Date().toString()
+        );
     }
+
     /**
      * Retrieves the count of documents in the frontier.
      *
@@ -111,6 +112,4 @@ public class UrlsFrontierService {
     public int count() {
         return (int) urlsFrontierRepository.count();
     }
-
 }
-
