@@ -5,6 +5,7 @@ import com.project.searchengine.crawler.preprocessing.*;
 import com.project.searchengine.server.model.InvertedIndex;
 import com.project.searchengine.server.model.Page;
 import com.project.searchengine.server.model.PageReference;
+import com.project.searchengine.server.repository.InvertedIndexRepository;
 import com.project.searchengine.server.service.PageService;
 import java.security.MessageDigest;
 import java.util.*;
@@ -28,6 +29,9 @@ public class Indexer {
 
     @Autowired
     private MongoTemplate mongoTemplate;
+
+    @Autowired
+    private InvertedIndexRepository invertedIndexRepository;
 
     /**
      * Preprocesses the document by extracting tokens and saving the page.
@@ -75,22 +79,35 @@ public class Indexer {
     public void saveTokens() {
         Map<String, InvertedIndex> indexBuffer = tokenizer.getIndexBuffer();
         System.out.println("Tokens size: " + indexBuffer.size());
+        long start = System.nanoTime();
 
         if (!indexBuffer.isEmpty()) {
-            long start = System.nanoTime();
+            // 1- Query existing words from the DB
+            Set<String> allWords = indexBuffer.keySet();
+            List<InvertedIndex> existingIndices = invertedIndexRepository.findAllByWordIn(allWords);
+            Set<String> existingWordSet = new HashSet<>(
+                existingIndices.stream().map(InvertedIndex::getWord).toList()
+            );
+
+            // 2- Create bulk operations
             BulkOperations bulkOps = mongoTemplate.bulkOps(
                 BulkOperations.BulkMode.UNORDERED,
                 InvertedIndex.class
             );
 
             for (InvertedIndex index : indexBuffer.values()) {
-                Query query = new Query(Criteria.where("word").is(index.getWord()));
-                Update update = new Update()
-                    .addToSet("pages")
-                    .each(index.getPages().toArray())
-                    .inc("pageCount", index.getPages().size());
-
-                bulkOps.upsert(query, update);
+                String word = index.getWord();
+                if (existingWordSet.contains(word)) {
+                    // Update existing word
+                    Query query = new Query(Criteria.where("word").is(word));
+                    Update update = new Update()
+                        .addToSet("pages", index.getPages())
+                        .inc("pageCount", index.getPageCount());
+                    bulkOps.updateOne(query, update);
+                } else {
+                    // Insert new word
+                    bulkOps.insert(index);
+                }
             }
 
             try {
@@ -107,7 +124,6 @@ public class Indexer {
 
             long duration = (System.nanoTime() - start) / 1_000_000;
             System.out.println("Saving to the database took: " + duration + " ms");
-
             indexBuffer.clear();
         }
     }

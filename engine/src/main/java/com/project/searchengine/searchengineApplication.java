@@ -29,7 +29,9 @@ public class searchengineApplication {
         Document document = null;
         Indexer dp = context.getBean(Indexer.class);
 
-        String url = "https://en.wikipedia.org/wiki/Computer_programming";
+        String url = "https://en.wikipedia.org/wiki/Computer_science";
+        //  String url = "https://en.wikipedia.org/wiki/Computer_programming";
+        //  String url = "https://en.wikipedia.org/wiki/Programming_language";
         try {
             document = Jsoup.connect(url).get();
 
