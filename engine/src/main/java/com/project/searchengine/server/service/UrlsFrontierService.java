@@ -97,5 +97,13 @@ public class UrlsFrontierService {
             doc.isCrawled(),
             new Date().toString());
     }
+    /**
+     * Retrieves the count of documents in the frontier.
+     *
+     * @return The count of documents
+     */
+    public int count() {
+        return (int) urlsFrontierRepository.count();
+    }
 
 }

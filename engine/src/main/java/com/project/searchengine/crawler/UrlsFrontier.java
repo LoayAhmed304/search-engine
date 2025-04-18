@@ -1,8 +1,5 @@
 package com.project.searchengine.crawler;
 
-// This class will have all the methods to manage the URLs in the frontier in the crawler.java filer
-// It will handle the URLs to be crawled, the URLs that have been crawled, and the URLs that are in the process of being crawled.
-// It will also deal with the server side related modules to deal with the database
 
 import com.project.searchengine.server.model.UrlDocument;
 import com.project.searchengine.server.service.UrlsFrontierService;
@@ -20,7 +17,7 @@ public class UrlsFrontier {
 
     private final String SEEDS_FILE_PATH = Paths.get("src/main/resources/seeds.txt").toString();
     public static final int BATCH_SIZE = 100;
-    public static final int MAX_URLS = 6000;
+    public static final int MAX_URLS = 1000;
     public List<String> currentUrlBatch = new ArrayList<>();
 
     /**
@@ -105,6 +102,10 @@ public class UrlsFrontier {
         urlDocument.setCrawled(isCrawled);
         urlDocument.setLinkedPages(linkedPages);
         urlsFrontierService.updateUrlDocument(urlDocument);
+    }
+
+    public boolean hasReachedThreshold() {
+        return urlsFrontierService.count() >= MAX_URLS;
     }
     
 }
