@@ -1,9 +1,10 @@
 package com.project.searchengine;
 
 // import com.project.searchengine.crawler.Crawler;
+
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-// import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContext;
 
 @SpringBootApplication
 public class searchengineApplication {
