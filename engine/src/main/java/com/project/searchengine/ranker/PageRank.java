@@ -15,7 +15,7 @@ public class PageRank {
 
     private final UrlsFrontierService urlFrontier;
     private final Map<String, UrlDocument> allUrls;
-    private final Map<String, Page> allPages;
+    final Map<String, Page> allPages;
     private final PageService pageService;
 
     public PageRank(UrlsFrontierService urlFrontier, PageService pageService) {
@@ -56,7 +56,7 @@ public class PageRank {
      * Computes the rank for each page in the database (only 1 run)
      * @return status boolean (to be updated later)
      */
-    private boolean computePagesRank(Map<String, List<String>> incomingLinks) {
+    boolean computePagesRank(Map<String, List<String>> incomingLinks) {
         Map<String, Double> newRanks = new HashMap<>();
 
         for (Page page : allPages.values()) {
@@ -103,7 +103,7 @@ public class PageRank {
      * Computes the incoming links hashmap for each URL in the URL frontier collection
      * @return Adjacency list of all ingoing links for each page
      */
-    private Map<String, List<String>> computeIncomingLinks() {
+    Map<String, List<String>> computeIncomingLinks() {
         Map<String, List<String>> incomingLinks = new HashMap<>();
 
         // for every page, add it to the outgoing links from the url frontier
