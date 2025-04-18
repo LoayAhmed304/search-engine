@@ -7,7 +7,6 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Document(collection = "words")
 public class InvertedIndex {
 
-    @Id
     private String word;
 
     private List<PageReference> pages;

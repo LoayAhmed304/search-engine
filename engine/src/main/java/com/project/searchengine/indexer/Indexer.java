@@ -83,19 +83,16 @@ public class Indexer {
             );
 
             for (InvertedIndex index : indexBuffer.values()) {
-                for (PageReference newPage : index.getPages()) {
-                    // Add the new page to the existing pages
-                    Query pageQuery = new Query(
-                        Criteria.where("word")
-                            .is(index.getWord())
-                            .and("pages.pageId")
-                            .ne(newPage.getPageId())
-                    );
+                // Query to find the existing inverted index
+                Query query = new Query(Criteria.where("word").is(index.getWord()));
 
-                    Update update = new Update().addToSet("pages", newPage).inc("pageCount", 1);
+                // Add the new pages to the existing inverted index
+                Update update = new Update()
+                    .addToSet("pages", index.getPages())
+                    .inc("pageCount", index.getPageCount());
 
-                    bulkOps.upsert(pageQuery, update);
-                }
+                // Upsert the inverted index
+                bulkOps.upsert(query, update);
             }
 
             try {
