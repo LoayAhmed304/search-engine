@@ -20,7 +20,7 @@ public class UrlsFrontier {
 
     private final String SEEDS_FILE_PATH = Paths.get("src/main/resources/seeds.txt").toString();
     public static final int BATCH_SIZE = 100;
-    public static final int MAX_URLS = 6000;
+    public static final int MAX_URLS = 1000;
     public List<String> currentUrlBatch = new ArrayList<>();
 
     /**
@@ -105,6 +105,10 @@ public class UrlsFrontier {
         urlDocument.setCrawled(isCrawled);
         urlDocument.setLinkedPages(linkedPages);
         urlsFrontierService.updateUrlDocument(urlDocument);
+    }
+
+    public boolean hasReachedThreshold() {
+        return urlsFrontierService.count() >= MAX_URLS;
     }
     
 }

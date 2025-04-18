@@ -51,17 +51,23 @@ public interface UrlsFrontierRepository extends MongoRepository<UrlDocument, Str
             incrementFrequency(normalizedUrl);
             return false;
         } else {
-            System.out.println("Creating new document for URL: " + normalizedUrl + "\n");
-            UrlDocument newDocument = new UrlDocument();
-            newDocument.setNormalizedUrl(normalizedUrl);
-            newDocument.setFrequency(1L);
-            newDocument.setCrawled(false);
-            newDocument.setDocument("");
-            newDocument.setHashedDocContent("");
-            newDocument.setLinkedPages(new ArrayList<>() {});
-            System.out.println("New document created: " + newDocument + "\n");
-            save(newDocument);
-            return true;
+            // if database has less than 6000 document create a new document
+            if(count() < 1000)
+            {
+                System.out.println("Creating new document for URL: " + normalizedUrl + "\n");
+                UrlDocument newDocument = new UrlDocument();
+                newDocument.setNormalizedUrl(normalizedUrl);
+                newDocument.setFrequency(1L);
+                newDocument.setCrawled(false);
+                newDocument.setDocument("");
+                newDocument.setHashedDocContent("");
+                newDocument.setLinkedPages(new ArrayList<>() {});
+                System.out.println("New document created: " + newDocument + "\n");
+                save(newDocument);
+                return true;
+                
+            }
+            return false;
         }
     }
 
