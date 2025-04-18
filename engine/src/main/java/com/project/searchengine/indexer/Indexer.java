@@ -1,5 +1,6 @@
 package com.project.searchengine.indexer;
 
+import com.mongodb.bulk.BulkWriteResult;
 import com.project.searchengine.crawler.preprocessing.*;
 import com.project.searchengine.server.model.InvertedIndex;
 import com.project.searchengine.server.model.Page;
@@ -83,26 +84,30 @@ public class Indexer {
             );
 
             for (InvertedIndex index : indexBuffer.values()) {
-                // Query to find the existing inverted index
                 Query query = new Query(Criteria.where("word").is(index.getWord()));
-
-                // Add the new pages to the existing inverted index
                 Update update = new Update()
-                    .addToSet("pages", index.getPages())
-                    .inc("pageCount", index.getPageCount());
+                    .addToSet("pages")
+                    .each(index.getPages().toArray())
+                    .inc("pageCount", index.getPages().size());
 
-                // Upsert the inverted index
                 bulkOps.upsert(query, update);
             }
 
             try {
-                bulkOps.execute();
+                BulkWriteResult result = bulkOps.execute();
+                System.out.printf(
+                    "Indexed %,d tokens (inserted: %,d, updated: %,d)%n",
+                    indexBuffer.size(),
+                    result.getInsertedCount(),
+                    result.getModifiedCount()
+                );
             } catch (Exception e) {
                 System.err.println("Error saving tokens: " + e.getMessage());
             }
 
             long duration = (System.nanoTime() - start) / 1_000_000;
             System.out.println("Saving to the database took: " + duration + " ms");
+
             indexBuffer.clear();
         }
     }
