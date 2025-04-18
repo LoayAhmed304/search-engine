@@ -15,6 +15,7 @@ public class URLExtractor {
      * @return the document fetched from the URL
      */
     public static Document getDocument(String url) {
+        System.out.println("Fetching document from URL: " + url);
         try {
             Connection.Response res = Jsoup.connect(url).execute();
             if(res.contentType() == null || !res.contentType().contains("text/html")) {
