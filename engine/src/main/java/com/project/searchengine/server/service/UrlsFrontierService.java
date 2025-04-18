@@ -1,6 +1,8 @@
 package com.project.searchengine.server.service;
 
 import com.project.searchengine.server.model.UrlDocument;
+import com.project.searchengine.utils.JsonParserUtil;
+
 import com.project.searchengine.server.repository.UrlsFrontierRepository;
 import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,9 +23,11 @@ public class UrlsFrontierService {
      *
      * @return List of up to 100 UrlDocument objects
      */
-    public List<UrlDocument> getTop100UrlsByFrequency() {
-        List<UrlDocument> topUrls = urlsFrontierRepository.findTop100ByFrequency();
-        return topUrls;
+    public List<String> getTop100UrlsByFrequency() {
+        List<String> topUrls = urlsFrontierRepository.findTop100ByFrequency();
+        
+        
+        return JsonParserUtil.parseNormalizedUrls(topUrls);
     }
 
     /**
@@ -73,4 +77,40 @@ public class UrlsFrontierService {
     public List<UrlDocument> getAllUrls() {
         return urlsFrontierRepository.findAll();
     }
+
+     * Checks if the frontier is empty.
+     * @return
+     */
+    public boolean isEmpty() {
+        return urlsFrontierRepository.count() == 0;
+    }
+
+    /**
+     * Updates a document with the given normalizedUrl with the provided fields.
+     *
+     * @param normalizedUrl    The normalized URL of the document to update
+     * @param document         The new HTML content of the page
+     * @param hashedDocContent The new hashed content of the page
+     * @param linkedPages      The new list of linked URLs
+     * @param isCrawled        The new crawled status
+     */
+    public void updateUrlDocument(UrlDocument doc) {
+        urlsFrontierRepository.updateUrlDocument(
+            doc.getNormalizedUrl(),
+            doc.getDocument(),
+            doc.getHashedDocContent(), 
+            doc.getLinkedPages(), 
+            doc.isCrawled(),
+            new Date().toString());
+    }
+    /**
+     * Retrieves the count of documents in the frontier.
+     *
+     * @return The count of documents
+     */
+    public int count() {
+        return (int) urlsFrontierRepository.count();
+    }
+
 }
+

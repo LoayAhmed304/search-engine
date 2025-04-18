@@ -13,12 +13,13 @@ import java.util.List;
 public interface UrlsFrontierRepository extends MongoRepository<UrlDocument, String> {
 
     /**
-     * Retrieves the top 100 documents sorted by frequency in descending order.
+     * Finds the top 100 URLs sorted by frequency in descending order, returning
+     * only the normalizedUrl field, for documents where isCrawled is false.
      *
-     * @return List of up to 100 UrlDocument documents
+     * @return List of up to 100 normalized URLs where isCrawled is false
      */
-    @Query(value = "{}", sort = "{ 'frequency': -1 }")
-    List<UrlDocument> findTop100ByFrequency();
+    @Query(value = "{ 'isCrawled': false }", fields = "{ 'normalizedUrl': 1, '_id': 0 }", sort = "{ 'frequency': -1 }")
+    List<String> findTop100ByFrequency();
 
     /**
      * Increments the frequency of a document with the given normalizedUrl.
@@ -50,13 +51,37 @@ public interface UrlsFrontierRepository extends MongoRepository<UrlDocument, Str
             incrementFrequency(normalizedUrl);
             return false;
         } else {
-            UrlDocument newDocument = new UrlDocument();
-            newDocument.setNormalizedUrl(normalizedUrl);
-            newDocument.setFrequency(1L);
-            newDocument.setCrawled(false);
-            newDocument.setLinkedPages(new ArrayList<>() {});
-            save(newDocument);
-            return true;
+            if(count() < 1000)
+            {
+                System.out.println("Creating new document for URL: " + normalizedUrl + "\n");
+                UrlDocument newDocument = new UrlDocument();
+                newDocument.setNormalizedUrl(normalizedUrl);
+                newDocument.setFrequency(1L);
+                newDocument.setCrawled(false);
+                newDocument.setDocument("");
+                newDocument.setHashedDocContent("");
+                newDocument.setLinkedPages(new ArrayList<>() {});
+                System.out.println("New document created: " + newDocument + "\n");
+                save(newDocument);
+                return true;
+                
+            }
+            return false;
         }
     }
+
+    /**
+     * Updates a document with the given normalizedUrl with the provided fields.
+     *
+     * @param normalizedUrl    The normalized URL of the document to update
+     * @param document         The new HTML content of the page
+     * @param hashedDocContent The new hashed content of the page
+     * @param linkedPages      The new list of linked URLs
+     * @param isCrawled        The new crawled status
+     * @param lastCrawled      The new last crawled date
+     */
+    @Query("{ 'normalizedUrl': ?0 }")
+    @Update("{ '$set': { 'document': ?1, 'hashedDocContent': ?2, 'linkedPages': ?3, 'isCrawled': ?4, 'lastCrawled': ?5 } }")
+    void updateUrlDocument(String normalizedUrl, String document, String hashedDocContent, List<String> linkedPages,
+            boolean isCrawled, String lastCrawled);
 }
