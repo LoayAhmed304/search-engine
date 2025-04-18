@@ -37,8 +37,12 @@ public class PageRank {
     public boolean computeAllRanks() {
         boolean converged = false; // to be implemented later
 
+        if (!initializePagesRank()) return false;
+
+        Map<String, List<String>> incomingLinks = computeIncomingLinks();
+
         for (int i = 0; i < MAX_ITERATIONS && !converged; i++) {
-            if (!computePagesRank()) return false;
+            if (!computePagesRank(incomingLinks)) return false;
         }
         // bulk update the pages here
         this.pageService.saveAll(new ArrayList<>(allPages.values()));
@@ -52,13 +56,7 @@ public class PageRank {
      * Computes the rank for each page in the database (only 1 run)
      * @return status boolean (to be updated later)
      */
-    private boolean computePagesRank() {
-        Map<String, List<String>> incomingLinks = computeIncomingLinks();
-
-        if (!initializePagesRank()) {
-            return false;
-        }
-
+    private boolean computePagesRank(Map<String, List<String>> incomingLinks) {
         Map<String, Double> newRanks = new HashMap<>();
 
         for (Page page : allPages.values()) {
