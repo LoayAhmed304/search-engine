@@ -95,14 +95,19 @@ public class Indexer {
                 InvertedIndex.class
             );
 
+            // 3- Insert or update the indices
             for (InvertedIndex index : indexBuffer.values()) {
                 String word = index.getWord();
+                Query query = new Query(Criteria.where("word").is(word));
+                Update update = new Update();
                 if (existingWordSet.contains(word)) {
                     // Update existing word
-                    Query query = new Query(Criteria.where("word").is(word));
-                    Update update = new Update()
-                        .addToSet("pages", index.getPages())
-                        .inc("pageCount", index.getPageCount());
+                    for (PageReference page : index.getPages()) {
+                        // Update the page reference
+                        update.addToSet("pages", page);
+                    }
+                    update.inc("pageCount", index.getPageCount());
+
                     bulkOps.updateOne(query, update);
                 } else {
                     // Insert new word
