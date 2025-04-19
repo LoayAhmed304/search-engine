@@ -1,11 +1,9 @@
 package com.project.searchengine.server.model;
 
 import java.util.*;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-
 
 @Document(collection = "urlsfrontier")
 public class UrlDocument {
@@ -20,15 +18,22 @@ public class UrlDocument {
     private String hashedDocContent;
     private List<String> linkedPages;
     private String lastCrawled;
+    private double rank;
 
     @Autowired
     public UrlDocument() {
         this.linkedPages = new ArrayList<>();
     }
 
-    public UrlDocument(String normalizedUrl, long frequency, boolean isCrawled,
-            String document, String hashedDocContent,
-            List<String> linkedPages, String lastCrawled) {
+    public UrlDocument(
+        String normalizedUrl,
+        long frequency,
+        boolean isCrawled,
+        String document,
+        String hashedDocContent,
+        List<String> linkedPages,
+        String lastCrawled
+    ) {
         this.normalizedUrl = normalizedUrl;
         this.frequency = frequency;
         this.isCrawled = isCrawled;
@@ -36,6 +41,7 @@ public class UrlDocument {
         this.hashedDocContent = hashedDocContent;
         this.linkedPages = linkedPages;
         this.lastCrawled = lastCrawled;
+        this.rank = 0.0;
     }
 
     public String getId() {
@@ -104,15 +110,37 @@ public class UrlDocument {
 
     @Override
     public String toString() {
-        return "UrlDocument{" +
-                "id='" + id + '\'' +
-                ", normalizedUrl='" + normalizedUrl + '\'' +
-                ", frequency=" + frequency +
-                ", isCrawled=" + isCrawled +
-                ", document='" + document + '\'' +
-                ", hashedDocContent='" + hashedDocContent + '\'' +
-                ", linkedPages=" + linkedPages +
-                ", lastCrawled=" + lastCrawled +
-                '}';
+        return (
+            "UrlDocument{" +
+            "id='" +
+            id +
+            '\'' +
+            ", normalizedUrl='" +
+            normalizedUrl +
+            '\'' +
+            ", frequency=" +
+            frequency +
+            ", isCrawled=" +
+            isCrawled +
+            ", document='" +
+            document +
+            '\'' +
+            ", hashedDocContent='" +
+            hashedDocContent +
+            '\'' +
+            ", linkedPages=" +
+            linkedPages +
+            ", lastCrawled=" +
+            lastCrawled +
+            '}'
+        );
+    }
+
+    public double getRank() {
+        return rank;
+    }
+
+    public void setRank(double rank) {
+        this.rank = rank;
     }
 }
