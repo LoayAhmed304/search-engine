@@ -27,7 +27,14 @@ public class PageRank {
 
         this.allUrls = this.urlFrontier.getAllUrls()
             .stream()
-            .collect(Collectors.toMap(UrlDocument::getNormalizedUrl, Function.identity()));
+            .collect(
+                Collectors.toMap(
+                    UrlDocument::getNormalizedUrl,
+                    Function.identity(),
+                    (a, b) -> a,
+                    HashMap::new
+                )
+            );
         this.allPages = this.pageService.getAllPages()
             .stream()
             .collect(Collectors.toMap(Page::getUrl, Function.identity()));
@@ -60,7 +67,7 @@ public class PageRank {
      * @return status boolean (to be updated later)
      */
     boolean computePagesRank(Map<String, List<String>> incomingLinks) {
-        Map<String, Double> newRanks = new HashMap<>();
+        Map<String, Double> newRanks = new HashMap<>(allPages.size());
 
         for (Page page : allPages.values()) {
             String url = page.getUrl();
@@ -106,7 +113,7 @@ public class PageRank {
      * @return Adjacency list of all ingoing links for each page
      */
     Map<String, List<String>> computeIncomingLinks() {
-        Map<String, List<String>> incomingLinks = new HashMap<>();
+        Map<String, List<String>> incomingLinks = new HashMap<>(allUrls.keySet().size());
 
         // for every page, add it to the outgoing links from the url frontier
         for (UrlDocument urlDoc : allUrls.values()) { // loop over every url in the url frontier (not all necessarily crawled)
