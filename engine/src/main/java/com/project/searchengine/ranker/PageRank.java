@@ -17,6 +17,7 @@ public class PageRank {
     private final Map<String, UrlDocument> allUrls;
     final Map<String, Page> allPages;
     private final PageService pageService;
+    private final Map<String, Integer> outgoingLinksCount = new HashMap<>();
 
     public PageRank(UrlsFrontierService urlFrontier, PageService pageService) {
         this.urlFrontier = urlFrontier;
@@ -24,7 +25,17 @@ public class PageRank {
 
         this.allUrls = this.urlFrontier.getAllUrls()
             .stream()
-            .collect(Collectors.toMap(UrlDocument::getNormalizedUrl, Function.identity()));
+            .collect(
+                Collectors.toMap(
+                    UrlDocument::getNormalizedUrl,
+                    Function.identity(),
+                    (a, b) -> a,
+                    HashMap::new
+                )
+            );
+
+        computeOutgoingLinksCount();
+
         this.allPages = this.pageService.getAllPages()
             .stream()
             .collect(Collectors.toMap(Page::getUrl, Function.identity()));
@@ -35,21 +46,27 @@ public class PageRank {
      * @return status boolean (to be implemented later)
      */
     public boolean computeAllRanks() {
-        boolean converged = false; // to be implemented later
+        try {
+            boolean converged = false; // to be implemented later
 
-        if (!initializePagesRank()) return false;
+            if (!initializePagesRank()) return false;
 
-        Map<String, List<String>> incomingLinks = computeIncomingLinks();
+            Map<String, List<String>> incomingLinks = computeIncomingLinks();
 
-        for (int i = 0; i < MAX_ITERATIONS && !converged; i++) {
-            if (!computePagesRank(incomingLinks)) return false;
+            for (int i = 0; i < MAX_ITERATIONS && !converged; i++) {
+                if (!computePagesRank(incomingLinks)) return false;
+            }
+            // bulk update the pages here
+            this.pageService.saveAll(new ArrayList<>(allPages.values()));
+
+            //⚠️⚠️ implement using bulkOps ⚠️⚠️
+            // Tasneem please do it for me thank you
+            return true;
+        } finally {
+            allUrls.clear();
+            allPages.clear();
+            outgoingLinksCount.clear();
         }
-        // bulk update the pages here
-        this.pageService.saveAll(new ArrayList<>(allPages.values()));
-
-        //⚠️⚠️ implement using bulkOps ⚠️⚠️
-        // Tasneem please do it for me thank you
-        return true;
     }
 
     /**
@@ -57,19 +74,18 @@ public class PageRank {
      * @return status boolean (to be updated later)
      */
     boolean computePagesRank(Map<String, List<String>> incomingLinks) {
-        Map<String, Double> newRanks = new HashMap<>();
+        Map<String, Double> newRanks = new HashMap<>(allPages.size());
 
         for (Page page : allPages.values()) {
             String url = page.getUrl();
             double curRank = 0;
 
             for (String incoming : incomingLinks.getOrDefault(url, List.of())) {
-                Page incomingPage = allPages.get(incoming);
-                int outLinks = allUrls
-                    .getOrDefault(incoming, new UrlDocument())
-                    .getLinkedPages()
-                    .size();
-                if (outLinks > 0) curRank += incomingPage.getRank() / outLinks;
+                Integer outLinks = outgoingLinksCount.get(incoming);
+
+                if (outLinks != null && outLinks > 0) {
+                    curRank += allPages.get(incoming).getRank() / outLinks;
+                }
             }
 
             curRank *= DAMPING_FACTOR;
@@ -104,7 +120,7 @@ public class PageRank {
      * @return Adjacency list of all ingoing links for each page
      */
     Map<String, List<String>> computeIncomingLinks() {
-        Map<String, List<String>> incomingLinks = new HashMap<>();
+        Map<String, List<String>> incomingLinks = new HashMap<>(allUrls.size());
 
         // for every page, add it to the outgoing links from the url frontier
         for (UrlDocument urlDoc : allUrls.values()) { // loop over every url in the url frontier (not all necessarily crawled)
@@ -118,5 +134,16 @@ public class PageRank {
         }
 
         return incomingLinks;
+    }
+
+    /**
+     * Pre computes all the outgoing links sizes
+     * Instead of retrieving from the database multiple times for the same URL.
+     * To decreases database multiple retrievals to just get a size of an array
+     */
+    void computeOutgoingLinksCount() {
+        for (UrlDocument doc : allUrls.values()) {
+            outgoingLinksCount.put(doc.getNormalizedUrl(), doc.getLinkedPages().size());
+        }
     }
 }
