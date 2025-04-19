@@ -9,6 +9,8 @@ import com.project.searchengine.server.model.UrlDocument;
 import com.project.searchengine.server.service.PageService;
 import com.project.searchengine.server.service.UrlsFrontierService;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -223,8 +225,13 @@ class PageRankTest {
         when(urlFrontier.getAllUrls()).thenReturn(Arrays.asList(url1, url2, url3));
 
         // 4. Capture what was passed to saveAll(), because we clear the data structures now
-        ArgumentCaptor<List<Page>> pagesCaptor = ArgumentCaptor.forClass(List.class);
-        doNothing().when(pageService).saveAll(pagesCaptor.capture());
+        List<Page> savedPagesCopy = new ArrayList<>();
+
+        when(pageService.saveAll(anyList())).thenAnswer(invocation -> {
+            List<Page> pagesToSave = invocation.getArgument(0);
+            savedPagesCopy.addAll(pagesToSave);
+            return new ArrayList<>(pagesToSave);
+        });
 
         // 5. Execute
         PageRank ranker = new PageRank(urlFrontier, pageService);
@@ -232,15 +239,18 @@ class PageRankTest {
         assertTrue(result);
 
         // 6. Verify saved pages
-        List<Page> savedPages = pagesCaptor.getValue();
-        assertNotNull(savedPages);
-        assertEquals(3, savedPages.size());
+
+        assertNotNull(savedPagesCopy);
+        assertEquals(3, savedPagesCopy.size());
         verify(pageService, times(1)).saveAll(anyList());
 
         // 7. Verify we're testing the right instances
-        assertEquals(page1, ranker.allPages.get("url1"));
-        assertEquals(page2, ranker.allPages.get("url2"));
-        assertEquals(page3, ranker.allPages.get("url3"));
+        Map<String, Page> savedPagesMap = savedPagesCopy
+            .stream()
+            .collect(Collectors.toMap(Page::getUrl, Function.identity()));
+        assertEquals(page1, savedPagesMap.get("url1"));
+        assertEquals(page2, savedPagesMap.get("url2"));
+        assertEquals(page3, savedPagesMap.get("url3"));
 
         // 8. Verify ranks updated properly
         assertTrue(page1.getRank() > 0, "Page1 rank should be > 0");
