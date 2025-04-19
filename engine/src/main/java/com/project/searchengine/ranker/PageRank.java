@@ -65,10 +65,10 @@ public class PageRank {
 
             for (String incoming : incomingLinks.getOrDefault(url, List.of())) {
                 Page incomingPage = allPages.get(incoming);
-                int outLinks = allUrls
-                    .getOrDefault(incoming, new UrlDocument())
-                    .getLinkedPages()
-                    .size();
+
+                if (!allUrls.containsKey(incoming)) continue;
+
+                int outLinks = allUrls.get(incoming).getLinkedPages().size();
                 if (outLinks > 0) curRank += incomingPage.getRank() / outLinks;
             }
 
