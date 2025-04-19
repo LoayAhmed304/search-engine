@@ -10,8 +10,9 @@ import java.util.stream.Collectors;
 
 public class PageRank {
 
-    private static final double DAMPING_FACTOR = 0.8;
-    private static final short MAX_ITERATIONS = 50;
+    private static final double DAMPING_FACTOR = 0.85;
+    private static final short MAX_ITERATIONS = 100;
+    private static final double CONVERGE_THRESHOLD = 1e-7;
 
     private final UrlsFrontierService urlFrontier;
     private final Map<String, UrlDocument> allUrls;
@@ -52,9 +53,18 @@ public class PageRank {
             if (!initializePagesRank()) return false;
 
             Map<String, List<String>> incomingLinks = computeIncomingLinks();
+            Map<String, Double> previousRanks = new HashMap<>();
+
+            allUrls.forEach((url, doc) -> previousRanks.put(url, doc.getRank()));
 
             for (int i = 0; i < MAX_ITERATIONS && !converged; i++) {
                 if (!computePagesRank(incomingLinks)) return false;
+                Map<String, Double> currentRanks = new HashMap<>();
+                allUrls.forEach((url, doc) -> currentRanks.put(url, doc.getRank()));
+
+                converged = hasConverged(previousRanks, currentRanks);
+                previousRanks.clear();
+                previousRanks.putAll(currentRanks);
             }
             // bulk update the pages here
             // this.pageService.saveAll(new ArrayList<>(allPages.values()));
@@ -66,6 +76,19 @@ public class PageRank {
             allPages.clear();
             outgoingLinksCount.clear();
         }
+    }
+
+    private boolean hasConverged(Map<String, Double> oldRanks, Map<String, Double> newRanks) {
+        double totalChange = 0.0;
+        for (Map.Entry<String, Double> entry : newRanks.entrySet()) {
+            String url = entry.getKey();
+            double newRank = entry.getValue();
+            double oldRank = oldRanks.getOrDefault(url, 0.0);
+            totalChange += Math.abs(newRank - oldRank);
+        }
+
+        double averageChange = totalChange / newRanks.size();
+        return averageChange < CONVERGE_THRESHOLD;
     }
 
     /**
