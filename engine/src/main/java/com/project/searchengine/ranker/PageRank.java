@@ -17,10 +17,13 @@ public class PageRank {
     private final Map<String, UrlDocument> allUrls;
     final Map<String, Page> allPages;
     private final PageService pageService;
+    private final Map<String, Integer> outgoingLinksCount = new HashMap<>();
 
     public PageRank(UrlsFrontierService urlFrontier, PageService pageService) {
         this.urlFrontier = urlFrontier;
         this.pageService = pageService;
+
+        computeOutgoingLinksCount();
 
         this.allUrls = this.urlFrontier.getAllUrls()
             .stream()
@@ -64,12 +67,11 @@ public class PageRank {
             double curRank = 0;
 
             for (String incoming : incomingLinks.getOrDefault(url, List.of())) {
-                Page incomingPage = allPages.get(incoming);
+                Integer outLinks = outgoingLinksCount.get(incoming);
 
-                if (!allUrls.containsKey(incoming)) continue;
-
-                int outLinks = allUrls.get(incoming).getLinkedPages().size();
-                if (outLinks > 0) curRank += incomingPage.getRank() / outLinks;
+                if (outLinks != null && outLinks > 0) {
+                    curRank += allPages.get(incoming).getRank() / outLinks;
+                }
             }
 
             curRank *= DAMPING_FACTOR;
@@ -118,5 +120,16 @@ public class PageRank {
         }
 
         return incomingLinks;
+    }
+
+    /**
+     * Pre computes all the outgoing links sizes
+     * Instead of retrieving from the database multiple times for the same URL.
+     * To decreases database multiple retrievals to just get a size of an array
+     */
+    void computeOutgoingLinksCount() {
+        for (UrlDocument doc : allUrls.values()) {
+            outgoingLinksCount.put(doc.getNormalizedUrl(), doc.getLinkedPages().size());
+        }
     }
 }
