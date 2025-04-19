@@ -78,23 +78,27 @@ public class PageRank {
 
         // for (Page page : allPages.values()) {
         //     String url = page.getUrl();
-        for (UrlDocument doc : allUrls.values()) {
-            String url = doc.getNormalizedUrl();
-            double curRank = 0;
+        allUrls
+            .values()
+            .parallelStream()
+            .collect(Collectors.toList())
+            .forEach(doc -> {
+                String url = doc.getNormalizedUrl();
+                double curRank = 0;
 
-            for (String incoming : incomingLinks.getOrDefault(url, List.of())) {
-                Integer outLinks = outgoingLinksCount.get(incoming);
+                for (String incoming : incomingLinks.getOrDefault(url, List.of())) {
+                    Integer outLinks = outgoingLinksCount.get(incoming);
 
-                if (outLinks != null && outLinks > 0) {
-                    // curRank += allPages.get(incoming).getRank() / outLinks;
-                    curRank += allUrls.get(incoming).getRank() / outLinks;
+                    if (outLinks != null && outLinks > 0) {
+                        // curRank += allPages.get(incoming).getRank() / outLinks;
+                        curRank += allUrls.get(incoming).getRank() / outLinks;
+                    }
                 }
-            }
 
-            curRank *= DAMPING_FACTOR;
-            curRank += 1 - DAMPING_FACTOR;
-            newRanks.put(url, curRank);
-        }
+                curRank *= DAMPING_FACTOR;
+                curRank += 1 - DAMPING_FACTOR;
+                newRanks.put(url, curRank);
+            });
 
         // for (Page page : allPages.values()) {
         //     page.setRank(newRanks.get(page.getUrl()));
@@ -157,3 +161,22 @@ public class PageRank {
         }
     }
 }
+// boolean computePagesRank(Map<String, List<String>> incomingLinks) {
+//         // Map<String, Double> newRanks = new HashMap<>(allPages.size());
+//         Map<String, Double> newRanks = new HashMap<>(allUrls.size());
+//         // for (Page page : allPages.values()) {
+//         //     String url = page.getUrl();
+//         for (UrlDocument doc : allUrls.values()) {
+//             String url = doc.getNormalizedUrl();
+//             double curRank = 0;
+//             for (String incoming : incomingLinks.getOrDefault(url, List.of())) {
+//                 Integer outLinks = outgoingLinksCount.get(incoming);
+//                 if (outLinks != null && outLinks > 0) {
+//                     // curRank += allPages.get(incoming).getRank() / outLinks;
+//                     curRank += allUrls.get(incoming).getRank() / outLinks;
+//                 }
+//             }
+//             curRank *= DAMPING_FACTOR;
+//             curRank += 1 - DAMPING_FACTOR;
+//             newRanks.put(url, curRank);
+//         }
