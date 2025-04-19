@@ -113,6 +113,11 @@ public class UrlsFrontierService {
         return (int) urlsFrontierRepository.count();
     }
 
+    /**
+     * Saves all given URL documents into the database
+     * @param urls  All URLs to be saved into the database
+     * @return All URLs saved into the database successfully
+     */
     public List<UrlDocument> saveAll(List<UrlDocument> urls) {
         return urlsFrontierRepository.saveAll(urls);
     }
