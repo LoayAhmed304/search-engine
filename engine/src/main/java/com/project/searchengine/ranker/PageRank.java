@@ -113,7 +113,7 @@ public class PageRank {
      * @return Adjacency list of all ingoing links for each page
      */
     Map<String, List<String>> computeIncomingLinks() {
-        Map<String, List<String>> incomingLinks = new HashMap<>(allUrls.keySet().size());
+        Map<String, List<String>> incomingLinks = new HashMap<>(allUrls.size());
 
         // for every page, add it to the outgoing links from the url frontier
         for (UrlDocument urlDoc : allUrls.values()) { // loop over every url in the url frontier (not all necessarily crawled)
