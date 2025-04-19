@@ -127,7 +127,7 @@ class PageRankTest {
         testPages.put("url3", new Page("3", "url3", "zTitle", "zContent"));
 
         for (Page page : testPages.values()) {
-            page.setRank(0.333);
+            page.setRank(1.0 / testPages.size());
         }
 
         Map<String, UrlDocument> testUrls = new HashMap<>();
@@ -162,6 +162,11 @@ class PageRankTest {
         java.lang.reflect.Field allUrlsField = PageRank.class.getDeclaredField("allUrls");
         allUrlsField.setAccessible(true);
         allUrlsField.set(ranker, testUrls);
+
+        java.lang.reflect.Field outgoingCountsField =
+            PageRank.class.getDeclaredField("outgoingLinksCount");
+        outgoingCountsField.setAccessible(true);
+        outgoingCountsField.set(ranker, Map.of("url1", 2, "url2", 1, "url3", 0));
 
         // Execute
         boolean result = ranker.computePagesRank(incomingLinks);
