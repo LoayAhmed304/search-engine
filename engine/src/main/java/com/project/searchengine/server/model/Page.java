@@ -12,12 +12,14 @@ public class Page {
     private String url;
     private String title;
     private String content;
+    private double rank;
 
     public Page(String id, String url, String title, String content) {
         this.id = id;
         this.url = url;
         this.title = title;
         this.content = content;
+        this.rank = 0.0;
     }
 
     public String getId() {
@@ -50,6 +52,14 @@ public class Page {
 
     public void setContent(String content) {
         this.content = content;
+    }
+
+    public double getRank() {
+        return rank;
+    }
+
+    public void setRank(double rank) {
+        this.rank = rank;
     }
 
     @Override
