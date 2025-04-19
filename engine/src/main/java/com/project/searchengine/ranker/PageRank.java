@@ -23,8 +23,6 @@ public class PageRank {
         this.urlFrontier = urlFrontier;
         this.pageService = pageService;
 
-        computeOutgoingLinksCount();
-
         this.allUrls = this.urlFrontier.getAllUrls()
             .stream()
             .collect(
@@ -35,6 +33,9 @@ public class PageRank {
                     HashMap::new
                 )
             );
+
+        computeOutgoingLinksCount();
+
         this.allPages = this.pageService.getAllPages()
             .stream()
             .collect(Collectors.toMap(Page::getUrl, Function.identity()));
