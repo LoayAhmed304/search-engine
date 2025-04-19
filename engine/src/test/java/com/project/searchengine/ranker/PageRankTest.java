@@ -11,6 +11,7 @@ import com.project.searchengine.server.service.UrlsFrontierService;
 import java.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 class PageRankTest {
@@ -216,39 +217,32 @@ class PageRankTest {
         when(pageService.getAllPages()).thenReturn(Arrays.asList(page1, page2, page3));
         when(urlFrontier.getAllUrls()).thenReturn(Arrays.asList(url1, url2, url3));
 
-        // 4. Create PageRank instance AFTER setting up mocks
-        PageRank ranker = new PageRank(urlFrontier, pageService);
-
-        // Debug: Print initial state
-        System.out.println("Initial ranks:");
-        System.out.println("url1: " + page1.getRank());
-        System.out.println("url2: " + page2.getRank());
-        System.out.println("url3: " + page3.getRank());
+        // 4. Capture what was passed to saveAll(), because we clear the data structures now
+        ArgumentCaptor<List<Page>> pagesCaptor = ArgumentCaptor.forClass(List.class);
+        doNothing().when(pageService).saveAll(pagesCaptor.capture());
 
         // 5. Execute
+        PageRank ranker = new PageRank(urlFrontier, pageService);
         boolean result = ranker.computeAllRanks();
-
-        // Debug: Print final state
-        System.out.println("Final ranks:");
-        System.out.println("url1: " + page1.getRank());
-        System.out.println("url2: " + page2.getRank());
-        System.out.println("url3: " + page3.getRank());
-
-        // 6. Verify
         assertTrue(result);
+
+        // 6. Verify saved pages
+        List<Page> savedPages = pagesCaptor.getValue();
+        assertNotNull(savedPages);
+        assertEquals(3, savedPages.size());
         verify(pageService, times(1)).saveAll(anyList());
 
-        // Verify we're testing the right instances
-        assertSame(page1, ranker.allPages.get("url1"));
-        assertSame(page2, ranker.allPages.get("url2"));
-        assertSame(page3, ranker.allPages.get("url3"));
+        // 7. Verify we're testing the right instances
+        assertEquals(page1, ranker.allPages.get("url1"));
+        assertEquals(page2, ranker.allPages.get("url2"));
+        assertEquals(page3, ranker.allPages.get("url3"));
 
-        // Verify ranks updated properly
+        // 8. Verify ranks updated properly
         assertTrue(page1.getRank() > 0, "Page1 rank should be > 0");
         assertTrue(page2.getRank() > 0, "Page2 rank should be > 0");
         assertTrue(page3.getRank() > 0, "Page3 rank should be > 0");
 
-        // Verify rank distribution makes sense
+        // 9. Verify rank distribution makes sense
         assertTrue(
             page3.getRank() > page2.getRank(),
             "url3 should have higher rank than url2 (more incoming links)"
