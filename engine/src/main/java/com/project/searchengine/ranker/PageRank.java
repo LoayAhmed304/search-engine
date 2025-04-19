@@ -45,21 +45,27 @@ public class PageRank {
      * @return status boolean (to be implemented later)
      */
     public boolean computeAllRanks() {
-        boolean converged = false; // to be implemented later
+        try {
+            boolean converged = false; // to be implemented later
 
-        if (!initializePagesRank()) return false;
+            if (!initializePagesRank()) return false;
 
-        Map<String, List<String>> incomingLinks = computeIncomingLinks();
+            Map<String, List<String>> incomingLinks = computeIncomingLinks();
 
-        for (int i = 0; i < MAX_ITERATIONS && !converged; i++) {
-            if (!computePagesRank(incomingLinks)) return false;
+            for (int i = 0; i < MAX_ITERATIONS && !converged; i++) {
+                if (!computePagesRank(incomingLinks)) return false;
+            }
+            // bulk update the pages here
+            this.pageService.saveAll(new ArrayList<>(allPages.values()));
+
+            //⚠️⚠️ implement using bulkOps ⚠️⚠️
+            // Tasneem please do it for me thank you
+            return true;
+        } finally {
+            allUrls.clear();
+            allPages.clear();
+            outgoingLinksCount.clear();
         }
-        // bulk update the pages here
-        this.pageService.saveAll(new ArrayList<>(allPages.values()));
-
-        //⚠️⚠️ implement using bulkOps ⚠️⚠️
-        // Tasneem please do it for me thank you
-        return true;
     }
 
     /**
