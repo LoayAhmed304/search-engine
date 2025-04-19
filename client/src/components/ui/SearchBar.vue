@@ -134,11 +134,15 @@ const voiceSearchQuery = () => {
 </script>
 
 <style scoped>
+.container { 
+  position: relative;
+}
+
 .container,
 .search-bar {
   width: 100%;
-  margin: 0 auto;
-}
+  max-width: 800px;
+  margin: 0 auto;}
 
 .search-bar__form-wrapper {
   display: flex;
@@ -200,6 +204,12 @@ base-button {
   border-radius: 5px;
   padding: 10px 16px;
   margin: 0.6rem 0;
+  position: absolute;
+
+  top: 100%; 
+  left: 0;
+  right: 0;
+  z-index: 10;
 }
 
 .search-bar__suggestion {
@@ -209,6 +219,7 @@ base-button {
   padding: 0.5rem;
   border-radius: 5px;
   cursor: pointer;
+
 }
 
 .search-bar__suggestion--active {

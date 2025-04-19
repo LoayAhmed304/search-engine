@@ -1,9 +1,10 @@
 <template>
-    <header>
-        <div class="search-bar">
-            <SearchBar/>
-        </div>
-    </header>
+  <div class="search">
+    <SearchBar :is-icon-shown="true" />
+  </div>
+
+  <div class="divider"></div>
+
 </template>
 
 <script setup>
@@ -11,12 +12,17 @@ import SearchBar from '../ui/SearchBar.vue';
 </script>
 
 <style scoped>
-header {
-width: 100%;
-    border: red 1px solid;
-    margin-top: 1.5rem;
+.divider {
+  border-bottom: 1px solid var(--divider-color);
+  width: 100%; /* Full viewport width */
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+  overflow-x: hidden;
 }
-.search-bar {
-    width: 60%;
+
+.search {
+  margin-top: 1.5rem;
+  width: 100%;
+  overflow: visible;
 }
 </style>

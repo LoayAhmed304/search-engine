@@ -5,7 +5,6 @@
   margin: 0;
   padding: 0;
   font-weight: normal;
-  /* border: red 1px solid; */
 }
 
 :root {
@@ -21,7 +20,6 @@ html[data-theme="dora"] {
   --link-color: #e67e22;
   --search-bar-background: #E38B8B0f;
   --divider-color: #e38b8b30;
-  --icon: url('client/src/assets/images/dora.png');
 }
 
 html[data-theme="backpack"] {
@@ -30,7 +28,6 @@ html[data-theme="backpack"] {
   --link-color: #5c89c9;
   --search-bar-background: #e8daff30;
   --divider-color: #bfa3e630;
-  --icon: url('/assets/images/backpack.png');
 }
 
 html[data-theme="swiper"] {
@@ -39,7 +36,6 @@ html[data-theme="swiper"] {
   --link-color: #2d5e99;
   --search-bar-background: #ffdcc330;
   --divider-color: #e5a07630;
-  --icon: url('/assets/images/swiper.png');
 }
 
 html[data-theme='boots'] {
@@ -48,7 +44,6 @@ html[data-theme='boots'] {
   --link-color: #e4b12f;
   --search-bar-background: #d9ecff30;
   --divider-color: #a3c7e832;
-  --icon: url('/assets/images/boots.png');
 }
 
 body {
@@ -58,8 +53,8 @@ body {
 }
 
 #app {
-  min-height: 100vh;
-  min-width: 100vw;
+  min-height: 100%;
+  min-width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;

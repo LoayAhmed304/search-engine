@@ -1,5 +1,5 @@
 <template>
-  <div class="container">
+  <div class="wrapper">
     <img src="/images/dora-the-explorer.png" alt="dora the explorer"  />
     <SearchBar :is-icon-shown="false"/>
   </div>
@@ -11,11 +11,11 @@ import SearchBar from '@/components/ui/SearchBar.vue'
 </script>
 
 <style scoped>
-.container {
+.wrapper {
   display: flex;
   flex-direction: column;
-  padding: 2rem;
-  margin: 1rem;
+  overflow: visible;
+  margin-top: 6rem;
 }
 
 img {

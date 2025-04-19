@@ -28,7 +28,10 @@ defineProps({
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  padding: 1.5rem 0;
+  padding: 1.4rem 0;
+  width: 100%;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .search-result__info {
@@ -37,10 +40,10 @@ defineProps({
 }
 
 .search-result__icon {
-  width: 45px;
+  width: 50px;
   height: auto;
   object-fit: contain;
-  margin-right: 1rem;
+  margin-right: 0.5rem;
 }
 
 .search-result__text {
@@ -48,7 +51,7 @@ defineProps({
   flex-direction: column;
   align-items: start;
   justify-content: center;
-  gap: 0.2rem;
+  font-weight: 200;
 }
 
 .search-result__link {
@@ -63,10 +66,10 @@ defineProps({
 }
 
 .search-result__title {
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   margin: 0;
   color: var(--title-color);
-  font-weight: 500;
+  font-weight: 550;
 }
 
 .search-result__link:hover,
