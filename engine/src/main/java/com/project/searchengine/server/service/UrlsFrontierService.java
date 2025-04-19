@@ -112,4 +112,8 @@ public class UrlsFrontierService {
     public int count() {
         return (int) urlsFrontierRepository.count();
     }
+
+    public List<UrlDocument> saveAll(List<UrlDocument> urls) {
+        return urlsFrontierRepository.saveAll(urls);
+    }
 }

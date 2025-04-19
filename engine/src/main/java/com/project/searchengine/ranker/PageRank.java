@@ -56,11 +56,10 @@ public class PageRank {
             for (int i = 0; i < MAX_ITERATIONS && !converged; i++) {
                 if (!computePagesRank(incomingLinks)) return false;
             }
-            // bulk update the pages here
-            this.pageService.saveAll(new ArrayList<>(allPages.values()));
 
-            //⚠️⚠️ implement using bulkOps ⚠️⚠️
-            // Tasneem please do it for me thank you
+            // this.pageService.saveAll(new ArrayList<>(allPages.values()));
+            this.urlFrontier.saveAll(new ArrayList<>(allUrls.values()));
+
             return true;
         } finally {
             allUrls.clear();
@@ -74,17 +73,21 @@ public class PageRank {
      * @return status boolean (to be updated later)
      */
     boolean computePagesRank(Map<String, List<String>> incomingLinks) {
-        Map<String, Double> newRanks = new HashMap<>(allPages.size());
+        // Map<String, Double> newRanks = new HashMap<>(allPages.size());
+        Map<String, Double> newRanks = new HashMap<>(allUrls.size());
 
-        for (Page page : allPages.values()) {
-            String url = page.getUrl();
+        //  for (Page page : allPages.values()) {
+        //  String url = page.getUrl();
+        for (UrlDocument doc : allUrls.values()) {
+            String url = doc.getNormalizedUrl();
             double curRank = 0;
 
             for (String incoming : incomingLinks.getOrDefault(url, List.of())) {
                 Integer outLinks = outgoingLinksCount.get(incoming);
 
                 if (outLinks != null && outLinks > 0) {
-                    curRank += allPages.get(incoming).getRank() / outLinks;
+                    // curRank += allPages.get(incoming).getRank() / outLinks;
+                    curRank += allUrls.get(incoming).getRank() / outLinks;
                 }
             }
 
@@ -93,8 +96,11 @@ public class PageRank {
             newRanks.put(url, curRank);
         }
 
-        for (Page page : allPages.values()) {
-            page.setRank(newRanks.get(page.getUrl()));
+        // for (Page page : allPages.values()) {
+        //  page.setRank(newRanks.get(page.getUrl()));
+        // }
+        for (UrlDocument doc : allUrls.values()) {
+            doc.setRank(newRanks.get(doc.getNormalizedUrl()));
         }
 
         return true;
@@ -106,10 +112,12 @@ public class PageRank {
      * @return status boolean
      */
     boolean initializePagesRank() {
-        int N = allPages.size();
+        // int N = allPages.size();
+        int N = allUrls.size();
 
-        for (Page page : allPages.values()) {
-            page.setRank((double) 1 / N);
+        // for (Page page : allPages.values()) {
+        for (UrlDocument doc : allUrls.values()) {
+            doc.setRank((double) 1 / N);
         }
 
         return true;
