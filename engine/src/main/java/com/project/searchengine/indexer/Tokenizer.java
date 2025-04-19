@@ -2,9 +2,12 @@ package com.project.searchengine.indexer;
 
 import com.project.searchengine.server.model.InvertedIndex;
 import com.project.searchengine.server.model.PageReference;
+import java.io.InputStream;
 import java.util.*;
 import java.util.regex.*;
 import opennlp.tools.stemmer.PorterStemmer;
+import opennlp.tools.tokenize.*;
+import opennlp.tools.tokenize.TokenizerModel;
 import org.jsoup.nodes.*;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,45 +16,17 @@ import org.springframework.stereotype.Component;
 @Component
 public class Tokenizer {
 
-    // Define individual patterns (lowercase only)
-    private final String WORD_PATTERN = "\\w+";
-    private final String EMAIL_PATTERN = "[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,}";
-    private final String PHONE_PATTERN = "\\+?\\d{1,3}[-\\d]{6,12}";
-    private final String HYPHENATED_PATTERN = "[a-z]+-[a-z]+";
-    private final String HASHTAG_PATTERN = "#[a-z0-9_]+";
-    private final String PLUS_COMBINED_PATTERN = "[a-z]+\\+{1,2}[a-z0-9]*"; // C++ like terms
-
-    // Field-specefic tokens
     private Map<String, InvertedIndex> indexBuffer = new HashMap<>();
-
     private final PorterStemmer stemmer = new PorterStemmer();
+
+    SimpleTokenizer tokenizer = SimpleTokenizer.INSTANCE;
+
+    //   private final TokenizerME tokenizer;
 
     @Autowired
     private final StopWordFilter stopWordFilter;
 
     private Integer tokenCount = 0;
-
-    // Combine patterns with proper grouping
-    private final Pattern pattern = Pattern.compile(
-        "(" +
-        EMAIL_PATTERN +
-        ")|" +
-        "(" +
-        PHONE_PATTERN +
-        ")|" +
-        "(" +
-        HASHTAG_PATTERN +
-        ")|" +
-        "(" +
-        PLUS_COMBINED_PATTERN +
-        ")|" +
-        "(" +
-        HYPHENATED_PATTERN +
-        ")|" +
-        "(" +
-        WORD_PATTERN +
-        ")"
-    );
 
     public Tokenizer(StopWordFilter stopWordFilter) {
         this.stopWordFilter = stopWordFilter;
@@ -66,19 +41,12 @@ public class Tokenizer {
     public void tokenizeContent(String text, String pageId, String fieldType) {
         int position = 0;
 
-        // Convert to lower case
-        text = text.toLowerCase();
+        String tokens[] = tokenizer.tokenize(text.toLowerCase());
 
-        // Match the pattern
-        Matcher matcher = pattern.matcher(text);
-
-        while (matcher.find()) {
-            String token = matcher.group();
+        for (String token : tokens) {
             String cleanedToken = cleanToken(token);
-
             if (!cleanedToken.isEmpty()) {
                 buildInvertedIndex(cleanedToken, pageId, position, fieldType);
-
                 tokenCount++;
                 position++;
             }
@@ -147,25 +115,32 @@ public class Tokenizer {
         if (stopWordFilter.isStopWord(token)) {
             return "";
         }
-        // Preserve special tokens
-        if (
-            token.matches(EMAIL_PATTERN) ||
-            token.matches(PHONE_PATTERN) ||
-            token.matches(HYPHENATED_PATTERN) ||
-            token.matches(HASHTAG_PATTERN) ||
-            token.matches(PLUS_COMBINED_PATTERN)
-        ) {
-            return token;
-        }
 
         // Apply stemming to regural words
         token = stemmer.stem(token);
 
-        String cleanedToken = token.replaceAll("[^a-zA-Z]", "");
+        String cleanedToken = token.replaceAll("[^a-z]", "");
 
-        // Default: remove everything except letters
         return cleanedToken;
     }
+
+    /**
+     * Load the tokenizer model from the specified input stream.
+     *
+     * @param modelInputStream The input stream containing the tokenizer model.
+     
+    void loadTokenizerModel(InputStream modelInputStream) {
+        try (InputStream modelIn = getClass().getResourceAsStream("/models/en-token.bin")) {
+            if (modelIn == null) {
+                throw new IllegalArgumentException("Model file not found");
+            }
+            TokenizerModel model = new TokenizerModel(modelIn);
+            tokenizer = new TokenizerME(model);
+        } catch (Exception e) {
+            throw new RuntimeException("Error loading tokenizer model", e);
+        }
+    }
+    */
 
     /**
      * Return index buffer of all tokens of the current document

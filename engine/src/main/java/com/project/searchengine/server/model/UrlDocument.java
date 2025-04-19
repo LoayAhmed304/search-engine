@@ -1,6 +1,8 @@
 package com.project.searchengine.server.model;
 
 import java.util.*;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -17,15 +19,16 @@ public class UrlDocument {
     private String document; // raw HTML content
     private String hashedDocContent;
     private List<String> linkedPages;
-    private Date lastCrawled;
+    private String lastCrawled;
 
+    @Autowired
     public UrlDocument() {
         this.linkedPages = new ArrayList<>();
     }
 
     public UrlDocument(String normalizedUrl, long frequency, boolean isCrawled,
             String document, String hashedDocContent,
-            List<String> linkedPages, Date lastCrawled) {
+            List<String> linkedPages, String lastCrawled) {
         this.normalizedUrl = normalizedUrl;
         this.frequency = frequency;
         this.isCrawled = isCrawled;
@@ -91,11 +94,11 @@ public class UrlDocument {
         this.linkedPages = linkedPages;
     }
 
-    public Date getLastCrawled() {
+    public String getLastCrawled() {
         return lastCrawled;
     }
 
-    public void setLastCrawled(Date lastCrawled) {
+    public void setLastCrawled(String lastCrawled) {
         this.lastCrawled = lastCrawled;
     }
 

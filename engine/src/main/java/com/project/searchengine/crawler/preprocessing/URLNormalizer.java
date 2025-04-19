@@ -22,16 +22,19 @@ public class URLNormalizer {
      */
     public static String normalizeUrl(String url) {
         try {
-            URI uri = new URI(url);
+            // Replace unencoded spaces with %20
+            String cleanedUrl = url.replace(" ", "%20");
+
+            URI uri = new URI(cleanedUrl);
 
             // Handle protocol-relative URLs
             String scheme = uri.getScheme();
             if (scheme == null) {
-                if(url.startsWith("//")) {
-                uri = new URI("https:" + url);
-                scheme = uri.getScheme();
+                if (url.startsWith("//")) {
+                    uri = new URI("https:" + url);
+                    scheme = uri.getScheme();
                 } else {
-                    System.out.println("No schema provided for:" + url);
+                    System.out.println("No schema provided for: " + url);
                     return null; // Invalid URL
                 }
             }
@@ -50,7 +53,7 @@ public class URLNormalizer {
             return normalized.replaceAll("(?<!:)/+$", ""); // Remove trailing slashes except after protocol
 
         } catch (URISyntaxException e) {
-            System.err.println("Invalid URL during normalization: " + url);
+            System.err.println("Invalid URL during normalization: " + url + " | Error: " + e.getMessage());
             return null;
         }
     }
