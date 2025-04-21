@@ -52,6 +52,7 @@ public class Crawler {
 
                 if (pageContent == null) {
                     System.out.println("Failed to fetch content for URL: " + url);
+                    // remover from the database
                     continue;
                 }
 
@@ -63,16 +64,7 @@ public class Crawler {
                 List<String> linkedPages = new ArrayList<>(linkedPagesSet);
                 System.out.println("Linked Pages: " + linkedPages.size());
 
-                if(!urlsFrontier.hasReachedThreshold()) {
-                    for (String linkedUrl : linkedPages) {
-                        String normalizedUrl = URLNormalizer.normalizeUrl(linkedUrl);
-                        
-                        if(!robotsHandler.isUrlAllowed(normalizedUrl))
-                            continue;
-                        
-                        urlsFrontier.handleUrl(normalizedUrl);
-                    }
-                }
+                handleLinkedPages(linkedPages);
                     
                 
                 urlsFrontier.saveCrawledDocument(url, pageContent.toString(), hashedDocument, true, linkedPages);
@@ -90,5 +82,23 @@ public class Crawler {
         System.out.println("Seeding the frontier...");
         urlsFrontier.seedFrontier();
         System.out.println("Frontier seeded successfully.");
+    }
+    /**
+     * Handles the linked pages extracted from the crawled document.
+     * It checks if each linked page is allowed to be crawled based on robots.txt rules.
+     *
+     * @param linkedPages List of linked pages to handle
+     */
+    private void handleLinkedPages(List<String> linkedPages) {
+        if (!urlsFrontier.hasReachedThreshold()) {
+            for (String linkedUrl : linkedPages) {
+                String normalizedUrl = URLNormalizer.normalizeUrl(linkedUrl);
+
+                if (!robotsHandler.isUrlAllowed(normalizedUrl))
+                    continue;
+
+                urlsFrontier.handleUrl(normalizedUrl);
+            }
+        }
     }
 }
