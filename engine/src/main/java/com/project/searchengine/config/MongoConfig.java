@@ -1,6 +1,5 @@
-package com.project.searchengine.server.config;
+package com.project.searchengine.config;
 
-import com.mongodb.client.model.IndexOptions;
 import com.project.searchengine.server.model.InvertedIndex;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
