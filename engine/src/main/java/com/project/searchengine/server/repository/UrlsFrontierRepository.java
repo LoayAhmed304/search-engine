@@ -101,5 +101,5 @@ public interface UrlsFrontierRepository extends MongoRepository<UrlDocument, Str
      * @param limit The maximum number of documents to return
      * @return List of UrlDocument objects
      */
-    List<UrlDocument> findByIsIndexedFalse(int limit);
+    List<UrlDocument> findByIsIndexedFalseAndIsCrawledTrue(int limit);
 }

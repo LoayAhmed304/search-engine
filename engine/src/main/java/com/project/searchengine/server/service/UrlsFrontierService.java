@@ -131,6 +131,6 @@ public class UrlsFrontierService {
      * @return A list of URL documents that are not indexed yet
      */
     public List<UrlDocument> getNotIndexedDocuments(int limit) {
-        return urlsFrontierRepository.findByIsIndexedFalse(limit);
+        return urlsFrontierRepository.findByIsIndexedFalseAndIsCrawledTrue(limit);
     }
 }

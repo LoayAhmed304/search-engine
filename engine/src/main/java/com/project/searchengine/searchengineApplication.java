@@ -27,17 +27,15 @@ public class searchengineApplication {
 
         // Test the Indexer
         Indexer indexer = context.getBean(Indexer.class);
-        System.out.println("\n\n\n\n\t\t***************Starting Indexing process***************");
+        System.out.println("\n\n\t\t***************Starting Indexing process***************");
         indexer.startIndexing();
-        System.out.println("\n\n\n\n\t\t***************Indexing process completed***************");
+        System.out.println("\n\n\t\t***************Indexing process completed***************");
 
         // Test the PageRank
         UrlsFrontierService urlsFrontierService = context.getBean(UrlsFrontierService.class);
         PageService pageService = context.getBean(PageService.class);
 
-        System.out.println(
-            "\n\n\n\n\t\t***************Starting PageRank calculation***************"
-        );
+        System.out.println("\n\n\t\t***************Starting PageRank calculation***************");
         long startTime = System.currentTimeMillis();
         PageRank pageRank = new PageRank(urlsFrontierService, pageService);
         boolean success = pageRank.computeAllRanks();
