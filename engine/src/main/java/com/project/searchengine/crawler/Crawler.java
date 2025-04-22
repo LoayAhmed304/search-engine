@@ -101,4 +101,8 @@ public class Crawler {
             }
         }
     }
+
+    public void test() {
+        urlsFrontier.getAllHashedDocContent();
+    }
 }
