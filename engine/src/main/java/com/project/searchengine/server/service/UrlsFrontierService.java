@@ -121,4 +121,14 @@ public class UrlsFrontierService {
     public List<UrlDocument> saveAll(List<UrlDocument> urls) {
         return urlsFrontierRepository.saveAll(urls);
     }
+
+    /**
+     * Get a list of URL documents that are not indexed yet.
+     * @param limit The maximum number of documents to retrieve
+     *
+     * @return A list of URL documents that are not indexed yet
+     */
+    public List<UrlDocument> getNotIndexedDocuments(int limit) {
+        return urlsFrontierRepository.findByIsIndexedFalse(limit);
+    }
 }

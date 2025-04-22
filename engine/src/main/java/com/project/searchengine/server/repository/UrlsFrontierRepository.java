@@ -1,24 +1,26 @@
 package com.project.searchengine.server.repository;
 
 import com.project.searchengine.server.model.UrlDocument;
+import java.util.ArrayList;
+import java.util.List;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 import org.springframework.data.mongodb.repository.Update;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Repository
 public interface UrlsFrontierRepository extends MongoRepository<UrlDocument, String> {
-
     /**
      * Finds the top 100 URLs sorted by frequency in descending order, returning
      * only the normalizedUrl field, for documents where isCrawled is false.
      *
      * @return List of up to 100 normalized URLs where isCrawled is false
      */
-    @Query(value = "{ 'isCrawled': false }", fields = "{ 'normalizedUrl': 1, '_id': 0 }", sort = "{ 'frequency': -1 }")
+    @Query(
+        value = "{ 'isCrawled': false }",
+        fields = "{ 'normalizedUrl': 1, '_id': 0 }",
+        sort = "{ 'frequency': -1 }"
+    )
     List<String> findTop100ByFrequency();
 
     /**
@@ -51,8 +53,7 @@ public interface UrlsFrontierRepository extends MongoRepository<UrlDocument, Str
             incrementFrequency(normalizedUrl);
             return false;
         } else {
-            if(count() < 1000)
-            {
+            if (count() < 1000) {
                 System.out.println("Creating new document for URL: " + normalizedUrl + "\n");
                 UrlDocument newDocument = new UrlDocument();
                 newDocument.setNormalizedUrl(normalizedUrl);
@@ -64,7 +65,6 @@ public interface UrlsFrontierRepository extends MongoRepository<UrlDocument, Str
                 System.out.println("New document created: " + newDocument + "\n");
                 save(newDocument);
                 return true;
-                
             }
             return false;
         }
@@ -81,7 +81,23 @@ public interface UrlsFrontierRepository extends MongoRepository<UrlDocument, Str
      * @param lastCrawled      The new last crawled date
      */
     @Query("{ 'normalizedUrl': ?0 }")
-    @Update("{ '$set': { 'document': ?1, 'hashedDocContent': ?2, 'linkedPages': ?3, 'isCrawled': ?4, 'lastCrawled': ?5 } }")
-    void updateUrlDocument(String normalizedUrl, String document, String hashedDocContent, List<String> linkedPages,
-            boolean isCrawled, String lastCrawled);
+    @Update(
+        "{ '$set': { 'document': ?1, 'hashedDocContent': ?2, 'linkedPages': ?3, 'isCrawled': ?4, 'lastCrawled': ?5 } }"
+    )
+    void updateUrlDocument(
+        String normalizedUrl,
+        String document,
+        String hashedDocContent,
+        List<String> linkedPages,
+        boolean isCrawled,
+        String lastCrawled
+    );
+
+    /**
+     * Finds all documents where isIndexed is false, limited to the specified number.
+     *
+     * @param limit The maximum number of documents to return
+     * @return List of UrlDocument objects
+     */
+    List<UrlDocument> findByIsIndexedFalse(int limit);
 }

@@ -5,11 +5,14 @@ import com.project.searchengine.crawler.preprocessing.*;
 import com.project.searchengine.server.model.InvertedIndex;
 import com.project.searchengine.server.model.Page;
 import com.project.searchengine.server.model.PageReference;
+import com.project.searchengine.server.model.UrlDocument;
 import com.project.searchengine.server.repository.InvertedIndexRepository;
 import com.project.searchengine.server.service.PageService;
+import com.project.searchengine.server.service.UrlsFrontierService;
 import java.security.MessageDigest;
 import java.util.*;
 import javax.xml.bind.DatatypeConverter;
+import org.jsoup.Jsoup;
 import org.jsoup.nodes.*;
 import org.jsoup.select.*;
 import org.springframework.beans.factory.annotation.*;
@@ -28,23 +31,44 @@ public class Indexer {
     private PageService pageService;
 
     @Autowired
+    private UrlsFrontierService urlsFrontierService;
+
+    @Autowired
     private MongoTemplate mongoTemplate;
 
     @Autowired
     private InvertedIndexRepository invertedIndexRepository;
 
+    public static int BATCH_SIZE = 100;
+
     public void startIndexing() {
         // Get a batch of not indexed documents from the database
+        List<UrlDocument> urlDocuments = urlsFrontierService.getNotIndexedDocuments(BATCH_SIZE);
 
-        // For each document in the batch
+        if (urlDocuments.isEmpty()) {
+            System.out.println("No documents to index");
+        }
 
-        // 1- Convert the document to a Jsoup Document object
+        for (UrlDocument urlDocument : urlDocuments) {
+            // 1- Get the document from the database
+            String url = urlDocument.getNormalizedUrl();
+            String document = urlDocument.getDocument();
 
-        // 2- Call the index method with the URL and the Jsoup Document object
+            // 2- Convert the document to a Jsoup Document object
+            Document jsoupDocument = Jsoup.parse(document);
 
-        // 3- Save the tokens in the index buffer to the database
+            // 3- Call the index method with the URL and the Jsoup Document object
+            index(url, jsoupDocument);
 
-        // 4- Save the page to the database
+            // 4- Save the tokens in the index buffer to the database
+            saveTokens();
+
+            // 5- Save the page to the database
+            savePage(urlDocument.getHashedDocContent(), url, jsoupDocument.title(), document);
+
+            // 6- Update the URL document in the database
+            urlDocument.setIndexed(true);
+        }
     }
 
     /**
@@ -70,8 +94,6 @@ public class Indexer {
 
         // Add the count of tokens before saving
         tokenizer.setPageTokenCount();
-        saveTokens();
-        savePage(id, url, title, content);
     }
 
     /**
