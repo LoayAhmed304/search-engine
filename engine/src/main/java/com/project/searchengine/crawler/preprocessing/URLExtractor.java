@@ -81,15 +81,14 @@ public class URLExtractor {
 
     private static boolean isUnwantedScheme(String scheme) {
         if (scheme == null)
-            return false; // Allow protocol-relative URLs -> handled in URLNormalizer
+            return false;
 
-        // List of unwanted schemes
         return scheme.equalsIgnoreCase("javascript") ||
                 scheme.equalsIgnoreCase("mailto") ||
                 scheme.equalsIgnoreCase("tel") ||
-                scheme.equalsIgnoreCase("sms");
+                scheme.equalsIgnoreCase("sms") ||
+                !(scheme.equalsIgnoreCase("http") || scheme.equalsIgnoreCase("https")); // Only allow HTTP/HTTPS
     }
-
     private static boolean isValidUri(URI uri) {
         return (uri.getHost() != null) ||
                 (uri.getPath() != null && !uri.getPath().isEmpty());
