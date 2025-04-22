@@ -11,10 +11,14 @@ public class Ranker {
     private final long totalDocuments;
     private final PageService pageService;
 
-    public Ranker(String query, Map<String, List<PageReference>> wordResults) {
+    public Ranker(
+        String query,
+        Map<String, List<PageReference>> wordResults,
+        PageService pageService
+    ) {
         this.queryTokens = Arrays.asList(query.split("\\s+"));
         this.wordResults = wordResults;
-        this.pageService = new PageService();
+        this.pageService = pageService;
         this.totalDocuments = pageService.getTotalDocuments();
     }
 
@@ -34,7 +38,7 @@ public class Ranker {
      *
      * @return Map with page_id as its key, and page score as its value
      */
-    private Map<String, Double> computeScores() {
+    Map<String, Double> computeScores() {
         Map<String, Double> scores = new HashMap<>();
 
         for (String token : queryTokens) {
@@ -50,7 +54,7 @@ public class Ranker {
      * @param token: the token (word) desired to process
      * @param scores: Map object by reference, to update the total score of every page (<pageId, score>)
      */
-    private void processToken(String token, Map<String, Double> scores) {
+    void processToken(String token, Map<String, Double> scores) {
         List<PageReference> prs = wordResults.getOrDefault(token, Collections.emptyList());
 
         double idf = getIDF(prs.size());
@@ -71,7 +75,7 @@ public class Ranker {
      * @param docsWithToken: number of documents containing the token
      * @return normalized IDF value (double)
      */
-    private double getIDF(int docsWithToken) {
+    double getIDF(int docsWithToken) {
         return Math.log((double) totalDocuments / docsWithToken);
     }
 
@@ -81,7 +85,7 @@ public class Ranker {
      * @param scores: Map of score corresponding to each page
      * @return sorted array of page IDs ([String, ...])
      */
-    private List<String> sortedPages(Map<String, Double> scores) {
+    List<String> sortedPages(Map<String, Double> scores) {
         List<String> result = new ArrayList<>(scores.keySet());
         result.sort((page1, page2) -> Double.compare(scores.get(page2), scores.get(page1)));
         return result;

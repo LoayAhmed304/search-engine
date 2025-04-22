@@ -50,6 +50,11 @@ public class Crawler {
 
                 Document pageContent = URLExtractor.getDocument(url);
 
+                if (pageContent == null) {
+                    System.out.println("Failed to fetch content for URL: " + url);
+                    continue;
+                }
+
                 String hashedDocument = HashManager.hash(pageContent.toString()); 
                 System.out.println("Hashed Document: " + hashedDocument);
                    // if the hash is in the database, remove the url from the frontier db urlsFrontier.removeDuplicates(hashedDocument);
@@ -58,16 +63,18 @@ public class Crawler {
                 List<String> linkedPages = new ArrayList<>(linkedPagesSet);
                 System.out.println("Linked Pages: " + linkedPages.size());
 
-                for (String linkedUrl : linkedPages) {
-
-                    String normalizedUrl = URLNormalizer.normalizeUrl(linkedUrl);
-                    if(!robotsHandler.isUrlAllowed(url))
-                        continue;
-                    
-                    urlsFrontier.handleUrl(normalizedUrl);
+                if(!urlsFrontier.hasReachedThreshold()) {
+                    for (String linkedUrl : linkedPages) {
+                        String normalizedUrl = URLNormalizer.normalizeUrl(linkedUrl);
+                        
+                        if(!robotsHandler.isUrlAllowed(normalizedUrl))
+                            continue;
+                        
+                        urlsFrontier.handleUrl(normalizedUrl);
+                    }
                 }
+                    
                 
-                // 3. update the document in the database
                 urlsFrontier.saveCrawledDocument(url, pageContent.toString(), hashedDocument, true, linkedPages);
         }
         System.out.println("Finished processing totoal batch of URLs of count: " + (currentBatch - 1));

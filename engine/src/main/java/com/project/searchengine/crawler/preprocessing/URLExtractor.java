@@ -60,7 +60,8 @@ public class URLExtractor {
 
         for (String url : urls) {
             try {
-                URI uri = new URI(url);
+                String cleanedUrl = url.replace(" ", "%20");
+                URI uri = new URI(cleanedUrl);
                 String scheme = uri.getScheme();
 
                 if (isUnwantedScheme(scheme))
@@ -92,6 +93,19 @@ public class URLExtractor {
     private static boolean isValidUri(URI uri) {
         return (uri.getHost() != null) ||
                 (uri.getPath() != null && !uri.getPath().isEmpty());
+    }
+
+    public static void main(String[] args) {
+        // Example usage
+        String url = "https://www.facebook.com/topuniversities";
+        Document doc = getDocument(url);
+        System.out.println(doc);
+        if (doc != null) {
+            Set<String> urls = getURLs(doc);
+            System.out.println("Extracted URLs: " + urls);
+        } else {
+            System.out.println("Failed to fetch document.");
+        }
     }
 
 }

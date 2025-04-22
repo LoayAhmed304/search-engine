@@ -28,4 +28,8 @@ public class PageService {
     public Page createPage(Page page) {
         return pageRepository.save(page);
     }
+
+    public List<Page> saveAll(List<Page> pages) {
+        return pageRepository.saveAll(pages);
+    }
 }

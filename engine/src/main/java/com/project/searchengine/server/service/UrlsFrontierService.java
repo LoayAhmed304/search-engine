@@ -1,13 +1,11 @@
 package com.project.searchengine.server.service;
 
 import com.project.searchengine.server.model.UrlDocument;
-import com.project.searchengine.utils.JsonParserUtil;
-
 import com.project.searchengine.server.repository.UrlsFrontierRepository;
+import com.project.searchengine.utils.JsonParserUtil;
+import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.util.*;
 
 @Service
 public class UrlsFrontierService {
@@ -26,8 +24,7 @@ public class UrlsFrontierService {
      */
     public List<String> getTop100UrlsByFrequency() {
         List<String> topUrls = urlsFrontierRepository.findTop100ByFrequency();
-        
-        
+
         return JsonParserUtil.parseNormalizedUrls(topUrls);
     }
 
@@ -66,9 +63,17 @@ public class UrlsFrontierService {
      * @param seedUrls List of seed URLs to insert
      */
     public void initializeFrontier(List<String> seedUrls) {
-        for(String url:seedUrls) {
+        for (String url : seedUrls) {
             upsertUrl(url);
         }
+    }
+
+    /**
+     *
+     * @return list of all Urls stored (not necessarily crawled)
+     */
+    public List<UrlDocument> getAllUrls() {
+        return urlsFrontierRepository.findAll();
     }
 
     /**
@@ -92,10 +97,28 @@ public class UrlsFrontierService {
         urlsFrontierRepository.updateUrlDocument(
             doc.getNormalizedUrl(),
             doc.getDocument(),
-            doc.getHashedDocContent(), 
-            doc.getLinkedPages(), 
+            doc.getHashedDocContent(),
+            doc.getLinkedPages(),
             doc.isCrawled(),
-            new Date().toString());
+            new Date().toString()
+        );
     }
 
+    /**
+     * Retrieves the count of documents in the frontier.
+     *
+     * @return The count of documents
+     */
+    public int count() {
+        return (int) urlsFrontierRepository.count();
+    }
+
+    /**
+     * Saves all given URL documents into the database
+     * @param urls  All URLs to be saved into the database
+     * @return All URLs saved into the database successfully
+     */
+    public List<UrlDocument> saveAll(List<UrlDocument> urls) {
+        return urlsFrontierRepository.saveAll(urls);
+    }
 }
