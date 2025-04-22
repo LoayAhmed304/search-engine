@@ -14,6 +14,7 @@ public class UrlDocument {
     private String normalizedUrl;
     private long frequency;
     private boolean isCrawled;
+    private boolean isIndexed;
     private String document; // raw HTML content
     private String hashedDocContent;
     private List<String> linkedPages;
@@ -74,6 +75,14 @@ public class UrlDocument {
 
     public void setCrawled(boolean crawled) {
         isCrawled = crawled;
+    }
+
+    public boolean isIndexed() {
+        return isIndexed;
+    }
+
+    public void setIndexed(boolean indexed) {
+        isIndexed = indexed;
     }
 
     public String getDocument() {

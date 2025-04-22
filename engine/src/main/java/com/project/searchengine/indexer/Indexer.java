@@ -33,12 +33,26 @@ public class Indexer {
     @Autowired
     private InvertedIndexRepository invertedIndexRepository;
 
+    public void startIndexing() {
+        // Get a batch of not indexed documents from the database
+
+        // For each document in the batch
+
+        // 1- Convert the document to a Jsoup Document object
+
+        // 2- Call the index method with the URL and the Jsoup Document object
+
+        // 3- Save the tokens in the index buffer to the database
+
+        // 4- Save the page to the database
+    }
+
     /**
      * Preprocesses the document by extracting tokens and saving the page.
      * @param url The URL of the document.
      * @param document The Jsoup Document object.
      */
-    public void preprocessDocument(String url, Document document) {
+    public void index(String url, Document document) {
         // Extract raw text
         String title = document.title();
         String id = hashUrl(url);
