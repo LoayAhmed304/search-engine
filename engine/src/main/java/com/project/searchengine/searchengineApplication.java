@@ -7,6 +7,7 @@ import com.project.searchengine.server.service.UrlsFrontierService;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+
 import org.springframework.context.ApplicationContext;
 
 @SpringBootApplication
@@ -16,7 +17,6 @@ public class searchengineApplication {
         // Start the Spring Boot application context
         ApplicationContext context = SpringApplication.run(searchengineApplication.class, args);
         System.out.println("Hello my Search Engine!");
-
         UrlsFrontierService urlsFrontierService = context.getBean(UrlsFrontierService.class);
         PageService pageService = context.getBean(PageService.class);
 

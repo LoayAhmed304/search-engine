@@ -1,9 +1,11 @@
 package com.project.searchengine.indexer;
 
+import com.mongodb.bulk.BulkWriteResult;
 import com.project.searchengine.crawler.preprocessing.*;
 import com.project.searchengine.server.model.InvertedIndex;
 import com.project.searchengine.server.model.Page;
 import com.project.searchengine.server.model.PageReference;
+import com.project.searchengine.server.repository.InvertedIndexRepository;
 import com.project.searchengine.server.service.PageService;
 import java.security.MessageDigest;
 import java.util.*;
@@ -27,6 +29,9 @@ public class Indexer {
 
     @Autowired
     private MongoTemplate mongoTemplate;
+
+    @Autowired
+    private InvertedIndexRepository invertedIndexRepository;
 
     /**
      * Preprocesses the document by extracting tokens and saving the page.
@@ -74,32 +79,50 @@ public class Indexer {
     public void saveTokens() {
         Map<String, InvertedIndex> indexBuffer = tokenizer.getIndexBuffer();
         System.out.println("Tokens size: " + indexBuffer.size());
+        long start = System.nanoTime();
 
         if (!indexBuffer.isEmpty()) {
-            long start = System.nanoTime();
+            // 1- Query existing words from the DB
+            Set<String> allWords = indexBuffer.keySet();
+            List<InvertedIndex> existingIndices = invertedIndexRepository.findAllByWordIn(allWords);
+            Set<String> existingWordSet = new HashSet<>(
+                existingIndices.stream().map(InvertedIndex::getWord).toList()
+            );
+
+            // 2- Create bulk operations
             BulkOperations bulkOps = mongoTemplate.bulkOps(
                 BulkOperations.BulkMode.UNORDERED,
                 InvertedIndex.class
             );
 
+            // 3- Insert or update the indices
             for (InvertedIndex index : indexBuffer.values()) {
-                for (PageReference newPage : index.getPages()) {
-                    // Add the new page to the existing pages
-                    Query pageQuery = new Query(
-                        Criteria.where("word")
-                            .is(index.getWord())
-                            .and("pages.pageId")
-                            .ne(newPage.getPageId())
-                    );
+                String word = index.getWord();
+                Query query = new Query(Criteria.where("word").is(word));
+                Update update = new Update();
+                if (existingWordSet.contains(word)) {
+                    // Update existing word
+                    for (PageReference page : index.getPages()) {
+                        // Update the page reference
+                        update.addToSet("pages", page);
+                    }
+                    update.inc("pageCount", index.getPageCount());
 
-                    Update update = new Update().addToSet("pages", newPage).inc("pageCount", 1);
-
-                    bulkOps.upsert(pageQuery, update);
+                    bulkOps.updateOne(query, update);
+                } else {
+                    // Insert new word
+                    bulkOps.insert(index);
                 }
             }
 
             try {
-                bulkOps.execute();
+                BulkWriteResult result = bulkOps.execute();
+                System.out.printf(
+                    "Indexed %,d tokens (inserted: %,d, updated: %,d)%n",
+                    indexBuffer.size(),
+                    result.getInsertedCount(),
+                    result.getModifiedCount()
+                );
             } catch (Exception e) {
                 System.err.println("Error saving tokens: " + e.getMessage());
             }
