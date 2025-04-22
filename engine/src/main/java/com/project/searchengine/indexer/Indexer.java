@@ -163,22 +163,4 @@ public class Indexer {
             indexBuffer.clear();
         }
     }
-
-    /**
-     * Hash the url to create a unique id using sha-256
-     * @param url The url to be hashed
-     * @return The hashed url as a string
-     */
-    private String hashUrl(String url) {
-        // Normalize the url first
-        String normalizedUrl = URLNormalizer.normalizeUrl(url);
-
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(normalizedUrl.getBytes("UTF-8"));
-            return DatatypeConverter.printHexBinary(hash).toLowerCase();
-        } catch (Exception e) {
-            return Integer.toHexString(url.hashCode());
-        }
-    }
 }
