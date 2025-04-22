@@ -92,6 +92,7 @@ public class UrlsFrontierService {
      * @param hashedDocContent The new hashed content of the page
      * @param linkedPages      The new list of linked URLs
      * @param isCrawled        The new crawled status
+     * @param isIndexed        The new indexed status
      */
     public void updateUrlDocument(UrlDocument doc) {
         urlsFrontierRepository.updateUrlDocument(
@@ -100,6 +101,7 @@ public class UrlsFrontierService {
             doc.getHashedDocContent(),
             doc.getLinkedPages(),
             doc.isCrawled(),
+            doc.isIndexed(),
             new Date().toString()
         );
     }

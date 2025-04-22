@@ -78,11 +78,12 @@ public interface UrlsFrontierRepository extends MongoRepository<UrlDocument, Str
      * @param hashedDocContent The new hashed content of the page
      * @param linkedPages      The new list of linked URLs
      * @param isCrawled        The new crawled status
+     * @param isIndexed        The new indexed status
      * @param lastCrawled      The new last crawled date
      */
     @Query("{ 'normalizedUrl': ?0 }")
     @Update(
-        "{ '$set': { 'document': ?1, 'hashedDocContent': ?2, 'linkedPages': ?3, 'isCrawled': ?4, 'lastCrawled': ?5 } }"
+        "{ '$set': { 'document': ?1, 'hashedDocContent': ?2, 'linkedPages': ?3, 'isCrawled': ?4, isIndexed: ?5, 'lastCrawled': ?5 } }"
     )
     void updateUrlDocument(
         String normalizedUrl,
@@ -90,6 +91,7 @@ public interface UrlsFrontierRepository extends MongoRepository<UrlDocument, Str
         String hashedDocContent,
         List<String> linkedPages,
         boolean isCrawled,
+        boolean isIndexed,
         String lastCrawled
     );
 

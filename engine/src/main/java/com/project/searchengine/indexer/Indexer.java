@@ -42,6 +42,9 @@ public class Indexer {
     public static int BATCH_SIZE = 100;
 
     public void startIndexing() {
+        System.out.println("Starting indexing process...");
+        long start = System.nanoTime();
+
         // Get a batch of not indexed documents from the database
         List<UrlDocument> urlDocuments = urlsFrontierService.getNotIndexedDocuments(BATCH_SIZE);
 
@@ -68,7 +71,16 @@ public class Indexer {
 
             // 6- Update the URL document in the database
             urlDocument.setIndexed(true);
+            urlsFrontierService.updateUrlDocument(urlDocument);
         }
+        long duration = (System.nanoTime() - start) / 1_000_000;
+        System.out.println(
+            "Indexing batch took: " +
+            duration +
+            " ms, processed " +
+            urlDocuments.size() +
+            " documents"
+        );
     }
 
     /**
