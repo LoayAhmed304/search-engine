@@ -19,6 +19,7 @@ public class UrlsFrontier {
     public static final int BATCH_SIZE = 100;
     public static final int MAX_URLS = 1000;
     public List<String> currentUrlBatch = new ArrayList<>();
+    public HashSet<String> allHashedDocs = new HashSet<>();
 
     /**
      * Constructor for UrlsFrontier.
@@ -76,6 +77,10 @@ public class UrlsFrontier {
         return true;
     }
 
+    public void getAllHashedDocContent() {
+        allHashedDocs.addAll(urlsFrontierService.findAllHashedDocContent());
+    }
+
     /**
      * Handles processed URL by updating its frequency in the frontier or adding it if it doesn't exist.
      * @param url The URL to handle
@@ -95,17 +100,19 @@ public class UrlsFrontier {
     }
 
     public void saveCrawledDocument(String normalizedUrl, String document, String hashedContent, boolean isCrawled ,List<String> linkedPages) {
-        UrlDocument urlDocument = new UrlDocument();
-        urlDocument.setNormalizedUrl(normalizedUrl);
-        urlDocument.setDocument(document);
-        urlDocument.setHashedDocContent(hashedContent);
-        urlDocument.setCrawled(isCrawled);
-        urlDocument.setLinkedPages(linkedPages);
+        UrlDocument urlDocument = new UrlDocument(normalizedUrl, 1, isCrawled, document, hashedContent, linkedPages, new Date().toString()); // dummy frequency
         urlsFrontierService.updateUrlDocument(urlDocument);
     }
 
     public boolean hasReachedThreshold() {
         return urlsFrontierService.count() >= MAX_URLS;
+    }
+
+    public void removeUrl(String normalizedUrl) {
+        urlsFrontierService.deleteByNormalizedUrl(normalizedUrl);
+    }
+    public boolean isDuplicate(String hashedDocContent) {
+        return allHashedDocs.contains(hashedDocContent);
     }
     
 }

@@ -50,18 +50,11 @@ public interface UrlsFrontierRepository extends MongoRepository<UrlDocument, Str
     default boolean upsertUrl(String normalizedUrl) {
         if (existsByNormalizedUrl(normalizedUrl)) {
             incrementFrequency(normalizedUrl);
-            return false;
+            return true;
         } else {
             if (count() < 1000) {
                 System.out.println("Creating new document for URL: " + normalizedUrl + "\n");
-                UrlDocument newDocument = new UrlDocument();
-                newDocument.setNormalizedUrl(normalizedUrl);
-                newDocument.setFrequency(1L);
-                newDocument.setCrawled(false);
-                newDocument.setDocument("");
-                newDocument.setHashedDocContent("");
-                newDocument.setLinkedPages(new ArrayList<>() {
-                });
+                UrlDocument newDocument = new UrlDocument(normalizedUrl, 1L, false, "", "", new ArrayList<>(), "");
                 System.out.println("New document created: " + newDocument + "\n");
                 save(newDocument);
                 return true;

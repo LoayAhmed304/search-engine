@@ -101,7 +101,7 @@ public class UrlsFrontierService {
             doc.getHashedDocContent(),
             doc.getLinkedPages(),
             doc.isCrawled(),
-            new Date().toString()
+            doc.getLastCrawled()
         );
     }
 
