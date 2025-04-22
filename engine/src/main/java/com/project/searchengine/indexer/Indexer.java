@@ -95,14 +95,8 @@ public class Indexer {
         String content = document.body().text();
         Elements fieldTags = document.select("h1, h2, h3, h4, h5, h6, title");
 
-        // Tokenize the document
-        long start = System.nanoTime();
-
         tokenizer.tokenizeContent(content, id, "body");
         tokenizer.tokenizeHeaders(fieldTags, id);
-
-        long duration = (System.nanoTime() - start) / 1_000_000;
-        System.out.println("Tokenization took: " + duration + " ms");
 
         // Add the count of tokens before saving
         tokenizer.setPageTokenCount();
@@ -126,8 +120,6 @@ public class Indexer {
      */
     public void saveTokens() {
         Map<String, InvertedIndex> indexBuffer = tokenizer.getIndexBuffer();
-        System.out.println("Tokens size: " + indexBuffer.size());
-        long start = System.nanoTime();
 
         if (!indexBuffer.isEmpty()) {
             // 1- Query existing words from the DB
@@ -165,18 +157,9 @@ public class Indexer {
 
             try {
                 BulkWriteResult result = bulkOps.execute();
-                System.out.printf(
-                    "Indexed %,d tokens (inserted: %,d, updated: %,d)%n",
-                    indexBuffer.size(),
-                    result.getInsertedCount(),
-                    result.getModifiedCount()
-                );
             } catch (Exception e) {
                 System.err.println("Error saving tokens: " + e.getMessage());
             }
-
-            long duration = (System.nanoTime() - start) / 1_000_000;
-            System.out.println("Saving to the database took: " + duration + " ms");
             indexBuffer.clear();
         }
     }
