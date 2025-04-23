@@ -1,23 +1,16 @@
 package com.project.searchengine.indexer;
 
 import com.mongodb.bulk.BulkWriteResult;
-import com.project.searchengine.crawler.preprocessing.*;
-import com.project.searchengine.server.model.InvertedIndex;
-import com.project.searchengine.server.model.Page;
-import com.project.searchengine.server.model.PageReference;
-import com.project.searchengine.server.model.UrlDocument;
+import com.project.searchengine.server.model.*;
 import com.project.searchengine.server.repository.InvertedIndexRepository;
-import com.project.searchengine.server.service.PageService;
-import com.project.searchengine.server.service.UrlsFrontierService;
-import java.security.MessageDigest;
+import com.project.searchengine.server.service.*;
+import com.project.searchengine.utils.HashManager;
 import java.util.*;
-import javax.xml.bind.DatatypeConverter;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.*;
 import org.jsoup.select.*;
 import org.springframework.beans.factory.annotation.*;
-import org.springframework.data.mongodb.core.BulkOperations;
-import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.*;
 import org.springframework.data.mongodb.core.query.*;
 import org.springframework.stereotype.*;
 
@@ -39,7 +32,7 @@ public class Indexer {
     @Autowired
     private InvertedIndexRepository invertedIndexRepository;
 
-    public static int BATCH_SIZE = 100;
+    public static int BATCH_SIZE = 1000;
 
     public void startIndexing() {
         System.out.println("Starting indexing process...");
@@ -91,7 +84,7 @@ public class Indexer {
     public void index(String url, Document document) {
         // Extract raw text
         String title = document.title();
-        String id = hashUrl(url);
+        String id = HashManager.hash(url);
         String content = document.body().text();
         Elements fieldTags = document.select("h1, h2, h3, h4, h5, h6, title");
 
@@ -157,6 +150,12 @@ public class Indexer {
 
             try {
                 BulkWriteResult result = bulkOps.execute();
+                System.out.println(
+                    "Inserted: " +
+                    result.getInsertedCount() +
+                    ", Updated: " +
+                    result.getModifiedCount()
+                );
             } catch (Exception e) {
                 System.err.println("Error saving tokens: " + e.getMessage());
             }

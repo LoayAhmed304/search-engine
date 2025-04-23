@@ -1,4 +1,3 @@
 package com.project.searchengine.ranker;
 
-public class RankCalculatorTest {
-}
+public class RankCalculatorTest {}

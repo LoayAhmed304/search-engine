@@ -70,6 +70,7 @@ public class Tokenizer {
     /**
      * Build the inverted index to be saved to the database
      * If it already exists update it
+     *
      * @param word The Id of the inverted index
      * @param pageId The Id of the page that contains the word
      * @param position The position of the word in the page
@@ -107,6 +108,7 @@ public class Tokenizer {
     /**
      * Cleans the token by removing unwanted characters.
      * Preserves special tokens like email, phone, hashtags, and hyphenated words.
+     *
      * @param token The token to clean.
      * @return The cleaned token.
      */
