@@ -32,6 +32,7 @@ public class Crawler {
     public void initCrawling() {
         if(urlsFrontier.shouldInitializeFrontier())
             urlsFrontier.seedFrontier();
+        urlsFrontier.getAllHashedDocContent(); // Prepare the cache
     }
 
     /**
@@ -43,7 +44,7 @@ public class Crawler {
     
         while(urlsFrontier.getNextUrlsBatch())
         {
-            System.out.println("Processing batch of URLs number: " + currentBatch++);
+            System.out.println("\n========================================\nProcessing batch of URLs number: " + currentBatch++);
 
             for (String url : urlsFrontier.currentUrlBatch) {
                 System.out.println("Crawling URL: " + url);
@@ -52,20 +53,25 @@ public class Crawler {
 
                 if (pageContent == null) {
                     System.out.println("Failed to fetch content for URL: " + url);
-                    // remover from the database
+                    urlsFrontier.removeUrl(url);
                     continue;
                 }
 
-                String hashedDocument = HashManager.hash(pageContent.toString()); 
+                String hashedDocument = HashManager.hash(pageContent.toString());
                 System.out.println("Hashed Document: " + hashedDocument);
-                   // if the hash is in the database, remove the url from the frontier db urlsFrontier.removeDuplicates(hashedDocument);
+                
+                if(urlsFrontier.isDuplicate(hashedDocument))
+                {
+                    System.out.println("Duplicate document found. Skipping URL: " + url);
+                    urlsFrontier.removeUrl(url);
+                    continue;
+                }
 
                 Set<String> linkedPagesSet = URLExtractor.getURLs(pageContent);
                 List<String> linkedPages = new ArrayList<>(linkedPagesSet);
                 System.out.println("Linked Pages: " + linkedPages.size());
 
                 handleLinkedPages(linkedPages);
-                    
                 
                 urlsFrontier.saveCrawledDocument(url, pageContent.toString(), hashedDocument, true, linkedPages);
         }
@@ -97,12 +103,13 @@ public class Crawler {
                 if (!robotsHandler.isUrlAllowed(normalizedUrl))
                     continue;
 
-                urlsFrontier.handleUrl(normalizedUrl);
+                if(!urlsFrontier.handleUrl(normalizedUrl))
+                    break;
             }
         }
     }
 
     public void test() {
-        urlsFrontier.getAllHashedDocContent();
+        crawl();
     }
 }

@@ -112,7 +112,7 @@ public class UrlsFrontier {
         urlsFrontierService.deleteByNormalizedUrl(normalizedUrl);
     }
     public boolean isDuplicate(String hashedDocContent) {
-        return allHashedDocs.contains(hashedDocContent);
+        return !allHashedDocs.add(hashedDocContent);
     }
     
 }
