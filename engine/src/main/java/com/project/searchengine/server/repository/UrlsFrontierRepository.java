@@ -1,8 +1,8 @@
 package com.project.searchengine.server.repository;
 
 import com.project.searchengine.server.model.UrlDocument;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import org.springframework.data.domain.*;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 import org.springframework.data.mongodb.repository.Update;
@@ -102,7 +102,7 @@ public interface UrlsFrontierRepository extends MongoRepository<UrlDocument, Str
      * @param limit The maximum number of documents to return
      * @return List of UrlDocument objects
      */
-    List<UrlDocument> findByIsIndexedFalseAndIsCrawledTrue(int limit);
+    Page<UrlDocument> findByIsIndexedFalse(Pageable limit);
 
     /**
      * Deletes a document with the given normalizedUrl from the database.

@@ -5,6 +5,7 @@ import com.project.searchengine.server.repository.UrlsFrontierRepository;
 import com.project.searchengine.utils.JsonParserUtil;
 import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -131,7 +132,8 @@ public class UrlsFrontierService {
      * @return A list of URL documents that are not indexed yet
      */
     public List<UrlDocument> getNotIndexedDocuments(int limit) {
-        return urlsFrontierRepository.findByIsIndexedFalseAndIsCrawledTrue(limit);
+        Pageable pageable = PageRequest.of(0, limit);
+        return urlsFrontierRepository.findByIsIndexedFalse(pageable).getContent();
     }
 
     /**

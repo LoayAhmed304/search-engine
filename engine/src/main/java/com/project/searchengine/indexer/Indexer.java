@@ -1,18 +1,29 @@
 package com.project.searchengine.indexer;
 
 import com.mongodb.bulk.BulkWriteResult;
-import com.project.searchengine.server.model.*;
+import com.project.searchengine.server.model.InvertedIndex;
+import com.project.searchengine.server.model.Page;
+import com.project.searchengine.server.model.PageReference;
+import com.project.searchengine.server.model.UrlDocument;
 import com.project.searchengine.server.repository.InvertedIndexRepository;
-import com.project.searchengine.server.service.*;
+import com.project.searchengine.server.service.PageService;
+import com.project.searchengine.server.service.UrlsFrontierService;
 import com.project.searchengine.utils.HashManager;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.jsoup.Jsoup;
-import org.jsoup.nodes.*;
-import org.jsoup.select.*;
-import org.springframework.beans.factory.annotation.*;
-import org.springframework.data.mongodb.core.*;
-import org.springframework.data.mongodb.core.query.*;
-import org.springframework.stereotype.*;
+import org.jsoup.nodes.Document;
+import org.jsoup.select.Elements;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.BulkOperations;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.stereotype.Service;
 
 @Service
 public class Indexer {
@@ -40,9 +51,12 @@ public class Indexer {
 
         // Get a batch of not indexed documents from the database
         List<UrlDocument> urlDocuments = urlsFrontierService.getNotIndexedDocuments(BATCH_SIZE);
+        List<UrlDocument> updatedUrlDocuments = new ArrayList<>();
+        List<Page> savedPages = new ArrayList<>();
 
         if (urlDocuments.isEmpty()) {
             System.out.println("No documents to index");
+            return;
         }
 
         for (UrlDocument urlDocument : urlDocuments) {
@@ -59,16 +73,16 @@ public class Indexer {
             // 4- Set the page token count
             tokenizer.setPageTokenCount();
 
-            // 5- Save the tokens in the index buffer to the database
-            saveTokens();
-
             // 6- Save the page to the database
-            savePage(urlDocument.getHashedDocContent(), url, jsoupDocument.title(), document);
-
+            savedPages.add(new Page(HashManager.hash(url), url, jsoupDocument.title(), document));
             // 7- Update the URL document in the database
             urlDocument.setIndexed(true);
-            urlsFrontierService.updateUrlDocument(urlDocument);
+            updatedUrlDocuments.add(urlDocument);
         }
+
+        saveTokens();
+        updateUrlDocuments(updatedUrlDocuments);
+        savePages(savedPages);
 
         long duration = (System.nanoTime() - start) / 1_000_000;
         System.out.println(
@@ -160,6 +174,44 @@ public class Indexer {
                 System.err.println("Error saving tokens: " + e.getMessage());
             }
             indexBuffer.clear();
+        }
+    }
+
+    public void updateUrlDocuments(List<UrlDocument> documents) {
+        BulkOperations bulkOps = mongoTemplate.bulkOps(
+            BulkOperations.BulkMode.UNORDERED,
+            UrlDocument.class
+        );
+
+        for (UrlDocument document : documents) {
+            Query query = new Query(Criteria.where("_id").is(document.getId()));
+            Update update = new Update().set("isIndexed", true);
+            bulkOps.updateOne(query, update);
+        }
+
+        try {
+            bulkOps.execute();
+        } catch (Exception e) {
+            System.err.println("Error updating URL documents: " + e.getMessage());
+        }
+    }
+
+    public void savePages(List<Page> pages) {
+        BulkOperations bulkOps = mongoTemplate.bulkOps(
+            BulkOperations.BulkMode.UNORDERED,
+            Page.class
+        );
+
+        // Insert pages
+        for (Page page : pages) {
+            bulkOps.insert(page);
+        }
+
+        try {
+            BulkWriteResult result = bulkOps.execute();
+            System.out.println("Inserted Pages: " + result.getInsertedCount());
+        } catch (Exception e) {
+            System.err.println("Error saving pages: " + e.getMessage());
         }
     }
 }
