@@ -68,7 +68,7 @@ public class Indexer {
             Document jsoupDocument = Jsoup.parse(document);
 
             // 3- Call the index method with the URL and the Jsoup Document object
-            index(url, jsoupDocument);
+            indexDocument(url, jsoupDocument);
 
             // 4- Set the page token count
             tokenizer.setPageTokenCount();
@@ -81,7 +81,7 @@ public class Indexer {
             updatedUrlDocuments.add(urlDocument);
         }
 
-        // Bulk save tokens, update URL documents, and save pages
+        // Bulk save tokens, update URL documents, and pages in the database
         saveTokens();
         updateUrlDocuments(updatedUrlDocuments);
         savePages(savedPages);
@@ -103,7 +103,7 @@ public class Indexer {
      * @param url The URL of the document.
      * @param document The Jsoup Document object.
      */
-    public void index(String url, Document document) {
+    public void indexDocument(String url, Document document) {
         // Extract raw text
         String id = HashManager.hash(url);
         String content = document.body().text();
@@ -111,19 +111,6 @@ public class Indexer {
 
         tokenizer.tokenizeContent(content, id, "body");
         tokenizer.tokenizeHeaders(fieldTags, id);
-    }
-
-    /**
-     * Saves the page to the database.
-     * @param id The unique identifier for the page.
-     * @param url The URL of the page.
-     * @param title The title of the page.
-     * @param content The content of the page.
-     */
-    public void savePage(String id, String url, String title, String content) {
-        Page page = new Page(id, url, title, content);
-
-        pageService.createPage(page);
     }
 
     /**
