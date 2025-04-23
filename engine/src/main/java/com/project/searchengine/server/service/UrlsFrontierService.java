@@ -24,7 +24,7 @@ public class UrlsFrontierService {
      * @return List of up to 100 UrlDocument objects
      */
     public List<String> getTop100UrlsByFrequency() {
-        List<String> topUrls = urlsFrontierRepository.findTop100ByFrequency();
+        List<String> topUrls = urlsFrontierRepository.findTop200ByFrequency();
 
         return JsonParserUtil.parseSingleField(topUrls, "normalizedUrl");
     }

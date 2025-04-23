@@ -4,13 +4,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 import org.jsoup.nodes.*;
 
 import com.project.searchengine.crawler.preprocessing.URLExtractor;
 import com.project.searchengine.crawler.preprocessing.URLNormalizer;
 import com.project.searchengine.utils.HashManager;
-
 
 @Component
 public class Crawler {
@@ -30,7 +31,7 @@ public class Crawler {
      * It determines whether the seeding of the frontier is necessary.
      */
     public void initCrawling() {
-        if(urlsFrontier.shouldInitializeFrontier())
+        if (urlsFrontier.shouldInitializeFrontier())
             urlsFrontier.seedFrontier();
         urlsFrontier.getAllHashedDocContent(); // Prepare the cache
     }
@@ -41,45 +42,46 @@ public class Crawler {
     public void crawl() {
         System.out.println("Starting the crawling process...");
         initCrawling();
-    
-        while(urlsFrontier.getNextUrlsBatch())
-        {
-            System.out.println("\n========================================\nProcessing batch of URLs number: " + currentBatch++);
 
-            for (String url : urlsFrontier.currentUrlBatch) {
-                System.out.println("Crawling URL: " + url);
+        while (urlsFrontier.getNextUrlsBatch()) {
+            System.out.println(
+                    "\n========================================\nProcessing batch of URLs number: " + currentBatch++);
 
-                Document pageContent = URLExtractor.getDocument(url);
+            // Replace for loop with stream
+            urlsFrontier.currentUrlBatch.stream()
+                    .forEach(url -> {
+                        System.out.println("Crawling URL: " + url);
 
-                if (pageContent == null) {
-                    System.out.println("Failed to fetch content for URL: " + url);
-                    urlsFrontier.removeUrl(url);
-                    continue;
-                }
+                        Document pageContent = URLExtractor.getDocument(url);
 
-                String hashedDocument = HashManager.hash(pageContent.toString());
-                System.out.println("Hashed Document: " + hashedDocument);
-                
-                if(urlsFrontier.isDuplicate(hashedDocument))
-                {
-                    System.out.println("Duplicate document found. Skipping URL: " + url);
-                    urlsFrontier.removeUrl(url);
-                    continue;
-                }
+                        if (pageContent == null) {
+                            System.out.println("Failed to fetch content for URL: " + url);
+                            urlsFrontier.removeUrl(url);
+                            return; // Equivalent to continue in for loop
+                        }
 
-                Set<String> linkedPagesSet = URLExtractor.getURLs(pageContent);
-                List<String> linkedPages = new ArrayList<>(linkedPagesSet);
-                System.out.println("Linked Pages: " + linkedPages.size());
+                        String hashedDocument = HashManager.hash(pageContent.toString());
+                        System.out.println("Hashed Document: " + hashedDocument);
 
-                handleLinkedPages(linkedPages);
-                
-                urlsFrontier.saveCrawledDocument(url, pageContent.toString(), hashedDocument, true, linkedPages);
+                        if (urlsFrontier.isDuplicate(hashedDocument)) {
+                            System.out.println("Duplicate document found. Skipping URL: " + url);
+                            urlsFrontier.removeUrl(url);
+                            return; // Equivalent to continue in for loop
+                        }
+
+                        Set<String> linkedPagesSet = URLExtractor.getURLs(pageContent);
+                        List<String> linkedPages = new ArrayList<>(linkedPagesSet);
+                        System.out.println("Linked Pages: " + linkedPages.size());
+
+                        handleLinkedPages(linkedPages);
+
+                        urlsFrontier.saveCrawledDocument(url, pageContent.toString(), hashedDocument, true,
+                                linkedPages);
+                    });
         }
-        System.out.println("Finished processing totoal batch of URLs of count: " + (currentBatch - 1));
+        System.out.println("Finished processing total batch of URLs of count: " + (currentBatch - 1));
         System.out.println("Crawling process completed.");
     }
-
-}
 
     /**
      * Seeds the frontier with URLs from the seed file.
@@ -89,23 +91,34 @@ public class Crawler {
         urlsFrontier.seedFrontier();
         System.out.println("Frontier seeded successfully.");
     }
+
     /**
      * Handles the linked pages extracted from the crawled document.
-     * It checks if each linked page is allowed to be crawled based on robots.txt rules.
+     * It checks if each linked page is allowed to be crawled based on robots.txt
+     * rules.
      *
      * @param linkedPages List of linked pages to handle
      */
     private void handleLinkedPages(List<String> linkedPages) {
         if (!urlsFrontier.hasReachedThreshold()) {
-            for (String linkedUrl : linkedPages) {
-                String normalizedUrl = URLNormalizer.normalizeUrl(linkedUrl);
+            // Use AtomicBoolean to track if we should "break"
+            final AtomicBoolean shouldContinue = new AtomicBoolean(true);
 
-                if (!robotsHandler.isUrlAllowed(normalizedUrl))
-                    continue;
+            // Replace for loop with stream
+            linkedPages.stream()
+                    .takeWhile(linkedUrl -> shouldContinue.get()) // Stop when shouldContinue becomes false (equivalent
+                                                                  // to break)
+                    .forEach(linkedUrl -> {
+                        String normalizedUrl = URLNormalizer.normalizeUrl(linkedUrl);
 
-                if(!urlsFrontier.handleUrl(normalizedUrl))
-                    break;
-            }
+                        if (!robotsHandler.isUrlAllowed(normalizedUrl)) {
+                            return; // Equivalent to continue in for loop
+                        }
+
+                        if (!urlsFrontier.handleUrl(normalizedUrl)) {
+                            shouldContinue.set(false); // Equivalent to break in for loop
+                        }
+                    });
         }
     }
 

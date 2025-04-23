@@ -11,12 +11,11 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 public class URLExtractor {
-    // Reusable connection (not thread-safe yet!)
     private static final Connection connection = Jsoup.newSession()
-            .timeout(5_000) // 5 second timeout
+            .timeout(5_000) 
             .ignoreHttpErrors(true) // Don't throw exceptions on HTTP errors
             .followRedirects(true) // Follow redirects
-            .maxBodySize(2_000_000); // 2MB max page size
+            .maxBodySize(2_000_000); 
 
     /**
      * Fetches the document from the passed URL using a reusable connection.
@@ -69,7 +68,7 @@ public class URLExtractor {
                     filteredUrls.add(url);
 
             } catch (URISyntaxException e) {
-                System.err.println("URL skipped - invalid syntax: " + url);
+                continue; // Skip malformed URLs
             }
         }
         return filteredUrls;

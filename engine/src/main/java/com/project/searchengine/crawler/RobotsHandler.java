@@ -23,7 +23,7 @@ public class RobotsHandler {
 
     // Static shared cache across all instances
     private static final ConcurrentMap<String, BaseRobotRules> SHARED_CACHE = new ConcurrentHashMap<>();
-    private static final int MAX_CACHE_SIZE = 3000;
+    private static final int MAX_CACHE_SIZE = 4000;
 
     /**
      * @param url the URL to check
@@ -53,7 +53,7 @@ public class RobotsHandler {
         return Jsoup.connect(robotsTxtUrl)
                 .ignoreContentType(true)
                 .userAgent(USER_AGENT)
-                .timeout(20_000)
+                .timeout(5_000)
                 .execute();
     }
 

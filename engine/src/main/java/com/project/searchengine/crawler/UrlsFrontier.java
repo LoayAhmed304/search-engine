@@ -16,7 +16,7 @@ public class UrlsFrontier {
     private UrlsFrontierService urlsFrontierService;
 
     private final String SEEDS_FILE_PATH = Paths.get("src/main/resources/seeds.txt").toString();
-    public static final int BATCH_SIZE = 100;
+    public static final int BATCH_SIZE = 200;
     public static final int MAX_URLS = 1000;
     public List<String> currentUrlBatch = new ArrayList<>();
     public HashSet<String> allHashedDocs = new HashSet<>();

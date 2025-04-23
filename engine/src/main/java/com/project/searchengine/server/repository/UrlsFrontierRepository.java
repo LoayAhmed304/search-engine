@@ -19,7 +19,7 @@ public interface UrlsFrontierRepository extends MongoRepository<UrlDocument, Str
      * @return List of up to 100 normalized URLs where isCrawled is false
      */
     @Query(value = "{ 'isCrawled': false }", fields = "{ 'normalizedUrl': 1, '_id': 0 }", sort = "{ 'frequency': -1 }")
-    List<String> findTop100ByFrequency();
+    List<String> findTop200ByFrequency();
 
     /**
      * Increments the frequency of a document with the given normalizedUrl.
