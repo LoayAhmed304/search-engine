@@ -56,16 +56,20 @@ public class Indexer {
             // 3- Call the index method with the URL and the Jsoup Document object
             index(url, jsoupDocument);
 
-            // 4- Save the tokens in the index buffer to the database
+            // 4- Set the page token count
+            tokenizer.setPageTokenCount();
+
+            // 5- Save the tokens in the index buffer to the database
             saveTokens();
 
-            // 5- Save the page to the database
+            // 6- Save the page to the database
             savePage(urlDocument.getHashedDocContent(), url, jsoupDocument.title(), document);
 
-            // 6- Update the URL document in the database
+            // 7- Update the URL document in the database
             urlDocument.setIndexed(true);
             urlsFrontierService.updateUrlDocument(urlDocument);
         }
+
         long duration = (System.nanoTime() - start) / 1_000_000;
         System.out.println(
             "Indexing batch took: " +
@@ -83,16 +87,12 @@ public class Indexer {
      */
     public void index(String url, Document document) {
         // Extract raw text
-        String title = document.title();
         String id = HashManager.hash(url);
         String content = document.body().text();
         Elements fieldTags = document.select("h1, h2, h3, h4, h5, h6, title");
 
         tokenizer.tokenizeContent(content, id, "body");
         tokenizer.tokenizeHeaders(fieldTags, id);
-
-        // Add the count of tokens before saving
-        tokenizer.setPageTokenCount();
     }
 
     /**
