@@ -1,28 +1,17 @@
 package com.project.searchengine.indexer;
 
 import com.mongodb.bulk.BulkWriteResult;
-import com.project.searchengine.server.model.InvertedIndex;
-import com.project.searchengine.server.model.Page;
-import com.project.searchengine.server.model.PageReference;
-import com.project.searchengine.server.model.UrlDocument;
+import com.project.searchengine.server.model.*;
 import com.project.searchengine.server.repository.InvertedIndexRepository;
-import com.project.searchengine.server.service.PageService;
-import com.project.searchengine.server.service.UrlsFrontierService;
+import com.project.searchengine.server.service.*;
 import com.project.searchengine.utils.HashManager;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.mongodb.core.BulkOperations;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.data.mongodb.core.*;
+import org.springframework.data.mongodb.core.query.*;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -43,21 +32,32 @@ public class Indexer {
     @Autowired
     private InvertedIndexRepository invertedIndexRepository;
 
-    public static int BATCH_SIZE = 1000;
+    public static int BATCH_SIZE = 100;
+    public static int currentBatch = 1;
 
     public void startIndexing() {
         System.out.println("Starting indexing process...");
+
+        while (true) {
+            // Get a batch of not indexed documents from the database
+            List<UrlDocument> urlDocuments = urlsFrontierService.getNotIndexedDocuments(BATCH_SIZE);
+
+            if (urlDocuments.isEmpty()) {
+                System.out.println("No more documents to index");
+                return;
+            }
+
+            // Index all batches
+            indexBatch(urlDocuments);
+            currentBatch++;
+        }
+    }
+
+    public void indexBatch(List<UrlDocument> urlDocuments) {
         long start = System.nanoTime();
 
-        // Get a batch of not indexed documents from the database
-        List<UrlDocument> urlDocuments = urlsFrontierService.getNotIndexedDocuments(BATCH_SIZE);
         List<UrlDocument> updatedUrlDocuments = new ArrayList<>();
         List<Page> savedPages = new ArrayList<>();
-
-        if (urlDocuments.isEmpty()) {
-            System.out.println("No documents to index");
-            return;
-        }
 
         for (UrlDocument urlDocument : urlDocuments) {
             // 1- Get the document from the database
@@ -73,20 +73,24 @@ public class Indexer {
             // 4- Set the page token count
             tokenizer.setPageTokenCount();
 
-            // 6- Save the page to the database
+            // 5- Add the page to the pages list to bulk save it
             savedPages.add(new Page(HashManager.hash(url), url, jsoupDocument.title(), document));
-            // 7- Update the URL document in the database
+
+            // 6- Add the document to the updatedUrlDocuments list
             urlDocument.setIndexed(true);
             updatedUrlDocuments.add(urlDocument);
         }
 
+        // Bulk save tokens, update URL documents, and save pages
         saveTokens();
         updateUrlDocuments(updatedUrlDocuments);
         savePages(savedPages);
 
         long duration = (System.nanoTime() - start) / 1_000_000;
         System.out.println(
-            "Indexing batch took: " +
+            "Indexing Batch " +
+            currentBatch +
+            " took: " +
             duration +
             " ms, processed " +
             urlDocuments.size() +
