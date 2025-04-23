@@ -16,9 +16,12 @@ public interface UrlsFrontierRepository extends MongoRepository<UrlDocument, Str
      *
      * @return List of up to 100 normalized URLs where isCrawled is false
      */
-    @Query(value = "{ 'isCrawled': false }", fields = "{ 'normalizedUrl': 1, '_id': 0 }", sort = "{ 'frequency': -1 }")
+    @Query(
+        value = "{ 'isCrawled': false }",
+        fields = "{ 'normalizedUrl': 1, '_id': 0 }",
+        sort = "{ 'frequency': -1 }"
+    )
     List<String> findTop200ByFrequency();
-
 
     /**
      * Increments the frequency of a document with the given normalizedUrl.
@@ -52,7 +55,15 @@ public interface UrlsFrontierRepository extends MongoRepository<UrlDocument, Str
             return true;
         } else {
             if (count() < 1000) {
-                UrlDocument newDocument = new UrlDocument(normalizedUrl, 1L, false, "", "", new ArrayList<>(), "");
+                UrlDocument newDocument = new UrlDocument(
+                    normalizedUrl,
+                    1L,
+                    false,
+                    "",
+                    "",
+                    new ArrayList<>(),
+                    ""
+                );
                 save(newDocument);
                 return true;
             }
@@ -73,7 +84,7 @@ public interface UrlsFrontierRepository extends MongoRepository<UrlDocument, Str
      */
     @Query("{ 'normalizedUrl': ?0 }")
     @Update(
-        "{ '$set': { 'document': ?1, 'hashedDocContent': ?2, 'linkedPages': ?3, 'isCrawled': ?4, isIndexed: ?5, 'lastCrawled': ?5 } }"
+        "{ '$set': { 'document': ?1, 'hashedDocContent': ?2, 'linkedPages': ?3, 'isCrawled': ?4, isIndexed: ?5, 'lastCrawled': ?6 } }"
     )
     void updateUrlDocument(
         String normalizedUrl,

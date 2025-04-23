@@ -2,12 +2,9 @@ package com.project.searchengine.indexer;
 
 import com.project.searchengine.server.model.InvertedIndex;
 import com.project.searchengine.server.model.PageReference;
-import java.io.InputStream;
 import java.util.*;
-import java.util.regex.*;
 import opennlp.tools.stemmer.PorterStemmer;
 import opennlp.tools.tokenize.*;
-import opennlp.tools.tokenize.TokenizerModel;
 import org.jsoup.nodes.*;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;

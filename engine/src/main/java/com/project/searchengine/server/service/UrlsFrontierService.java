@@ -4,7 +4,6 @@ import com.project.searchengine.server.model.UrlDocument;
 import com.project.searchengine.server.repository.UrlsFrontierRepository;
 import com.project.searchengine.utils.JsonParserUtil;
 import java.util.*;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -103,7 +102,6 @@ public class UrlsFrontierService {
             doc.getLinkedPages(),
             doc.isCrawled(),
             doc.isIndexed(),
-            new Date().toString()
             doc.getLastCrawled()
         );
     }
@@ -135,8 +133,8 @@ public class UrlsFrontierService {
     public List<UrlDocument> getNotIndexedDocuments(int limit) {
         return urlsFrontierRepository.findByIsIndexedFalseAndIsCrawledTrue(limit);
     }
-  
-   /**
+
+    /**
      * Deletes a document with the given normalizedUrl from the database.
      *
      * @param normalizedUrl The normalized URL of the document to delete
@@ -151,7 +149,7 @@ public class UrlsFrontierService {
      * @return List of all hashedDocContent values
      */
     public List<String> findAllHashedDocContent() {
-       List<String> allHash = urlsFrontierRepository.findAllHashedDocContent();
-       return JsonParserUtil.parseSingleField(allHash, "hashedDocContent");
+        List<String> allHash = urlsFrontierRepository.findAllHashedDocContent();
+        return JsonParserUtil.parseSingleField(allHash, "hashedDocContent");
     }
 }
