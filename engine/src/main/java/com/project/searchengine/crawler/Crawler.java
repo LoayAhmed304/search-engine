@@ -4,13 +4,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
-
 import org.jsoup.nodes.*;
 
-import com.project.searchengine.crawler.preprocessing.URLExtractor;
-import com.project.searchengine.crawler.preprocessing.URLNormalizer;
+import com.project.searchengine.crawler.preprocessing.*;
 import com.project.searchengine.utils.HashManager;
-
 
 @Component
 public class Crawler {
@@ -26,62 +23,57 @@ public class Crawler {
     }
 
     /**
-     * Handles the initialization of the crawling process.
-     * It determines whether the seeding of the frontier is necessary.
+     * Handles the initialization of the crawling process: seeding, preparing caches, etc.
      */
     public void initCrawling() {
-        if(urlsFrontier.shouldInitializeFrontier())
+        if (urlsFrontier.shouldInitializeFrontier())
             urlsFrontier.seedFrontier();
+        urlsFrontier.getAllHashedDocContent(); // Prepare the cache
     }
 
     /**
-     * Includes the crawling process skeleton.
+     * Crawls the URLs managed by the frontier.
+     * It processes each URL in the current batch, fetches its content,
+     * checks for duplicates, and handles linked pages.
      */
     public void crawl() {
         System.out.println("Starting the crawling process...");
         initCrawling();
-    
-        while(urlsFrontier.getNextUrlsBatch())
-        {
-            System.out.println("Processing batch of URLs number: " + currentBatch++);
 
-            for (String url : urlsFrontier.currentUrlBatch) {
-                System.out.println("Crawling URL: " + url);
+        while (urlsFrontier.getNextUrlsBatch()) {
+            System.out.println("\nProcessing batch of URLs number: " + currentBatch++);
 
-                Document pageContent = URLExtractor.getDocument(url);
+            urlsFrontier.currentUrlBatch.stream()
+                    .forEach(url -> {
+                        System.out.println("Crawling URL: " + url);
 
-                if (pageContent == null) {
-                    System.out.println("Failed to fetch content for URL: " + url);
-                    continue;
-                }
+                        Document pageContent = URLExtractor.getDocument(url);
 
-                String hashedDocument = HashManager.hash(pageContent.toString()); 
-                System.out.println("Hashed Document: " + hashedDocument);
-                   // if the hash is in the database, remove the url from the frontier db urlsFrontier.removeDuplicates(hashedDocument);
+                        if (pageContent == null) {
+                            System.out.println("Failed to fetch content for URL: " + url);
+                            urlsFrontier.removeUrl(url);
+                            return;
+                        }
 
-                Set<String> linkedPagesSet = URLExtractor.getURLs(pageContent);
-                List<String> linkedPages = new ArrayList<>(linkedPagesSet);
-                System.out.println("Linked Pages: " + linkedPages.size());
+                        String hashedDocument = HashManager.hash(pageContent.toString());
 
-                if(!urlsFrontier.hasReachedThreshold()) {
-                    for (String linkedUrl : linkedPages) {
-                        String normalizedUrl = URLNormalizer.normalizeUrl(linkedUrl);
-                        
-                        if(!robotsHandler.isUrlAllowed(normalizedUrl))
-                            continue;
-                        
-                        urlsFrontier.handleUrl(normalizedUrl);
-                    }
-                }
-                    
-                
-                urlsFrontier.saveCrawledDocument(url, pageContent.toString(), hashedDocument, true, linkedPages);
+                        if (urlsFrontier.isDuplicate(hashedDocument)) {
+                            System.out.println("Duplicate document found. Skipping URL: " + url);
+                            urlsFrontier.removeUrl(url);
+                            return;
+                        }
+
+                        Set<String> allLinks = URLExtractor.getURLs(pageContent);
+                        List<String> linkedPages = new ArrayList<>(allLinks);
+
+                        handleLinkedPages(linkedPages);
+
+                        urlsFrontier.saveCrawledDocument(url, pageContent.toString(), hashedDocument, linkedPages);
+                    });
         }
-        System.out.println("Finished processing totoal batch of URLs of count: " + (currentBatch - 1));
+        System.out.println("Finished processing total batch of URLs of count: " + (currentBatch - 1));
         System.out.println("Crawling process completed.");
     }
-
-}
 
     /**
      * Seeds the frontier with URLs from the seed file.
@@ -90,5 +82,26 @@ public class Crawler {
         System.out.println("Seeding the frontier...");
         urlsFrontier.seedFrontier();
         System.out.println("Frontier seeded successfully.");
+    }
+
+    /**
+     * Handles the linked pages extracted from the crawled document.
+     * It checks if each linked page is allowed to be crawled based on robots.txt
+     * rules.
+     *
+     * @param linkedPages List of linked pages to handle
+     */
+    private void handleLinkedPages(List<String> linkedPages) {
+        if (!urlsFrontier.hasReachedThreshold()) {
+            for (String linkedUrl : linkedPages) {
+                String normalizedUrl = URLNormalizer.normalizeUrl(linkedUrl);
+
+                if (!robotsHandler.isUrlAllowed(normalizedUrl))
+                    continue;
+
+                if (!urlsFrontier.handleUrl(normalizedUrl))
+                    break;
+            }
+        }
     }
 }

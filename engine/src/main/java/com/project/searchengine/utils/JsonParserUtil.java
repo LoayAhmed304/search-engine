@@ -21,7 +21,7 @@ public class JsonParserUtil {
      * @param jsonList The list of JSON strings to parse
      * @return List of normalized URLs
      */
-    public static List<String> parseNormalizedUrls(List<String> jsonList) {
+    public static List<String> parseSingleField(List<String> jsonList, String fieldName) {
         List<String> urls = new ArrayList<>();
 
         if (jsonList == null || jsonList.isEmpty()) {
@@ -31,7 +31,7 @@ public class JsonParserUtil {
         for (String json : jsonList) {
             try {
                 JsonNode node = objectMapper.readTree(json);
-                String normalizedUrl = node.get("normalizedUrl").asText();
+                String normalizedUrl = node.get(fieldName).asText();
                 urls.add(normalizedUrl);
             } catch (JsonMappingException e) {
                 System.err.println("Mapping error for JSON: " + json + " - " + e.getMessage());

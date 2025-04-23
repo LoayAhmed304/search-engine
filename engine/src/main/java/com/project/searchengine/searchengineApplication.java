@@ -15,7 +15,7 @@ public class searchengineApplication {
 
     public static void main(String[] args) {
         // Start the Spring Boot application context
-        ApplicationContext context = SpringApplication.run(searchengineApplication.class, args);
+        SpringApplication.run(searchengineApplication.class, args);
         System.out.println("Hello my Search Engine!");
 
         // Test the crawler by seeding the frontier
@@ -26,27 +26,27 @@ public class searchengineApplication {
         // System.out.println("crawling took: " + duration + " ms");
 
         // Test the Indexer
-        Indexer indexer = context.getBean(Indexer.class);
-        System.out.println("\n\n\t\t***************Starting Indexing process***************");
-        indexer.startIndexing();
-        System.out.println("\n\n\t\t***************Indexing process completed***************");
+//         Indexer indexer = context.getBean(Indexer.class);
+//         System.out.println("\n\n\t\t***************Starting Indexing process***************");
+//         indexer.startIndexing();
+//         System.out.println("\n\n\t\t***************Indexing process completed***************");
 
         // Test the PageRank
-        UrlsFrontierService urlsFrontierService = context.getBean(UrlsFrontierService.class);
-        PageService pageService = context.getBean(PageService.class);
+//         UrlsFrontierService urlsFrontierService = context.getBean(UrlsFrontierService.class);
+//         PageService pageService = context.getBean(PageService.class);
 
-        System.out.println("\n\n\t\t***************Starting PageRank calculation***************");
-        long startTime = System.currentTimeMillis();
-        PageRank pageRank = new PageRank(urlsFrontierService, pageService);
-        boolean success = pageRank.computeAllRanks();
-        long rankDuration = System.currentTimeMillis() - startTime;
+//         System.out.println("\n\n\t\t***************Starting PageRank calculation***************");
+//         long startTime = System.currentTimeMillis();
+//         PageRank pageRank = new PageRank(urlsFrontierService, pageService);
+//         boolean success = pageRank.computeAllRanks();
+//         long rankDuration = System.currentTimeMillis() - startTime;
 
-        if (success) {
-            System.out.println("PageRank calculation completed successfully!");
-            System.out.println("Pages ranked: " + urlsFrontierService.getAllUrls().size());
-            System.out.println("Time taken: " + rankDuration + "ms\n\n");
-        } else {
-            System.out.println("PageRank calculation failed!\n\n");
-        }
+//         if (success) {
+//             System.out.println("PageRank calculation completed successfully!");
+//             System.out.println("Pages ranked: " + urlsFrontierService.getAllUrls().size());
+//             System.out.println("Time taken: " + rankDuration + "ms\n\n");
+//         } else {
+//             System.out.println("PageRank calculation failed!\n\n");
+//         }
     }
 }
