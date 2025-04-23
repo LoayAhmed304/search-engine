@@ -19,7 +19,7 @@ public interface UrlsFrontierRepository extends MongoRepository<UrlDocument, Str
      * @return List of up to 100 normalized URLs where isCrawled is false
      */
     @Query(value = "{ 'isCrawled': false }", fields = "{ 'normalizedUrl': 1, '_id': 0 }", sort = "{ 'frequency': -1 }")
-    List<String> findTop100ByFrequency();
+    List<String> findTop200ByFrequency();
 
     /**
      * Increments the frequency of a document with the given normalizedUrl.
@@ -44,27 +44,19 @@ public interface UrlsFrontierRepository extends MongoRepository<UrlDocument, Str
      * with frequency = 1 and default values.
      *
      * @param normalizedUrl The normalized URL to upsert
-     * @return false if the URL existed and was updated, true if a new document was created
+     * @return false if the URL existed and was updated, true if a new document was
+     *         created
      */
     default boolean upsertUrl(String normalizedUrl) {
         if (existsByNormalizedUrl(normalizedUrl)) {
             incrementFrequency(normalizedUrl);
-            return false;
+            return true;
         } else {
-            if(count() < 1000)
-            {
-                System.out.println("Creating new document for URL: " + normalizedUrl + "\n");
-                UrlDocument newDocument = new UrlDocument();
-                newDocument.setNormalizedUrl(normalizedUrl);
-                newDocument.setFrequency(1L);
-                newDocument.setCrawled(false);
-                newDocument.setDocument("");
-                newDocument.setHashedDocContent("");
-                newDocument.setLinkedPages(new ArrayList<>() {});
-                System.out.println("New document created: " + newDocument + "\n");
+            if (count() < 1000) {
+                UrlDocument newDocument = new UrlDocument(normalizedUrl, 1L, false, "", "", new ArrayList<>(), "");
                 save(newDocument);
                 return true;
-                
+
             }
             return false;
         }
@@ -84,4 +76,20 @@ public interface UrlsFrontierRepository extends MongoRepository<UrlDocument, Str
     @Update("{ '$set': { 'document': ?1, 'hashedDocContent': ?2, 'linkedPages': ?3, 'isCrawled': ?4, 'lastCrawled': ?5 } }")
     void updateUrlDocument(String normalizedUrl, String document, String hashedDocContent, List<String> linkedPages,
             boolean isCrawled, String lastCrawled);
+
+    /**
+     * Deletes a document with the given normalizedUrl from the database.
+     *
+     * @param normalizedUrl The normalized URL of the document to delete
+     */
+    @Query(value = "{ 'normalizedUrl': ?0 }", delete = true)
+    void deleteByNormalizedUrl(String normalizedUrl);
+
+    /**
+     * Retrieves all hashedDocContent values from the database.
+     *
+     * @return List of all hashedDocContent values
+     */
+    @Query(value = "{}", fields = "{ 'hashedDocContent': 1, '_id': 0 }")
+    List<String> findAllHashedDocContent();
 }

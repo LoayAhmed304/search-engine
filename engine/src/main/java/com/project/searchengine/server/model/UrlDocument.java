@@ -3,15 +3,21 @@ package com.project.searchengine.server.model;
 import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.*;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document(collection = "urlsfrontier")
+@CompoundIndexes({
+    @CompoundIndex(name = "isCrawled_frequency_idx", def = "{'isCrawled': 1, 'frequency': -1}")
+})
 public class UrlDocument {
 
     @Id
     private String id;
 
+    @Indexed(unique = true)
     private String normalizedUrl;
+    
     private long frequency;
     private boolean isCrawled;
     private String document; // raw HTML content
