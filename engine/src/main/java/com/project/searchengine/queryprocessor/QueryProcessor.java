@@ -1,4 +1,4 @@
-package com.project.searchengine.processor;
+package com.project.searchengine.queryprocessor;
 
 import java.util.*;
 
@@ -12,7 +12,7 @@ import opennlp.tools.stemmer.PorterStemmer;
 import opennlp.tools.tokenize.*;
 
 @Component
-public class Processor {
+public class QueryProcessor {
     private List<String> query;
     private Ranker ranker;
 
@@ -21,7 +21,7 @@ public class Processor {
 
     SimpleTokenizer tokenizer = SimpleTokenizer.INSTANCE;
 
-    public Processor(StopWordFilter stopWordFilter, Ranker ranker) {
+    public QueryProcessor(StopWordFilter stopWordFilter, Ranker ranker) {
         this.stopWordFilter = stopWordFilter;
         this.ranker = ranker;
     }
