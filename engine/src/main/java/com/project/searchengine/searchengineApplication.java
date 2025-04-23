@@ -39,7 +39,7 @@ public class searchengineApplication {
         //Test the crawler by seeding the frontier
         Crawler crawler = context.getBean(Crawler.class);
         long start = System.currentTimeMillis();
-        crawler.test();
+        crawler.crawl();
         long duration = System.currentTimeMillis() - start;
         System.out.println("crawling took: " + duration + " ms");
     }

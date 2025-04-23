@@ -37,8 +37,9 @@ public class RobotsHandler {
             BaseRobotRules rules = getRules(domainKey);
 
             return rules.isAllowed(url);
-        } catch (URISyntaxException e) {
-            throw new IllegalArgumentException("Invalid URL: " + url);
+        } catch (Exception e) {
+            System.err.println("Error checking robots.txt for URL: " + url + " - " + e.getMessage());
+            return true; // Assume allowed if any error occurs (permissive default)
         }
     }
 
@@ -74,11 +75,12 @@ public class RobotsHandler {
     /**
      * @param domainKey the domain key for the robots.txt file
      * @return the BaseRobotRules object for the domain
-     * Checks if the rules are already cached and if not, fetches, caches and parses.
+     *         Checks if the rules are already cached and if not, fetches, caches
+     *         and parses.
      */
     BaseRobotRules getRules(String domainKey) {
         BaseRobotRules rules = SHARED_CACHE.get(domainKey);
-        if(rules == null) {
+        if (rules == null) {
             try {
                 URI uri = new URI(domainKey);
                 String robotsTxtUrl = getRobotsTxtUrl(uri);
@@ -88,7 +90,7 @@ public class RobotsHandler {
                         response.bodyAsBytes(),
                         response.contentType(),
                         USER_AGENT);
-                
+
                 addToCache(domainKey, rules);
             } catch (IOException | URISyntaxException e) {
                 // Return default permissive rules if fetch fails
@@ -99,17 +101,16 @@ public class RobotsHandler {
     }
 
     /**
-     * @param key the domain key for the robots.txt file
+     * @param key   the domain key for the robots.txt file
      * @param rules the BaseRobotRules object to cache
-     * Works as a cache manager for the class
+     *              Works as a cache manager for the class
      */
     public static void addToCache(String key, BaseRobotRules rules) {
-        if (SHARED_CACHE.size() < MAX_CACHE_SIZE) 
+        if (SHARED_CACHE.size() < MAX_CACHE_SIZE)
             SHARED_CACHE.putIfAbsent(key, rules);
-        else
-        {
+        else {
             clearSharedCache();
-            SHARED_CACHE.putIfAbsent(key, rules); 
+            SHARED_CACHE.putIfAbsent(key, rules);
         }
     }
 

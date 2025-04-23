@@ -6,8 +6,7 @@ import org.springframework.stereotype.Component;
 import java.util.*;
 import org.jsoup.nodes.*;
 
-import com.project.searchengine.crawler.preprocessing.URLExtractor;
-import com.project.searchengine.crawler.preprocessing.URLNormalizer;
+import com.project.searchengine.crawler.preprocessing.*;
 import com.project.searchengine.utils.HashManager;
 
 @Component
@@ -24,8 +23,7 @@ public class Crawler {
     }
 
     /**
-     * Handles the initialization of the crawling process.
-     * It determines whether the seeding of the frontier is necessary.
+     * Handles the initialization of the crawling process: seeding, preparing caches, etc.
      */
     public void initCrawling() {
         if (urlsFrontier.shouldInitializeFrontier())
@@ -34,15 +32,16 @@ public class Crawler {
     }
 
     /**
-     * Includes the crawling process skeleton.
+     * Crawls the URLs managed by the frontier.
+     * It processes each URL in the current batch, fetches its content,
+     * checks for duplicates, and handles linked pages.
      */
     public void crawl() {
         System.out.println("Starting the crawling process...");
         initCrawling();
 
         while (urlsFrontier.getNextUrlsBatch()) {
-            System.out.println(
-                    "\n========================================\nProcessing batch of URLs number: " + currentBatch++);
+            System.out.println("\nProcessing batch of URLs number: " + currentBatch++);
 
             urlsFrontier.currentUrlBatch.stream()
                     .forEach(url -> {
@@ -53,7 +52,7 @@ public class Crawler {
                         if (pageContent == null) {
                             System.out.println("Failed to fetch content for URL: " + url);
                             urlsFrontier.removeUrl(url);
-                            return; 
+                            return;
                         }
 
                         String hashedDocument = HashManager.hash(pageContent.toString());
@@ -61,16 +60,15 @@ public class Crawler {
                         if (urlsFrontier.isDuplicate(hashedDocument)) {
                             System.out.println("Duplicate document found. Skipping URL: " + url);
                             urlsFrontier.removeUrl(url);
-                            return; 
+                            return;
                         }
 
-                        Set<String> linkedPagesSet = URLExtractor.getURLs(pageContent);
-                        List<String> linkedPages = new ArrayList<>(linkedPagesSet);
+                        Set<String> allLinks = URLExtractor.getURLs(pageContent);
+                        List<String> linkedPages = new ArrayList<>(allLinks);
 
                         handleLinkedPages(linkedPages);
 
-                        urlsFrontier.saveCrawledDocument(url, pageContent.toString(), hashedDocument, true,
-                                linkedPages);
+                        urlsFrontier.saveCrawledDocument(url, pageContent.toString(), hashedDocument, linkedPages);
                     });
         }
         System.out.println("Finished processing total batch of URLs of count: " + (currentBatch - 1));
@@ -105,9 +103,5 @@ public class Crawler {
                     break;
             }
         }
-    }
-
-    public void test() {
-        crawl();
     }
 }

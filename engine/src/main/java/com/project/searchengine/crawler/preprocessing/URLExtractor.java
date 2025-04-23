@@ -11,10 +11,14 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 public class URLExtractor {
+    /**
+     * A reusable connection to be used for fetching documents.
+     * This is a static field to avoid creating a new connection for each request.
+     */
     private static final Connection connection = Jsoup.newSession()
             .timeout(5_000) 
             .ignoreHttpErrors(true) // Don't throw exceptions on HTTP errors
-            .followRedirects(true) // Follow redirects
+            .followRedirects(true) 
             .maxBodySize(2_000_000); 
 
     /**
@@ -74,6 +78,9 @@ public class URLExtractor {
         return filteredUrls;
     }
 
+    /**
+     * Checks if the URL scheme is unwanted (e.g., javascript, mailto).
+     */
     private static boolean isUnwantedScheme(String scheme) {
         if (scheme == null)
             return false;
@@ -84,6 +91,9 @@ public class URLExtractor {
                 !(scheme.equalsIgnoreCase("http") || scheme.equalsIgnoreCase("https"));
     }
 
+    /**
+     * Checks if the URI is valid (has a host or a non-empty path).
+     */
     private static boolean isValidUri(URI uri) {
         return uri.getHost() != null ||
                 (uri.getPath() != null && !uri.getPath().isEmpty());
