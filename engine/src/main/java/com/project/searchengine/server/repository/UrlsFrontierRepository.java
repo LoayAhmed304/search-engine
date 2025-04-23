@@ -53,9 +53,7 @@ public interface UrlsFrontierRepository extends MongoRepository<UrlDocument, Str
             return true;
         } else {
             if (count() < 1000) {
-                System.out.println("Creating new document for URL: " + normalizedUrl + "\n");
                 UrlDocument newDocument = new UrlDocument(normalizedUrl, 1L, false, "", "", new ArrayList<>(), "");
-                System.out.println("New document created: " + newDocument + "\n");
                 save(newDocument);
                 return true;
 

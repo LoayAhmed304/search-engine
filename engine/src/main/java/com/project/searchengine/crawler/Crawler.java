@@ -4,9 +4,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
-
 import org.jsoup.nodes.*;
 
 import com.project.searchengine.crawler.preprocessing.URLExtractor;
@@ -47,7 +44,6 @@ public class Crawler {
             System.out.println(
                     "\n========================================\nProcessing batch of URLs number: " + currentBatch++);
 
-            // Replace for loop with stream
             urlsFrontier.currentUrlBatch.stream()
                     .forEach(url -> {
                         System.out.println("Crawling URL: " + url);
@@ -57,21 +53,19 @@ public class Crawler {
                         if (pageContent == null) {
                             System.out.println("Failed to fetch content for URL: " + url);
                             urlsFrontier.removeUrl(url);
-                            return; // Equivalent to continue in for loop
+                            return; 
                         }
 
                         String hashedDocument = HashManager.hash(pageContent.toString());
-                        System.out.println("Hashed Document: " + hashedDocument);
 
                         if (urlsFrontier.isDuplicate(hashedDocument)) {
                             System.out.println("Duplicate document found. Skipping URL: " + url);
                             urlsFrontier.removeUrl(url);
-                            return; // Equivalent to continue in for loop
+                            return; 
                         }
 
                         Set<String> linkedPagesSet = URLExtractor.getURLs(pageContent);
                         List<String> linkedPages = new ArrayList<>(linkedPagesSet);
-                        System.out.println("Linked Pages: " + linkedPages.size());
 
                         handleLinkedPages(linkedPages);
 
@@ -101,24 +95,15 @@ public class Crawler {
      */
     private void handleLinkedPages(List<String> linkedPages) {
         if (!urlsFrontier.hasReachedThreshold()) {
-            // Use AtomicBoolean to track if we should "break"
-            final AtomicBoolean shouldContinue = new AtomicBoolean(true);
+            for (String linkedUrl : linkedPages) {
+                String normalizedUrl = URLNormalizer.normalizeUrl(linkedUrl);
 
-            // Replace for loop with stream
-            linkedPages.stream()
-                    .takeWhile(linkedUrl -> shouldContinue.get()) // Stop when shouldContinue becomes false (equivalent
-                                                                  // to break)
-                    .forEach(linkedUrl -> {
-                        String normalizedUrl = URLNormalizer.normalizeUrl(linkedUrl);
+                if (!robotsHandler.isUrlAllowed(normalizedUrl))
+                    continue;
 
-                        if (!robotsHandler.isUrlAllowed(normalizedUrl)) {
-                            return; // Equivalent to continue in for loop
-                        }
-
-                        if (!urlsFrontier.handleUrl(normalizedUrl)) {
-                            shouldContinue.set(false); // Equivalent to break in for loop
-                        }
-                    });
+                if (!urlsFrontier.handleUrl(normalizedUrl))
+                    break;
+            }
         }
     }
 

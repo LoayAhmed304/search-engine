@@ -53,7 +53,7 @@ public class RobotsHandler {
         return Jsoup.connect(robotsTxtUrl)
                 .ignoreContentType(true)
                 .userAgent(USER_AGENT)
-                .timeout(5_000)
+                .timeout(10_000)
                 .execute();
     }
 
