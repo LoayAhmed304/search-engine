@@ -10,6 +10,8 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.*;
 import org.springframework.data.mongodb.core.BulkOperations.BulkMode;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.*;
 import org.springframework.data.mongodb.core.query.*;
 import org.springframework.stereotype.Service;
 
@@ -18,9 +20,10 @@ public class UrlsFrontierService {
 
     private final UrlsFrontierRepository urlsFrontierRepository;
     private final MongoOperations mongoOperations;
+    private MongoTemplate mongoTemplate;
 
     @Autowired
-    public UrlsFrontierService(UrlsFrontierRepository urlsFrontierRepository, MongoOperations mongoOperations) {
+    public UrlsFrontierService(UrlsFrontierRepository urlsFrontierRepository) {
         this.urlsFrontierRepository = urlsFrontierRepository;
         this.mongoOperations = mongoOperations;
     }
@@ -63,16 +66,6 @@ public class UrlsFrontierService {
         return urlsFrontierRepository.count() == 0;
     }
 
-    public void updateUrlDocument(UrlDocument doc) {
-        urlsFrontierRepository.updateUrlDocument(
-            doc.getNormalizedUrl(),
-            doc.getDocument(),
-            doc.getHashedDocContent(),
-            doc.getLinkedPages(),
-            doc.isCrawled(),
-            doc.getLastCrawled()
-        );
-    }
    
     public void bulkSaveCrawledBatch(Map<String, UrlDocument> crawledDocs) {
         if (crawledDocs.isEmpty()) return;
@@ -134,6 +127,22 @@ public class UrlsFrontierService {
         return urlsFrontierRepository.saveAll(urls);
     }
 
+    /**
+     * Get a list of URL documents that are not indexed yet.
+     * @param limit The maximum number of documents to retrieve
+     *
+     * @return A list of URL documents that are not indexed yet
+     */
+    public List<UrlDocument> getNotIndexedDocuments(int limit) {
+        Pageable pageable = PageRequest.of(0, limit);
+        return urlsFrontierRepository.findByIsIndexedFalse(pageable).getContent();
+    }
+
+    /**
+     * Deletes a document with the given normalizedUrl from the database.
+     *
+     * @param normalizedUrl The normalized URL of the document to delete
+     */
     public void deleteByNormalizedUrl(String normalizedUrl) {
         urlsFrontierRepository.deleteByNormalizedUrl(normalizedUrl);
     }
@@ -141,5 +150,29 @@ public class UrlsFrontierService {
     public List<String> findAllHashedDocContent() {
         List<String> allHash = urlsFrontierRepository.findAllHashedDocContent();
         return JsonParserUtil.parseSingleField(allHash, "hashedDocContent");
+    }
+
+    /**
+     * Bulk Update the isIndexed field of multiple URL documents to true.
+     *
+     * @param documents List of URL documents to update
+     */
+    public void updateUrlDocumentsInBulk(List<UrlDocument> documents) {
+        BulkOperations bulkOps = mongoTemplate.bulkOps(
+            BulkOperations.BulkMode.UNORDERED,
+            UrlDocument.class
+        );
+
+        for (UrlDocument document : documents) {
+            Query query = new Query(Criteria.where("_id").is(document.getId()));
+            Update update = new Update().set("isIndexed", true);
+            bulkOps.updateOne(query, update);
+        }
+
+        try {
+            bulkOps.execute();
+        } catch (Exception e) {
+            System.err.println("Error updating URL documents: " + e.getMessage());
+        }
     }
 }
