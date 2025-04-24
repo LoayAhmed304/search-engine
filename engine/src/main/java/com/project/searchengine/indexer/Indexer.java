@@ -2,6 +2,7 @@ package com.project.searchengine.indexer;
 
 import com.project.searchengine.server.model.*;
 import com.project.searchengine.server.service.*;
+import com.project.searchengine.utils.CompressionUtil;
 import com.project.searchengine.utils.HashManager;
 import java.util.*;
 import org.jsoup.Jsoup;
@@ -67,7 +68,7 @@ public class Indexer {
         for (UrlDocument urlDocument : urlDocuments) {
             // 1- Get the document from the database
             String url = urlDocument.getNormalizedUrl();
-            String document = urlDocument.getDocument();
+            String document = CompressionUtil.decompress(urlDocument.getDocument());
 
             // 2- Convert the document to a Jsoup Document object
             Document jsoupDocument = Jsoup.parse(document);
