@@ -16,8 +16,8 @@ public class UrlsFrontier {
     private final String SEEDS_FILE_PATH = Paths.get("src/main/resources/seeds.txt").toString();
     public static final int MAX_URLS = 1000;
     public List<String> currentUrlBatch = new ArrayList<>();
-    private List<UrlDocument> currentBatchCache = new ArrayList<>();
-    public HashSet<String> hashedDocsCache = new HashSet<>();
+    private Map<String, UrlDocument> currentBatchCache = new HashMap<>(); 
+    public HashSet<String> hashedDocsCache = new HashSet<>(); 
 
     /**
      * Constructor for UrlsFrontier.
@@ -105,6 +105,8 @@ public class UrlsFrontier {
 
     public void saveBatch() {
         // save the current batch to the database
+        urlsFrontierService.bulkSaveCrawledBatch(currentBatchCache);
+        currentBatchCache.clear();
     }
 
     /**
@@ -142,14 +144,8 @@ public class UrlsFrontier {
      * @param document      The content of the crawled document.
      * @param linkedPages   List of linked pages found in the crawled document.
      */
-    public void cacheCrawledDocument(
-        String url,
-        String hash,
-        byte[] document,
-        List<String> linkedPages
-    ) {
-        UrlDocument urlDocument = new UrlDocument(
-            url,
+    public void cacheCrawledDocument(String url,String hash,byte[] document,List<String> linkedPages) {
+        UrlDocument urlDocument = new UrlDocument(url,
             -1, // dummy frequency
             true,
             document,
@@ -157,6 +153,6 @@ public class UrlsFrontier {
             linkedPages,
             new Date().toString()
         );
-        currentBatchCache.add(urlDocument);
+        currentBatchCache.put(url, urlDocument);
     }
 }

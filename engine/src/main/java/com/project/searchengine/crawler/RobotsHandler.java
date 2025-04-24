@@ -23,7 +23,7 @@ public class RobotsHandler {
 
     // Static shared cache across all instances
     private static final ConcurrentMap<String, BaseRobotRules> SHARED_CACHE = new ConcurrentHashMap<>();
-    private static final int MAX_CACHE_SIZE = 4000;
+    private static final int MAX_CACHE_SIZE = 5000;
 
     /**
      * @param url the URL to check

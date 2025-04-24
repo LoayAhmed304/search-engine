@@ -39,6 +39,7 @@ public class Crawler {
 
         while (urlsFrontier.getNextUrlsBatch()) {
             System.out.println("\nProcessing batch of URLs number: " + currentBatch++);
+            System.out.println("\n\n\n\n\n\n\n\n\n\n\nCurrent batch size: " + urlsFrontier.currentUrlBatch.size());
 
             urlsFrontier.currentUrlBatch
                 .stream()
@@ -66,12 +67,7 @@ public class Crawler {
 
                     handleLinkedPages(linkedPages);
 
-                    urlsFrontier.cacheCrawledDocument(
-                        url,
-                        hashedDocument,
-                        CompressionUtil.compress(stringifiedPage),
-                        linkedPages
-                    );
+                    urlsFrontier.cacheCrawledDocument(url, hashedDocument, CompressionUtil.compress(stringifiedPage), linkedPages);
                 });
             urlsFrontier.saveBatch();
         }

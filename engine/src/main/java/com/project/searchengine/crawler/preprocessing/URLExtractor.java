@@ -16,7 +16,7 @@ public class URLExtractor {
      * This is a static field to avoid creating a new connection for each request.
      */
     private static final Connection connection = Jsoup.newSession()
-            .timeout(5_000) 
+            .timeout(3_000) 
             .ignoreHttpErrors(true) // Don't throw exceptions on HTTP errors
             .followRedirects(true) 
             .maxBodySize(2_000_000); 
