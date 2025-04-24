@@ -4,7 +4,6 @@ import com.project.searchengine.server.model.UrlDocument;
 import com.project.searchengine.server.repository.UrlsFrontierRepository;
 import com.project.searchengine.utils.JsonParserUtil;
 import java.util.*;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -24,7 +23,7 @@ public class UrlsFrontierService {
      * @return List of up to 100 UrlDocument objects
      */
     public List<String> getTop100UrlsByFrequency() {
-        List<String> topUrls = urlsFrontierRepository.findTop200ByFrequency();
+        List<String> topUrls = urlsFrontierRepository.findTop100ByFrequency();
 
         return JsonParserUtil.parseSingleField(topUrls, "normalizedUrl");
     }
@@ -138,7 +137,16 @@ public class UrlsFrontierService {
      * @return List of all hashedDocContent values
      */
     public List<String> findAllHashedDocContent() {
-       List<String> allHash = urlsFrontierRepository.findAllHashedDocContent();
-       return JsonParserUtil.parseSingleField(allHash, "hashedDocContent");
+        List<String> allHash = urlsFrontierRepository.findAllHashedDocContent();
+        return JsonParserUtil.parseSingleField(allHash, "hashedDocContent");
+    }
+
+    public void cacheCrawledDocument(
+        String url,
+        byte[] doc,
+        String hash,
+        List<String> linkedPages
+    ) {
+        UrlDocument urlDocument = new UrlDocument(url, 1L, false, doc, hash, linkedPages, "");
     }
 }

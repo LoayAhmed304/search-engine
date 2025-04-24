@@ -14,10 +14,10 @@ public class UrlsFrontier {
     private UrlsFrontierService urlsFrontierService;
 
     private final String SEEDS_FILE_PATH = Paths.get("src/main/resources/seeds.txt").toString();
-    public static final int BATCH_SIZE = 200;
     public static final int MAX_URLS = 1000;
     public List<String> currentUrlBatch = new ArrayList<>();
-    public HashSet<String> allHashedDocs = new HashSet<>();
+    private List<UrlDocument> currentBatchCache = new ArrayList<>();
+    public HashSet<String> hashedDocsCache = new HashSet<>();
 
     /**
      * Constructor for UrlsFrontier.
@@ -78,11 +78,11 @@ public class UrlsFrontier {
 
     /**
      * Retrieves all hashed document contents from the database.
-     * Sets the allHashedDocs Cache.
+     * Sets the hashedDocsCache Cache.
      * This is used to check for duplicates in the frontier.
      */
     public void getAllHashedDocContent() {
-        allHashedDocs.addAll(urlsFrontierService.findAllHashedDocContent());
+        hashedDocsCache.addAll(urlsFrontierService.findAllHashedDocContent());
     }
 
     /**
@@ -103,29 +103,8 @@ public class UrlsFrontier {
         return urlsFrontierService.isEmpty();
     }
 
-    /**
-     * Updates a normalized URL's document after being crawled in the database.
-     * @param normalizedUrl the crawled url.
-     * @param document URL's page content.
-     * @param hashedContent URL's page content hash.
-     * @param linkedPages URL's linked pages.
-     */
-    public void saveCrawledDocument(
-        String normalizedUrl,
-        byte[] document,
-        String hashedContent,
-        List<String> linkedPages
-    ) {
-        UrlDocument urlDocument = new UrlDocument(
-            normalizedUrl,
-            1,
-            true,
-            document,
-            hashedContent,
-            linkedPages,
-            new Date().toString()
-        ); // dummy frequency
-        urlsFrontierService.updateUrlDocument(urlDocument);
+    public void saveBatch() {
+        // save the current batch to the database
     }
 
     /**
@@ -152,6 +131,32 @@ public class UrlsFrontier {
      * @return true if the URL exists, false otherwise.
      */
     public boolean isDuplicate(String hashedDocContent) {
-        return !allHashedDocs.add(hashedDocContent);
+        return !hashedDocsCache.add(hashedDocContent);
+    }
+
+    /**
+     * Caches the crawled document in the current batch.
+     *
+     * @param url           The URL of the crawled document.
+     * @param hash          The hash of the crawled document.
+     * @param document      The content of the crawled document.
+     * @param linkedPages   List of linked pages found in the crawled document.
+     */
+    public void cacheCrawledDocument(
+        String url,
+        String hash,
+        byte[] document,
+        List<String> linkedPages
+    ) {
+        UrlDocument urlDocument = new UrlDocument(
+            url,
+            -1, // dummy frequency
+            true,
+            document,
+            hash,
+            linkedPages,
+            new Date().toString()
+        );
+        currentBatchCache.add(urlDocument);
     }
 }

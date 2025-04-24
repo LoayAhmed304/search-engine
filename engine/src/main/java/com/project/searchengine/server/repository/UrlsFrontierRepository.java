@@ -21,7 +21,7 @@ public interface UrlsFrontierRepository extends MongoRepository<UrlDocument, Str
         fields = "{ 'normalizedUrl': 1, '_id': 0 }",
         sort = "{ 'frequency': -1 }"
     )
-    List<String> findTop200ByFrequency();
+    List<String> findTop100ByFrequency();
 
     /**
      * Increments the frequency of a document with the given normalizedUrl.

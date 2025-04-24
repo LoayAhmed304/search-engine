@@ -46,6 +46,7 @@ public class Crawler {
                     System.out.println("Crawling URL: " + url);
 
                     Document pageContent = URLExtractor.getDocument(url);
+                    String stringifiedPage = pageContent != null ? pageContent.toString() : null;
 
                     if (pageContent == null) {
                         System.out.println("Failed to fetch content for URL: " + url);
@@ -53,7 +54,7 @@ public class Crawler {
                         return;
                     }
 
-                    String hashedDocument = HashManager.hash(pageContent.toString());
+                    String hashedDocument = HashManager.hash(stringifiedPage);
 
                     if (urlsFrontier.isDuplicate(hashedDocument)) {
                         System.out.println("Duplicate document found. Skipping URL: " + url);
@@ -61,18 +62,18 @@ public class Crawler {
                         return;
                     }
 
-                    Set<String> allLinks = URLExtractor.getURLs(pageContent);
-                    List<String> linkedPages = new ArrayList<>(allLinks);
+                    List<String> linkedPages = new ArrayList<>(URLExtractor.getURLs(pageContent));
 
                     handleLinkedPages(linkedPages);
 
-                    urlsFrontier.saveCrawledDocument(
+                    urlsFrontier.cacheCrawledDocument(
                         url,
-                        CompressionUtil.compress(pageContent.toString()),
                         hashedDocument,
+                        CompressionUtil.compress(stringifiedPage),
                         linkedPages
                     );
                 });
+            urlsFrontier.saveBatch();
         }
         System.out.println(
             "Finished processing total batch of URLs of count: " + (currentBatch - 1)
