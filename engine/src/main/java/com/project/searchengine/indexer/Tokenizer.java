@@ -2,12 +2,9 @@ package com.project.searchengine.indexer;
 
 import com.project.searchengine.server.model.InvertedIndex;
 import com.project.searchengine.server.model.PageReference;
-import java.io.InputStream;
 import java.util.*;
-import java.util.regex.*;
 import opennlp.tools.stemmer.PorterStemmer;
 import opennlp.tools.tokenize.*;
-import opennlp.tools.tokenize.TokenizerModel;
 import org.jsoup.nodes.*;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +13,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class Tokenizer {
 
-    private Map<String, InvertedIndex> indexBuffer = new HashMap<>();
+    private final Map<String, InvertedIndex> indexBuffer = new HashMap<>();
     private final PorterStemmer stemmer = new PorterStemmer();
 
     SimpleTokenizer tokenizer = SimpleTokenizer.INSTANCE;
@@ -56,6 +53,7 @@ public class Tokenizer {
     /**
      * Tokenizes the headers
      * @param fieldTags The field tags to tokenize.
+     * @param pageId The page id.
      */
 
     public void tokenizeHeaders(Elements fieldTags, String pageId) {
@@ -70,6 +68,7 @@ public class Tokenizer {
     /**
      * Build the inverted index to be saved to the database
      * If it already exists update it
+     *
      * @param word The Id of the inverted index
      * @param pageId The Id of the page that contains the word
      * @param position The position of the word in the page
@@ -107,6 +106,7 @@ public class Tokenizer {
     /**
      * Cleans the token by removing unwanted characters.
      * Preserves special tokens like email, phone, hashtags, and hyphenated words.
+     *
      * @param token The token to clean.
      * @return The cleaned token.
      */
