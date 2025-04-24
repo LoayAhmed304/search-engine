@@ -4,6 +4,7 @@ import com.project.searchengine.server.model.UrlDocument;
 import com.project.searchengine.server.repository.UrlsFrontierRepository;
 import com.project.searchengine.utils.JsonParserUtil;
 import java.util.*;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -23,9 +24,9 @@ public class UrlsFrontierService {
      * @return List of up to 100 UrlDocument objects
      */
     public List<String> getTop100UrlsByFrequency() {
-        List<String> topUrls = urlsFrontierRepository.findTop100ByFrequency();
+        List<String> topUrls = urlsFrontierRepository.findTop200ByFrequency();
 
-        return JsonParserUtil.parseNormalizedUrls(topUrls);
+        return JsonParserUtil.parseSingleField(topUrls, "normalizedUrl");
     }
 
     /**
@@ -100,7 +101,7 @@ public class UrlsFrontierService {
             doc.getHashedDocContent(),
             doc.getLinkedPages(),
             doc.isCrawled(),
-            new Date().toString()
+            doc.getLastCrawled()
         );
     }
 
@@ -120,5 +121,24 @@ public class UrlsFrontierService {
      */
     public List<UrlDocument> saveAll(List<UrlDocument> urls) {
         return urlsFrontierRepository.saveAll(urls);
+    }
+
+    /**
+     * Deletes a document with the given normalizedUrl from the database.
+     *
+     * @param normalizedUrl The normalized URL of the document to delete
+     */
+    public void deleteByNormalizedUrl(String normalizedUrl) {
+        urlsFrontierRepository.deleteByNormalizedUrl(normalizedUrl);
+    }
+
+    /**
+     * Retrieves all hashedDocContent values from the database.
+     *
+     * @return List of all hashedDocContent values
+     */
+    public List<String> findAllHashedDocContent() {
+       List<String> allHash = urlsFrontierRepository.findAllHashedDocContent();
+       return JsonParserUtil.parseSingleField(allHash, "hashedDocContent");
     }
 }

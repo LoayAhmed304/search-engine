@@ -1,44 +1,45 @@
 package com.project.searchengine.crawler;
 
-
 import com.project.searchengine.server.model.UrlDocument;
 import com.project.searchengine.server.service.UrlsFrontierService;
-
 import java.io.*;
 import java.nio.file.Paths;
 import java.util.*;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public class UrlsFrontier {
+
     private UrlsFrontierService urlsFrontierService;
 
     private final String SEEDS_FILE_PATH = Paths.get("src/main/resources/seeds.txt").toString();
-    public static final int BATCH_SIZE = 100;
+    public static final int BATCH_SIZE = 200;
     public static final int MAX_URLS = 1000;
     public List<String> currentUrlBatch = new ArrayList<>();
+    public HashSet<String> allHashedDocs = new HashSet<>();
 
     /**
      * Constructor for UrlsFrontier.
      *
-     * @param urlsFrontierService Service to manage URLs in the frontier
+     * @param urlsFrontierService Service to manage URLs in the frontier.
      */
     @Autowired
     public UrlsFrontier(UrlsFrontierService urlsFrontierService) {
         this.urlsFrontierService = urlsFrontierService;
     }
+
     /**
      * Initializes the frontier with a list of seed URLs.
      *
-     * @param seedUrls List of seed URLs to initialize the frontier
+     * @param seedUrls List of seed URLs to initialize the frontier.
      */
     public void seedFrontier() {
         List<String> seedUrls = readSeeds();
         System.out.println("Seeding the frontier with " + seedUrls.size() + " URLs." + seedUrls);
         urlsFrontierService.initializeFrontier(seedUrls);
     }
+
     /**
      * Utility method
      * Reads seed URLs from a file.
@@ -61,7 +62,7 @@ public class UrlsFrontier {
     /**
      * Retrieves the next batch of URLs from the frontier.
      *
-     * @return true if the batch was successfully retrieved, false if no more URLs are available
+     * @return true if the batch was successfully retrieved, false if no more URLs are available.
      */
     public boolean getNextUrlsBatch() {
         List<String> urls = urlsFrontierService.getTop100UrlsByFrequency();
@@ -70,10 +71,18 @@ public class UrlsFrontier {
         }
         // replace the current batch with the new batch
         currentUrlBatch.clear();
-        for (int i = 0; i < urls.size(); i++)
-            currentUrlBatch.add(urls.get(i));
+        for (int i = 0; i < urls.size(); i++) currentUrlBatch.add(urls.get(i));
 
         return true;
+    }
+
+    /**
+     * Retrieves all hashed document contents from the database.
+     * Sets the allHashedDocs Cache.
+     * This is used to check for duplicates in the frontier.
+     */
+    public void getAllHashedDocContent() {
+        allHashedDocs.addAll(urlsFrontierService.findAllHashedDocContent());
     }
 
     /**
@@ -94,18 +103,55 @@ public class UrlsFrontier {
         return urlsFrontierService.isEmpty();
     }
 
-    public void saveCrawledDocument(String normalizedUrl, String document, String hashedContent, boolean isCrawled ,List<String> linkedPages) {
-        UrlDocument urlDocument = new UrlDocument();
-        urlDocument.setNormalizedUrl(normalizedUrl);
-        urlDocument.setDocument(document);
-        urlDocument.setHashedDocContent(hashedContent);
-        urlDocument.setCrawled(isCrawled);
-        urlDocument.setLinkedPages(linkedPages);
+    /**
+     * Updates a normalized URL's document after being crawled in the database.
+     * @param normalizedUrl the crawled url.
+     * @param document URL's page content.
+     * @param hashedContent URL's page content hash.
+     * @param linkedPages URL's linked pages.
+     */
+    public void saveCrawledDocument(
+        String normalizedUrl,
+        byte[] document,
+        String hashedContent,
+        List<String> linkedPages
+    ) {
+        UrlDocument urlDocument = new UrlDocument(
+            normalizedUrl,
+            1,
+            true,
+            document,
+            hashedContent,
+            linkedPages,
+            new Date().toString()
+        ); // dummy frequency
         urlsFrontierService.updateUrlDocument(urlDocument);
     }
 
+    /**
+     * Checks if the URL frontier has reached its threshold.
+     *
+     * @return true if the threshold is reached, false otherwise.
+     */
     public boolean hasReachedThreshold() {
         return urlsFrontierService.count() >= MAX_URLS;
     }
-    
+
+    /**
+     * Removes a URL from the frontier if it proves to be un-crawlable.
+     * @param normalizedUrl the URL to be removed.
+     */
+    public void removeUrl(String normalizedUrl) {
+        urlsFrontierService.deleteByNormalizedUrl(normalizedUrl);
+    }
+
+    /**
+     * Checks if a page content is already in the frontier by checking the hash cache.
+     *
+     * @param normalizedUrl The normalized URL to check.
+     * @return true if the URL exists, false otherwise.
+     */
+    public boolean isDuplicate(String hashedDocContent) {
+        return !allHashedDocs.add(hashedDocContent);
+    }
 }

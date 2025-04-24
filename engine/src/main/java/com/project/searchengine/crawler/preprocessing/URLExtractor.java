@@ -2,40 +2,48 @@ package com.project.searchengine.crawler.preprocessing;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
-import org.jsoup.*;
-import org.jsoup.nodes.*;
+import java.util.HashSet;
+import java.util.Set;
+import org.jsoup.Connection;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 public class URLExtractor {
     /**
-     * Fetches the document from the passed URL.
-     * 
-     * @param url the URL from which the document is to be fetched
-     * @return the document fetched from the URL
+     * A reusable connection to be used for fetching documents.
+     * This is a static field to avoid creating a new connection for each request.
+     */
+    private static final Connection connection = Jsoup.newSession()
+            .timeout(5_000) 
+            .ignoreHttpErrors(true) // Don't throw exceptions on HTTP errors
+            .followRedirects(true) 
+            .maxBodySize(2_000_000); 
+
+    /**
+     * Fetches the document from the passed URL using a reusable connection.
      */
     public static Document getDocument(String url) {
-        System.out.println("Fetching document from URL: " + url);
         try {
-            Connection.Response res = Jsoup.connect(url).execute();
-            if(res.contentType() == null || !res.contentType().contains("text/html")) {
-                System.out.println("Not a valid HTML document: " + url);
-                return null;
+            Connection.Response res = connection.url(url).execute();
+
+            // Only accept successful (200) responses with HTML content
+            if (res.statusCode() == 200 &&
+                    res.contentType() != null &&
+                    res.contentType().contains("text/html")) {
+                return res.parse();
             }
-            Document doc = res.parse();
-            return doc;
+            System.out.println("Skipping non-HTML or failed response: " + url);
+            return null;
         } catch (Exception e) {
-            System.out.println("Error fetching the document from the URL: " + url);
+            System.out.println("Error fetching URL: " + url + " - " + e.getMessage());
             return null;
         }
     }
 
     /**
-     * Extracts the URLs from a passed document.
-     * 
-     * @param doc the document from which the URLs are to be extracted
-     * @see filterURLs
-     * @return the set of filtered URLs extracted from the document
+     * Extracts and filters URLs from a document.
      */
     public static Set<String> getURLs(Document doc) {
         Set<String> urls = new HashSet<>();
@@ -48,16 +56,10 @@ public class URLExtractor {
     }
 
     /**
-     * Filters URLs to exclude invalid schemes (javascript, mailto) and malformed
-     * URLs.
-     * Uses URI parsing for O(1) validation, better than regex.
-     * 
-     * @param urls set of URLs to filter
-     * @return filtered set of valid URLs
+     * Filters out invalid URLs (non-HTTP, malformed, etc.).
      */
     public static Set<String> filterURLs(Set<String> urls) {
         Set<String> filteredUrls = new HashSet<>();
-
         for (String url : urls) {
             try {
                 String cleanedUrl = url.replace(" ", "%20");
@@ -66,46 +68,34 @@ public class URLExtractor {
 
                 if (isUnwantedScheme(scheme))
                     continue;
-
                 if (isValidUri(uri))
                     filteredUrls.add(url);
 
             } catch (URISyntaxException e) {
-                System.err.println("Invalid URL syntax: " + url);
-                continue;
+                continue; // Skip malformed URLs
             }
         }
-
         return filteredUrls;
     }
 
+    /**
+     * Checks if the URL scheme is unwanted (e.g., javascript, mailto).
+     */
     private static boolean isUnwantedScheme(String scheme) {
         if (scheme == null)
-            return false; // Allow protocol-relative URLs -> handled in URLNormalizer
-
-        // List of unwanted schemes
+            return false;
         return scheme.equalsIgnoreCase("javascript") ||
                 scheme.equalsIgnoreCase("mailto") ||
                 scheme.equalsIgnoreCase("tel") ||
-                scheme.equalsIgnoreCase("sms");
+                scheme.equalsIgnoreCase("sms") ||
+                !(scheme.equalsIgnoreCase("http") || scheme.equalsIgnoreCase("https"));
     }
 
+    /**
+     * Checks if the URI is valid (has a host or a non-empty path).
+     */
     private static boolean isValidUri(URI uri) {
-        return (uri.getHost() != null) ||
+        return uri.getHost() != null ||
                 (uri.getPath() != null && !uri.getPath().isEmpty());
     }
-
-    public static void main(String[] args) {
-        // Example usage
-        String url = "https://www.facebook.com/topuniversities";
-        Document doc = getDocument(url);
-        System.out.println(doc);
-        if (doc != null) {
-            Set<String> urls = getURLs(doc);
-            System.out.println("Extracted URLs: " + urls);
-        } else {
-            System.out.println("Failed to fetch document.");
-        }
-    }
-
 }

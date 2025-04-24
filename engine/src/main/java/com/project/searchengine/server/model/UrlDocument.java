@@ -3,18 +3,24 @@ package com.project.searchengine.server.model;
 import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.*;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document(collection = "urlsfrontier")
+@CompoundIndexes(
+    { @CompoundIndex(name = "isCrawled_frequency_idx", def = "{'isCrawled': 1, 'frequency': -1}") }
+)
 public class UrlDocument {
 
     @Id
     private String id;
 
+    @Indexed(unique = true)
     private String normalizedUrl;
+
     private long frequency;
     private boolean isCrawled;
-    private String document; // raw HTML content
+    private byte[] document; // raw HTML content
     private String hashedDocContent;
     private List<String> linkedPages;
     private String lastCrawled;
@@ -29,7 +35,7 @@ public class UrlDocument {
         String normalizedUrl,
         long frequency,
         boolean isCrawled,
-        String document,
+        byte[] document,
         String hashedDocContent,
         List<String> linkedPages,
         String lastCrawled
@@ -76,11 +82,11 @@ public class UrlDocument {
         isCrawled = crawled;
     }
 
-    public String getDocument() {
+    public byte[] getDocument() {
         return document;
     }
 
-    public void setDocument(String document) {
+    public void setDocument(byte[] document) {
         this.document = document;
     }
 
