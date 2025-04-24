@@ -38,9 +38,10 @@ public class Indexer {
         System.out.println("Starting indexing process...");
 
         while (true) {
-            // Get a batch of not indexed documents from the database
+            // Get a batch of non indexed documents from the database
             List<UrlDocument> urlDocuments = urlsFrontierService.getNotIndexedDocuments(BATCH_SIZE);
 
+            // If there are no more documents to index, break the loop
             if (urlDocuments.isEmpty()) {
                 System.out.println("No more documents to index");
                 return;
@@ -85,6 +86,9 @@ public class Indexer {
             updatedUrlDocuments.add(urlDocument);
         }
 
+        // 7- Save the tokens, updated URL documents and pages to the database
+        saveToDatabase(updatedUrlDocuments, savedPages);
+
         long duration = (System.nanoTime() - start) / 1_000_000;
         System.out.println(
             "Indexing Batch " +
@@ -122,7 +126,7 @@ public class Indexer {
 
     public void saveToDatabase(List<UrlDocument> updatedUrlDocuments, List<Page> savedPages) {
         // Save the updated URL documents in bulk
-        urlsFrontierService.saveUrlsInBulk(updatedUrlDocuments);
+        urlsFrontierService.updateUrlDocumentsInBulk(updatedUrlDocuments);
 
         // Save the pages in bulk
         pageService.savePagesInBulk(savedPages);
