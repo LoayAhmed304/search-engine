@@ -91,7 +91,7 @@ public class UrlDocument {
         isIndexed = indexed;
     }
 
-    public String getDocument() {
+    public byte[] getDocument() {
         return document;
     }
 
