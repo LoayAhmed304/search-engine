@@ -6,12 +6,17 @@ import com.project.searchengine.utils.JsonParserUtil;
 import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
+import org.springframework.data.mongodb.core.*;
+import org.springframework.data.mongodb.core.query.*;
 import org.springframework.stereotype.Service;
 
 @Service
 public class UrlsFrontierService {
 
     private UrlsFrontierRepository urlsFrontierRepository;
+
+    @Autowired
+    private MongoTemplate mongoTemplate;
 
     @Autowired
     public UrlsFrontierService(UrlsFrontierRepository urlsFrontierRepository) {
@@ -153,5 +158,29 @@ public class UrlsFrontierService {
     public List<String> findAllHashedDocContent() {
         List<String> allHash = urlsFrontierRepository.findAllHashedDocContent();
         return JsonParserUtil.parseSingleField(allHash, "hashedDocContent");
+    }
+
+    /**
+     * Bulk Update the isIndexed field of multiple URL documents to true.
+     *
+     * @param documents List of URL documents to update
+     */
+    public void updateUrlDocumentsInBulk(List<UrlDocument> documents) {
+        BulkOperations bulkOps = mongoTemplate.bulkOps(
+            BulkOperations.BulkMode.UNORDERED,
+            UrlDocument.class
+        );
+
+        for (UrlDocument document : documents) {
+            Query query = new Query(Criteria.where("_id").is(document.getId()));
+            Update update = new Update().set("isIndexed", true);
+            bulkOps.updateOne(query, update);
+        }
+
+        try {
+            bulkOps.execute();
+        } catch (Exception e) {
+            System.err.println("Error updating URL documents: " + e.getMessage());
+        }
     }
 }

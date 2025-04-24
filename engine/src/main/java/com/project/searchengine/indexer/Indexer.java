@@ -1,8 +1,6 @@
 package com.project.searchengine.indexer;
 
-import com.mongodb.bulk.BulkWriteResult;
 import com.project.searchengine.server.model.*;
-import com.project.searchengine.server.repository.InvertedIndexRepository;
 import com.project.searchengine.server.service.*;
 import com.project.searchengine.utils.HashManager;
 import java.util.*;
@@ -10,8 +8,6 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.mongodb.core.*;
-import org.springframework.data.mongodb.core.query.*;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -24,13 +20,10 @@ public class Indexer {
     private PageService pageService;
 
     @Autowired
+    private InvertedIndexService invertedIndexService;
+
+    @Autowired
     private UrlsFrontierService urlsFrontierService;
-
-    @Autowired
-    private MongoTemplate mongoTemplate;
-
-    @Autowired
-    private InvertedIndexRepository invertedIndexRepository;
 
     public static int BATCH_SIZE = 100;
     public static int currentBatch = 1;
@@ -82,9 +75,10 @@ public class Indexer {
         }
 
         // Bulk save tokens, update URL documents, and pages in the database
-        saveTokens();
-        updateUrlDocuments(updatedUrlDocuments);
-        savePages(savedPages);
+        Map<String, InvertedIndex> indexBuffer = tokenizer.getIndexBuffer();
+        invertedIndexService.saveTokensInBulk(indexBuffer);
+        pageService.savePagesInBulk(savedPages);
+        urlsFrontierService.updateUrlDocumentsInBulk(updatedUrlDocuments);
 
         long duration = (System.nanoTime() - start) / 1_000_000;
         System.out.println(
@@ -111,98 +105,5 @@ public class Indexer {
 
         tokenizer.tokenizeContent(content, id, "body");
         tokenizer.tokenizeHeaders(fieldTags, id);
-    }
-
-    /**
-     * Save tokens in the index buffer to the database
-     */
-    public void saveTokens() {
-        Map<String, InvertedIndex> indexBuffer = tokenizer.getIndexBuffer();
-
-        if (!indexBuffer.isEmpty()) {
-            // 1- Query existing words from the DB
-            Set<String> allWords = indexBuffer.keySet();
-            List<InvertedIndex> existingIndices = invertedIndexRepository.findAllByWordIn(allWords);
-            Set<String> existingWordSet = new HashSet<>(
-                existingIndices.stream().map(InvertedIndex::getWord).toList()
-            );
-
-            // 2- Create bulk operations
-            BulkOperations bulkOps = mongoTemplate.bulkOps(
-                BulkOperations.BulkMode.UNORDERED,
-                InvertedIndex.class
-            );
-
-            // 3- Insert or update the indices
-            for (InvertedIndex index : indexBuffer.values()) {
-                String word = index.getWord();
-                Query query = new Query(Criteria.where("word").is(word));
-                Update update = new Update();
-                if (existingWordSet.contains(word)) {
-                    // Update existing word
-                    for (PageReference page : index.getPages()) {
-                        // Update the page reference
-                        update.addToSet("pages", page);
-                    }
-                    update.inc("pageCount", index.getPageCount());
-
-                    bulkOps.updateOne(query, update);
-                } else {
-                    // Insert new word
-                    bulkOps.insert(index);
-                }
-            }
-
-            try {
-                BulkWriteResult result = bulkOps.execute();
-                System.out.println(
-                    "Inserted: " +
-                    result.getInsertedCount() +
-                    ", Updated: " +
-                    result.getModifiedCount()
-                );
-            } catch (Exception e) {
-                System.err.println("Error saving tokens: " + e.getMessage());
-            }
-            indexBuffer.clear();
-        }
-    }
-
-    public void updateUrlDocuments(List<UrlDocument> documents) {
-        BulkOperations bulkOps = mongoTemplate.bulkOps(
-            BulkOperations.BulkMode.UNORDERED,
-            UrlDocument.class
-        );
-
-        for (UrlDocument document : documents) {
-            Query query = new Query(Criteria.where("_id").is(document.getId()));
-            Update update = new Update().set("isIndexed", true);
-            bulkOps.updateOne(query, update);
-        }
-
-        try {
-            bulkOps.execute();
-        } catch (Exception e) {
-            System.err.println("Error updating URL documents: " + e.getMessage());
-        }
-    }
-
-    public void savePages(List<Page> pages) {
-        BulkOperations bulkOps = mongoTemplate.bulkOps(
-            BulkOperations.BulkMode.UNORDERED,
-            Page.class
-        );
-
-        // Insert pages
-        for (Page page : pages) {
-            bulkOps.insert(page);
-        }
-
-        try {
-            BulkWriteResult result = bulkOps.execute();
-            System.out.println("Inserted Pages: " + result.getInsertedCount());
-        } catch (Exception e) {
-            System.err.println("Error saving pages: " + e.getMessage());
-        }
     }
 }
