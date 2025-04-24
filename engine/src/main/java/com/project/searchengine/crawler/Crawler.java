@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-public class Crawler {
+public class Crawler implements Runnable {
 
     private final UrlsFrontier urlsFrontier;
     private RobotsHandler robotsHandler;
@@ -18,6 +18,12 @@ public class Crawler {
     public Crawler(UrlsFrontier urlsFrontier) {
         this.urlsFrontier = urlsFrontier;
         this.robotsHandler = new RobotsHandler();
+    }
+
+    public void run() {
+        System.out.println("Crawler thread started: " + Thread.currentThread().getName());
+        crawl();
+        System.out.println("Crawler thread finished: " + Thread.currentThread().getName());
     }
 
     /**

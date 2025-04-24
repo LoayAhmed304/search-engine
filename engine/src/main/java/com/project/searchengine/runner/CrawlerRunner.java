@@ -1,5 +1,9 @@
 package com.project.searchengine.runner;
 import com.project.searchengine.crawler.Crawler;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -16,7 +20,22 @@ public class CrawlerRunner implements CommandLineRunner {
     public void run(String... args) {
         System.out.println("Starting the crawler...");
         long start = System.currentTimeMillis();
-        crawler.crawl();
+        List<Thread> threads = new ArrayList<>();
+        int numThreads = 30; // User-defined thread count
+
+        for (int i = 0; i < numThreads; i++) {
+            Thread t = new Thread(crawler); // Shared Crawler instance
+            threads.add(t);
+            t.start();
+        }
+
+        try {
+            for (Thread t : threads) {
+                t.join();
+            }
+        } catch (InterruptedException e) {
+            System.out.println("Thread interrupted: " + e.getMessage());
+        }
         System.out.println("Crawling took: " + (System.currentTimeMillis() - start) + "ms");
     }
 }

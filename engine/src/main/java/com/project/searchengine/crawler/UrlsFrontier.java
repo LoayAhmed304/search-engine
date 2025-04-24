@@ -5,6 +5,8 @@ import com.project.searchengine.server.service.UrlsFrontierService;
 import java.io.*;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -16,8 +18,8 @@ public class UrlsFrontier {
     private final String SEEDS_FILE_PATH = Paths.get("src/main/resources/seeds.txt").toString();
     public static final int BATCH_SIZE = 200;
     public static final int MAX_URLS = 1000;
-    public List<String> currentUrlBatch = new ArrayList<>();
-    public HashSet<String> allHashedDocs = new HashSet<>();
+    public List<String> currentUrlBatch = Collections.synchronizedList(new ArrayList<>());
+    public Set<String> hashedDocsCache = ConcurrentHashMap.newKeySet();
 
     /**
      * Constructor for UrlsFrontier.
@@ -64,15 +66,13 @@ public class UrlsFrontier {
      *
      * @return true if the batch was successfully retrieved, false if no more URLs are available.
      */
-    public boolean getNextUrlsBatch() {
+    public synchronized boolean getNextUrlsBatch() {
         List<String> urls = urlsFrontierService.getTop100UrlsByFrequency();
         if (urls.isEmpty()) {
             return false;
         }
-        // replace the current batch with the new batch
         currentUrlBatch.clear();
-        for (int i = 0; i < urls.size(); i++) currentUrlBatch.add(urls.get(i));
-
+        currentUrlBatch.addAll(urls);
         return true;
     }
 
@@ -82,7 +82,7 @@ public class UrlsFrontier {
      * This is used to check for duplicates in the frontier.
      */
     public void getAllHashedDocContent() {
-        allHashedDocs.addAll(urlsFrontierService.findAllHashedDocContent());
+        hashedDocsCache.addAll(urlsFrontierService.findAllHashedDocContent());
     }
 
     /**
@@ -152,6 +152,6 @@ public class UrlsFrontier {
      * @return true if the URL exists, false otherwise.
      */
     public boolean isDuplicate(String hashedDocContent) {
-        return !allHashedDocs.add(hashedDocContent);
+        return !hashedDocsCache.add(hashedDocContent);
     }
 }
