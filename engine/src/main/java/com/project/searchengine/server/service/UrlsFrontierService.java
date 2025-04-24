@@ -73,65 +73,56 @@ public class UrlsFrontierService {
             doc.getLastCrawled()
         );
     }
-
+   
     public void bulkSaveCrawledBatch(Map<String, UrlDocument> crawledDocs) {
-        if (crawledDocs.isEmpty()) {
-            return;
-        }
-
-        // 1- Query existing documents by normalizedUrl
+        if (crawledDocs.isEmpty()) return;
+    
+        // 1. Lightweight existence check (URLs only)
         Set<String> allUrls = crawledDocs.keySet();
         Query query = new Query(Criteria.where("normalizedUrl").in(allUrls));
-        query.fields().include("normalizedUrl");
-        List<UrlDocument> existingDocs = mongoOperations.find(query, UrlDocument.class, "urlsfrontier");
-        Set<String> existingUrlSet = new HashSet<>(
-            existingDocs.stream().map(UrlDocument::getNormalizedUrl).toList()
+        query.fields()
+            .include("normalizedUrl")
+            .exclude("_id");  // Fixed syntax for field projection
+    
+        Set<String> existingUrls = new HashSet<>(
+            mongoOperations.find(query, UrlDocument.class, "urlsfrontier")
+                .stream()
+                .map(UrlDocument::getNormalizedUrl)
+                .toList()
         );
-
-        // 2- Create bulk operations
-        BulkOperations bulkOps = mongoOperations.bulkOps(BulkMode.UNORDERED, UrlDocument.class, "urlsfrontier");
-
-        // 3- Insert or update the documents
-        for (Map.Entry<String, UrlDocument> entry : crawledDocs.entrySet()) {
-            String url = entry.getKey();
-            UrlDocument doc = entry.getValue();
-
-            if (existingUrlSet.contains(url)) {
-                // Update existing document
-                Query updateQuery = Query.query(Criteria.where("normalizedUrl").is(url));
-                Update update = new Update()
-                    .set("document", doc.getDocument())
-                    .set("hashedDocContent", doc.getHashedDocContent())
-                    .set("linkedPages", doc.getLinkedPages())
-                    .set("isCrawled", doc.isCrawled())
-                    .set("lastCrawled", doc.getLastCrawled());
+    
+        // 2. Prepare bulk ops
+        BulkOperations bulkOps = mongoOperations.bulkOps(
+            BulkMode.UNORDERED, 
+            UrlDocument.class, 
+            "urlsfrontier"
+        );
+    
+        // 3. Build operations
+        crawledDocs.forEach((url, doc) -> {
+            Query updateQuery = Query.query(Criteria.where("normalizedUrl").is(url));
+            Update update = new Update()
+                .set("document", doc.getDocument())
+                .set("hashedDocContent", doc.getHashedDocContent())
+                .set("linkedPages", doc.getLinkedPages())
+                .set("isCrawled", doc.isCrawled())
+                .set("lastCrawled", doc.getLastCrawled());
+    
+            if (existingUrls.contains(url)) {
                 bulkOps.updateOne(updateQuery, update);
             } else {
-                // Insert new document
-                // We need to set all fields since it's a new document
-                UrlDocument newDoc = new UrlDocument(
-                    url,
-                    doc.getFrequency(),
-                    doc.isCrawled(),
-                    null,
-                    doc.getHashedDocContent(),
-                    doc.getLinkedPages(),
-                    doc.getLastCrawled()
-                );
-                newDoc.setDocument(doc.getDocument());
-                bulkOps.insert(newDoc);
+                bulkOps.insert(doc);  // Insert the complete document
             }
-        }
-
-        // 4- Execute bulk operation
+        });
+    
+        // 4. Execute
         try {
             BulkWriteResult result = bulkOps.execute();
-            System.out.println(
-                "Inserted: " + result.getInsertedCount() +
-                ", Updated: " + result.getModifiedCount()
-            );
+            System.out.printf("Bulk save: %d inserts, %d updates\n",
+                result.getInsertedCount(),
+                result.getModifiedCount());
         } catch (Exception e) {
-            System.err.println("Error during bulk save: " + e.getMessage());
+            System.err.println("Bulk save failed: " + e.getMessage());
         }
     }
 
