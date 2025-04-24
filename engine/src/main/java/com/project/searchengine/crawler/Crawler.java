@@ -1,13 +1,11 @@
 package com.project.searchengine.crawler;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
+import com.project.searchengine.crawler.preprocessing.*;
+import com.project.searchengine.utils.*;
 import java.util.*;
 import org.jsoup.nodes.*;
-
-import com.project.searchengine.crawler.preprocessing.*;
-import com.project.searchengine.utils.HashManager;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 @Component
 public class Crawler {
@@ -26,8 +24,7 @@ public class Crawler {
      * Handles the initialization of the crawling process: seeding, preparing caches, etc.
      */
     public void initCrawling() {
-        if (urlsFrontier.shouldInitializeFrontier())
-            urlsFrontier.seedFrontier();
+        if (urlsFrontier.shouldInitializeFrontier()) seed();
         urlsFrontier.getAllHashedDocContent(); // Prepare the cache
     }
 
@@ -43,35 +40,43 @@ public class Crawler {
         while (urlsFrontier.getNextUrlsBatch()) {
             System.out.println("\nProcessing batch of URLs number: " + currentBatch++);
 
-            urlsFrontier.currentUrlBatch.stream()
-                    .forEach(url -> {
-                        System.out.println("Crawling URL: " + url);
+            urlsFrontier.currentUrlBatch
+                .stream()
+                .forEach(url -> {
+                    System.out.println("Crawling URL: " + url);
 
-                        Document pageContent = URLExtractor.getDocument(url);
+                    Document pageContent = URLExtractor.getDocument(url);
 
-                        if (pageContent == null) {
-                            System.out.println("Failed to fetch content for URL: " + url);
-                            urlsFrontier.removeUrl(url);
-                            return;
-                        }
+                    if (pageContent == null) {
+                        System.out.println("Failed to fetch content for URL: " + url);
+                        urlsFrontier.removeUrl(url);
+                        return;
+                    }
 
-                        String hashedDocument = HashManager.hash(pageContent.toString());
+                    String hashedDocument = HashManager.hash(pageContent.toString());
 
-                        if (urlsFrontier.isDuplicate(hashedDocument)) {
-                            System.out.println("Duplicate document found. Skipping URL: " + url);
-                            urlsFrontier.removeUrl(url);
-                            return;
-                        }
+                    if (urlsFrontier.isDuplicate(hashedDocument)) {
+                        System.out.println("Duplicate document found. Skipping URL: " + url);
+                        urlsFrontier.removeUrl(url);
+                        return;
+                    }
 
-                        Set<String> allLinks = URLExtractor.getURLs(pageContent);
-                        List<String> linkedPages = new ArrayList<>(allLinks);
+                    Set<String> allLinks = URLExtractor.getURLs(pageContent);
+                    List<String> linkedPages = new ArrayList<>(allLinks);
 
-                        handleLinkedPages(linkedPages);
+                    handleLinkedPages(linkedPages);
 
-                        urlsFrontier.saveCrawledDocument(url, pageContent.toString(), hashedDocument, linkedPages);
-                    });
+                    urlsFrontier.saveCrawledDocument(
+                        url,
+                        CompressionUtil.compress(pageContent.toString()),
+                        hashedDocument,
+                        linkedPages
+                    );
+                });
         }
-        System.out.println("Finished processing total batch of URLs of count: " + (currentBatch - 1));
+        System.out.println(
+            "Finished processing total batch of URLs of count: " + (currentBatch - 1)
+        );
         System.out.println("Crawling process completed.");
     }
 
@@ -96,11 +101,9 @@ public class Crawler {
             for (String linkedUrl : linkedPages) {
                 String normalizedUrl = URLNormalizer.normalizeUrl(linkedUrl);
 
-                if (!robotsHandler.isUrlAllowed(normalizedUrl))
-                    continue;
+                if (!robotsHandler.isUrlAllowed(normalizedUrl)) continue;
 
-                if (!urlsFrontier.handleUrl(normalizedUrl))
-                    break;
+                if (!urlsFrontier.handleUrl(normalizedUrl)) break;
             }
         }
     }

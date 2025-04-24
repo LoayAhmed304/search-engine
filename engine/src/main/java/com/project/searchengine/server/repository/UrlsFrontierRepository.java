@@ -59,7 +59,7 @@ public interface UrlsFrontierRepository extends MongoRepository<UrlDocument, Str
                     normalizedUrl,
                     1L,
                     false,
-                    "",
+                    null,
                     "",
                     new ArrayList<>(),
                     ""
@@ -88,7 +88,7 @@ public interface UrlsFrontierRepository extends MongoRepository<UrlDocument, Str
     )
     void updateUrlDocument(
         String normalizedUrl,
-        String document,
+        byte[] document,
         String hashedDocContent,
         List<String> linkedPages,
         boolean isCrawled,

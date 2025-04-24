@@ -1,0 +1,13 @@
+<configuration>
+    <springProperty scope="context" name="logLevel" source="logging.level.root" defaultValue="INFO"/>
+
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+
+    <root level="${logLevel}">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+
+    <!-- Suppress warnings from crawlercommons.robots -->
+    <logger name="crawlercommons.robots" level="ERROR"/>
+</configuration>
