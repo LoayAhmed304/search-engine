@@ -38,6 +38,11 @@ public class PageService {
         return pageRepository.saveAll(pages);
     }
 
+    /**
+     * Saves a list of pages in bulk to the database.
+     *
+     * @param pages List of Page objects to be saved
+     */
     public void savePagesInBulk(List<Page> pages) {
         BulkOperations bulkOps = mongoTemplate.bulkOps(
             BulkOperations.BulkMode.UNORDERED,

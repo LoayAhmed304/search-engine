@@ -30,7 +30,9 @@ public class InvertedIndexService {
     }
 
     /**
-     * Save tokens in the index buffer to the database
+     * Saves a list of inverted indices in bulk to the database.
+     *
+     * @param indexBuffer Map of word to InvertedIndex objects to be saved
      */
     public void saveTokensInBulk(Map<String, InvertedIndex> indexBuffer) {
         if (!indexBuffer.isEmpty()) {

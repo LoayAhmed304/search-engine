@@ -28,6 +28,12 @@ public class Indexer {
     public static int BATCH_SIZE = 100;
     public static int currentBatch = 1;
 
+    /**
+     * Starts the indexing process by fetching documents from the database and indexing them in batches.
+     * It continues until there are no more documents to index.
+     *
+     * This method is called by the main application to initiate the indexing process.
+     */
     public void startIndexing() {
         System.out.println("Starting indexing process...");
 
@@ -46,6 +52,11 @@ public class Indexer {
         }
     }
 
+    /**
+     * Indexes a batch of URL documents with a certain size.
+     *
+     * @param urlDocuments The list of URL documents to be indexed.
+     */
     public void indexBatch(List<UrlDocument> urlDocuments) {
         long start = System.nanoTime();
 
@@ -74,12 +85,6 @@ public class Indexer {
             updatedUrlDocuments.add(urlDocument);
         }
 
-        // Bulk save tokens, update URL documents, and pages in the database
-        Map<String, InvertedIndex> indexBuffer = tokenizer.getIndexBuffer();
-        invertedIndexService.saveTokensInBulk(indexBuffer);
-        pageService.savePagesInBulk(savedPages);
-        urlsFrontierService.updateUrlDocumentsInBulk(updatedUrlDocuments);
-
         long duration = (System.nanoTime() - start) / 1_000_000;
         System.out.println(
             "Indexing Batch " +
@@ -93,7 +98,8 @@ public class Indexer {
     }
 
     /**
-     * Preprocesses the document by extracting tokens and saving the page.
+     * Processes a single document by extracting its content and headers, and tokenizing them.
+     *
      * @param url The URL of the document.
      * @param document The Jsoup Document object.
      */
@@ -105,5 +111,23 @@ public class Indexer {
 
         tokenizer.tokenizeContent(content, id, "body");
         tokenizer.tokenizeHeaders(fieldTags, id);
+    }
+
+    /**
+     * Saves the tokens, updated URL documents and pages to the database.
+     *
+     * @param updatedUrlDocuments The list of URL documents to be updated.
+     * @param savedPages The list of pages to be saved.
+     */
+
+    public void saveToDatabase(List<UrlDocument> updatedUrlDocuments, List<Page> savedPages) {
+        // Save the updated URL documents in bulk
+        urlsFrontierService.saveUrlsInBulk(updatedUrlDocuments);
+
+        // Save the pages in bulk
+        pageService.savePagesInBulk(savedPages);
+
+        // Save the inverted index in bulk
+        invertedIndexService.saveTokensInBulk(tokenizer.getIndexBuffer());
     }
 }
