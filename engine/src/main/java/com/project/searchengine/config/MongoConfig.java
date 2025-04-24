@@ -29,7 +29,6 @@ public class MongoConfig {
                     .unique()
                     .named("word_pageId_unique_index")
             );
-            System.out.println("MongoDB index created for InvertedIndex collection.");
         } catch (Exception e) {
             System.out.println("Failed to create MongoDB index: " + e.getMessage());
         }

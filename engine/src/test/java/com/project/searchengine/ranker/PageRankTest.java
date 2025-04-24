@@ -76,7 +76,7 @@ class PageRankTest {
             "url1",
             1,
             true,
-            "d",
+            null,
             "hd",
             Arrays.asList("url2", "url3"),
             "now"
@@ -85,7 +85,7 @@ class PageRankTest {
             "url2",
             1,
             true,
-            "d",
+            null,
             "hd",
             Arrays.asList("url3"),
             "now"
@@ -94,7 +94,7 @@ class PageRankTest {
             "url3",
             1,
             true,
-            "d",
+            null,
             "hd",
             Collections.emptyList(),
             "now"
@@ -135,15 +135,15 @@ class PageRankTest {
         Map<String, UrlDocument> testUrls = new HashMap<>();
         testUrls.put(
             "url1",
-            new UrlDocument("url1", 1, true, "d", "hd", Arrays.asList("url2", "url3"), "now")
+            new UrlDocument("url1", 1, true, null, "hd", Arrays.asList("url2", "url3"), "now")
         );
         testUrls.put(
             "url2",
-            new UrlDocument("url2", 1, true, "d", "hd", Arrays.asList("url3"), "now")
+            new UrlDocument("url2", 1, true, null, "hd", Arrays.asList("url3"), "now")
         );
         testUrls.put(
             "url3",
-            new UrlDocument("url3", 1, true, "d", "hd", Collections.emptyList(), "now")
+            new UrlDocument("url3", 1, true, null, "hd", Collections.emptyList(), "now")
         );
 
         Map<String, List<String>> incomingLinks = Map.of(
@@ -196,7 +196,7 @@ class PageRankTest {
             "url1", // Make sure this matches page1's URL exactly
             1,
             true,
-            "d",
+            null,
             "hd",
             Arrays.asList("url2", "url3"), // url1 links to url2 and url3
             "now"
@@ -205,7 +205,7 @@ class PageRankTest {
             "url2",
             1,
             true,
-            "d",
+            null,
             "hd",
             Arrays.asList("url3"), // url2 links to url3
             "now"
@@ -214,7 +214,7 @@ class PageRankTest {
             "url3",
             1,
             true,
-            "d",
+            null,
             "hd",
             Collections.emptyList(), // url3 has no outgoing links
             "now"

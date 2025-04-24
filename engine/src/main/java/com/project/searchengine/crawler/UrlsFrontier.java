@@ -1,18 +1,16 @@
 package com.project.searchengine.crawler;
 
-
 import com.project.searchengine.server.model.UrlDocument;
 import com.project.searchengine.server.service.UrlsFrontierService;
-
 import java.io.*;
 import java.nio.file.Paths;
 import java.util.*;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public class UrlsFrontier {
+
     private UrlsFrontierService urlsFrontierService;
 
     private final String SEEDS_FILE_PATH = Paths.get("src/main/resources/seeds.txt").toString();
@@ -30,6 +28,7 @@ public class UrlsFrontier {
     public UrlsFrontier(UrlsFrontierService urlsFrontierService) {
         this.urlsFrontierService = urlsFrontierService;
     }
+
     /**
      * Initializes the frontier with a list of seed URLs.
      *
@@ -40,6 +39,7 @@ public class UrlsFrontier {
         System.out.println("Seeding the frontier with " + seedUrls.size() + " URLs." + seedUrls);
         urlsFrontierService.initializeFrontier(seedUrls);
     }
+
     /**
      * Utility method
      * Reads seed URLs from a file.
@@ -71,8 +71,7 @@ public class UrlsFrontier {
         }
         // replace the current batch with the new batch
         currentUrlBatch.clear();
-        for (int i = 0; i < urls.size(); i++)
-            currentUrlBatch.add(urls.get(i));
+        for (int i = 0; i < urls.size(); i++) currentUrlBatch.add(urls.get(i));
 
         return true;
     }
@@ -111,8 +110,21 @@ public class UrlsFrontier {
      * @param hashedContent URL's page content hash.
      * @param linkedPages URL's linked pages.
      */
-    public void saveCrawledDocument(String normalizedUrl, String document, String hashedContent,List<String> linkedPages) {
-        UrlDocument urlDocument = new UrlDocument(normalizedUrl, 1, true, document, hashedContent, linkedPages, new Date().toString()); // dummy frequency
+    public void saveCrawledDocument(
+        String normalizedUrl,
+        byte[] document,
+        String hashedContent,
+        List<String> linkedPages
+    ) {
+        UrlDocument urlDocument = new UrlDocument(
+            normalizedUrl,
+            1,
+            true,
+            document,
+            hashedContent,
+            linkedPages,
+            new Date().toString()
+        ); // dummy frequency
         urlsFrontierService.updateUrlDocument(urlDocument);
     }
 
@@ -142,5 +154,4 @@ public class UrlsFrontier {
     public boolean isDuplicate(String hashedDocContent) {
         return !allHashedDocs.add(hashedDocContent);
     }
-    
 }
