@@ -1,6 +1,8 @@
 package com.project.searchengine.ranker;
 
+import com.project.searchengine.server.model.InvertedIndex;
 import com.project.searchengine.server.model.PageReference;
+import java.util.*;
 
 public class RankCalculator {
 
@@ -8,14 +10,23 @@ public class RankCalculator {
     private static final double PAGE_RANK_COEFF = 0.3;
 
     /**
-     * Calculates the weighted Term Frequency
+     * Calculates the weighted Term Frequency and saves it in the PageReference object
      * TF(weighted) = number of token occurence in document / total tokens in document
      *
-     * @param pr: PageReference that the token is part of
-     * @return normalized TF value (double)
+     * @param pageReference: PageReference that the token is part of
      */
-    public static double calculateTF(PageReference pr) {
-        return (double) pr.getWordPositions().size() / (double) pr.getPageTokenCount();
+    public static void calculateTf(Map<String, InvertedIndex> indexBuffer) {
+        for (InvertedIndex index : indexBuffer.values()) {
+            for (PageReference pageReference : index.getPages()) {
+                // Calculate TF for each page reference
+                double tf =
+                    (double) pageReference.getWordPositions().size() /
+                    (double) pageReference.getPageTokenCount();
+
+                // Update the page reference with the calculated TF
+                pageReference.setTf(tf);
+            }
+        }
     }
 
     /**
