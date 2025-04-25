@@ -20,6 +20,7 @@ public class UrlDocument {
 
     private long frequency;
     private boolean isCrawled;
+    private boolean isIndexed;
     private byte[] document; // raw HTML content
     private String hashedDocContent;
     private List<String> linkedPages;
@@ -80,6 +81,14 @@ public class UrlDocument {
 
     public void setCrawled(boolean crawled) {
         isCrawled = crawled;
+    }
+
+    public boolean isIndexed() {
+        return isIndexed;
+    }
+
+    public void setIndexed(boolean indexed) {
+        isIndexed = indexed;
     }
 
     public byte[] getDocument() {

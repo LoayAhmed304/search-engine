@@ -1,9 +1,11 @@
 package com.project.searchengine.server.service;
 
+import com.mongodb.bulk.*;
 import com.project.searchengine.server.model.Page;
 import com.project.searchengine.server.repository.PageRepository;
-import java.util.List;
+import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.*;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -11,6 +13,9 @@ public class PageService {
 
     @Autowired
     private PageRepository pageRepository;
+
+    @Autowired
+    private MongoTemplate mongoTemplate;
 
     /**
      * Gets total number of documents in the Page database
@@ -31,5 +36,29 @@ public class PageService {
 
     public List<Page> saveAll(List<Page> pages) {
         return pageRepository.saveAll(pages);
+    }
+
+    /**
+     * Saves a list of pages in bulk to the database.
+     *
+     * @param pages List of Page objects to be saved
+     */
+    public void savePagesInBulk(List<Page> pages) {
+        BulkOperations bulkOps = mongoTemplate.bulkOps(
+            BulkOperations.BulkMode.UNORDERED,
+            Page.class
+        );
+
+        // Insert pages
+        for (Page page : pages) {
+            bulkOps.insert(page);
+        }
+
+        try {
+            BulkWriteResult result = bulkOps.execute();
+            System.out.println("Inserted Pages: " + result.getInsertedCount());
+        } catch (Exception e) {
+            System.err.println("Error saving pages: " + e.getMessage());
+        }
     }
 }

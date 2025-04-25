@@ -1,8 +1,8 @@
 package com.project.searchengine.server.repository;
 
 import com.project.searchengine.server.model.UrlDocument;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import org.springframework.data.domain.*;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 import org.springframework.data.mongodb.repository.Update;
@@ -74,11 +74,12 @@ public interface UrlsFrontierRepository extends MongoRepository<UrlDocument, Str
      * @param hashedDocContent The new hashed content of the page
      * @param linkedPages      The new list of linked URLs
      * @param isCrawled        The new crawled status
+     * @param isIndexed        The new indexed status
      * @param lastCrawled      The new last crawled date
      */
     @Query("{ 'normalizedUrl': ?0 }")
     @Update(
-        "{ '$set': { 'document': ?1, 'hashedDocContent': ?2, 'linkedPages': ?3, 'isCrawled': ?4, 'lastCrawled': ?5 } }"
+        "{ '$set': { 'document': ?1, 'hashedDocContent': ?2, 'linkedPages': ?3, 'isCrawled': ?4, isIndexed: ?5, 'lastCrawled': ?6 } }"
     )
     void updateUrlDocument(
         String normalizedUrl,
@@ -86,8 +87,17 @@ public interface UrlsFrontierRepository extends MongoRepository<UrlDocument, Str
         String hashedDocContent,
         List<String> linkedPages,
         boolean isCrawled,
+        boolean isIndexed,
         String lastCrawled
     );
+
+    /**
+     * Finds all documents where isIndexed is false, limited to the specified number.
+     *
+     * @param limit The maximum number of documents to return
+     * @return List of UrlDocument objects
+     */
+    Page<UrlDocument> findByIsIndexedFalse(Pageable limit);
 
     /**
      * Deletes a document with the given normalizedUrl from the database.
