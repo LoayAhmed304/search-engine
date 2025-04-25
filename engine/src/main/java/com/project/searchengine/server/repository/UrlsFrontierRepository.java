@@ -49,7 +49,7 @@ public interface UrlsFrontierRepository extends MongoRepository<UrlDocument, Str
             incrementFrequency(normalizedUrl);
             return true;
         } else {
-            if (count() < 1000) {
+            if (count() < 6000) {
                 UrlDocument newDocument = new UrlDocument(
                     normalizedUrl,
                     1L,

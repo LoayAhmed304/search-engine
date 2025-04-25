@@ -17,7 +17,7 @@ public class UrlsFrontier {
 
     private final String SEEDS_FILE_PATH = Paths.get("src/main/resources/seeds.txt").toString();
     public static final int BATCH_SIZE = 200;
-    public static final int MAX_URLS = 1000;
+    public static final int MAX_URLS = 6000;
     public List<String> currentUrlBatch = Collections.synchronizedList(new ArrayList<>());
     public Set<String> hashedDocsCache = ConcurrentHashMap.newKeySet();
 
