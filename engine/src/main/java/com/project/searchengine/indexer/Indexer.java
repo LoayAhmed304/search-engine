@@ -70,6 +70,12 @@ public class Indexer {
             String url = urlDocument.getNormalizedUrl();
             String document = CompressionUtil.decompress(urlDocument.getDocument());
 
+            // Check null documents
+            if (document == null) {
+                System.out.println("Skipping null document for URL:" + url);
+                continue;
+            }
+
             // 2- Convert the document to a Jsoup Document object
             Document jsoupDocument = Jsoup.parse(document);
 
