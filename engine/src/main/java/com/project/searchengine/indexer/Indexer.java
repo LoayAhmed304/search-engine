@@ -87,8 +87,9 @@ public class Indexer {
             // Set the page token count in the page object
             // Check if the page already exists in the database
             String pageId = HashManager.hash(url);
+            int pageTokenCount = 0;
             if (!pageService.existsById(pageId)) {
-                int pageTokenCount = tokenizer.getPageTokenCount(pageId);
+                pageTokenCount = tokenizer.getPageTokenCount(pageId);
                 savedPages.add(
                     new Page(pageId, url, jsoupDocument.title(), document, pageTokenCount)
                 );
@@ -106,7 +107,8 @@ public class Indexer {
 
         // 7- Compute the term frequency (TF) for the tokens
         Map<String, InvertedIndex> indexBuffer = tokenizer.getIndexBuffer();
-        RankCalculator.calculateTf(indexBuffer);
+        Map<String, Integer> pagesTokensCount = tokenizer.getPagesTokensCount();
+        RankCalculator.calculateTf(indexBuffer, pagesTokensCount);
 
         // 8- Save the tokens, updated URL documents and pages to the database
         saveToDatabase(updatedUrlDocuments, savedPages, indexBuffer);
@@ -155,10 +157,10 @@ public class Indexer {
         Map<String, InvertedIndex> indexBuffer
     ) {
         invertedIndexService.saveTokensInBulk(tokenizer.getIndexBuffer());
-        
+
         // Save the pages in bulk
         pageService.savePagesInBulk(savedPages);
-        
+
         // Save the updated URL documents in bulk
         urlsFrontierService.updateUrlDocumentsInBulk(updatedUrlDocuments);
     }

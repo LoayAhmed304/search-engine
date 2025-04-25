@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 public class Tokenizer {
 
     private final Map<String, InvertedIndex> indexBuffer = new HashMap<>();
-    private final Map<String, Integer> pageTokenCounts = new HashMap<>();
+    private final Map<String, Integer> pagesTokensCount = new HashMap<>();
 
     private final PorterStemmer stemmer = new PorterStemmer();
 
@@ -48,7 +48,7 @@ public class Tokenizer {
                 buildInvertedIndex(cleanedToken, pageId, position, fieldType);
 
                 // Increment token count for page id
-                pageTokenCounts.merge(pageId, 1, Integer::sum);
+                pagesTokensCount.merge(pageId, 1, Integer::sum);
 
                 // Increment position to the next token
                 position++;
@@ -97,7 +97,7 @@ public class Tokenizer {
             .filter(p -> p.getPageId().equals(pageId))
             .findFirst()
             .orElseGet(() -> {
-                PageReference newPageReference = new PageReference(pageId, 0);
+                PageReference newPageReference = new PageReference(pageId);
                 invertedIndex.addPage(newPageReference);
                 return newPageReference;
             });
@@ -132,7 +132,7 @@ public class Tokenizer {
 
     public void resetForNewBatch() {
         indexBuffer.clear();
-        pageTokenCounts.clear();
+        pagesTokensCount.clear();
         System.out.println("Reset tokenizer for new batch");
     }
 
@@ -165,7 +165,11 @@ public class Tokenizer {
      * Set the count of tokens for each page reference in the index buffer
      */
     int getPageTokenCount(String pageId) {
-        int tokenCount = pageTokenCounts.getOrDefault(pageId, 0);
+        int tokenCount = pagesTokensCount.getOrDefault(pageId, 0);
         return tokenCount;
+    }
+
+    Map<String, Integer> getPagesTokensCount() {
+        return pagesTokensCount;
     }
 }

@@ -9,14 +9,12 @@ public class PageReference {
     private List<Integer> wordPositions;
     private Map<String, Integer> fieldWordCount; // field type -> word count
 
-    private int pageTokenCount;
     private double tf;
 
-    public PageReference(String pageId, int pageTokenCount) {
+    public PageReference(String pageId) {
         this.pageId = pageId;
         this.wordPositions = new ArrayList<>();
         this.fieldWordCount = new HashMap<>();
-        this.pageTokenCount = pageTokenCount;
         tf = 0.0;
     }
 
@@ -50,14 +48,6 @@ public class PageReference {
 
     public void addfieldWordCount(String field, int count) {
         fieldWordCount.put(field, count);
-    }
-
-    public int getPageTokenCount() {
-        return pageTokenCount;
-    }
-
-    public void setPageTokenCount(int pageTokenCount) {
-        this.pageTokenCount = pageTokenCount;
     }
 
     public double getTf() {

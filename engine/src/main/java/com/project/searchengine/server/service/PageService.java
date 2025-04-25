@@ -48,6 +48,10 @@ public class PageService {
         return pageRepository.existsById(pageId);
     }
 
+    public Page getPage(String id) {
+        return pageRepository.getPageById(id);
+    }
+
     /**
      * Saves a list of pages in bulk to the database.
      *

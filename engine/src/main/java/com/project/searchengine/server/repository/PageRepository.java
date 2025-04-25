@@ -9,4 +9,6 @@ public interface PageRepository extends MongoRepository<Page, String> {
      *
      */
     public boolean existsById(String id);
+
+    public Page getPageById(String id);
 }

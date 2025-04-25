@@ -60,7 +60,6 @@ public class InvertedIndexService {
                         // Update the page reference
                         update.addToSet("pages", page);
                     }
-                    update.inc("pageCount", index.getPageCount());
 
                     bulkOps.updateOne(query, update);
                 } else {
