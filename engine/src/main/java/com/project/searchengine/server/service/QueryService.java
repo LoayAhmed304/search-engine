@@ -19,4 +19,6 @@ public class QueryService {
         
         return invertedIndex != null ? invertedIndex.getPages() : Collections.emptyList();
     }
+
+
 }

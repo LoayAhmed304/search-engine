@@ -1,6 +1,7 @@
 package com.project.searchengine.queryprocessor;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -16,15 +17,14 @@ import com.project.searchengine.server.service.QueryService;
 
 @Component
 public class QueryProcessor {
-    private List<String> query;
-
-
     private final QueryService queryService;
 
     private final StopWordFilter stopWordFilter;
     private final PorterStemmer stemmer = new PorterStemmer();
 
     SimpleTokenizer tokenizer = SimpleTokenizer.INSTANCE;
+
+    private Map<String, String> processedWordToOriginal;
 
     public QueryProcessor(StopWordFilter stopWordFilter, QueryService queryService) {
         this.stopWordFilter = stopWordFilter;
@@ -51,12 +51,16 @@ public class QueryProcessor {
         String tokens[] = tokenizer.tokenize(query);
 
         for (String token : tokens) {
+            String originalWord = token;
+
             if (stopWordFilter.isStopWord(token)) {
                 continue;
             }
 
             token = stemmer.stem(token);
             token = token.replaceAll("[^a-z]", "");
+
+            processedWordToOriginal.put(originalWord, token);
 
             if (!token.isEmpty()) {
                 processedQuery.add(token);
@@ -73,10 +77,50 @@ public class QueryProcessor {
     public Map<String, List<PageReference>> retrieveQueryPages(List<String> processedQuery) {
         Map<String, List<PageReference>> queryPages = new HashMap<>();
 
-        for(String token : processedQuery) {
+        for (String token : processedQuery) {
             List<PageReference> tokenPages = retrieveTokenPages(token);
             queryPages.put(token, tokenPages);
         }
         return queryPages;
+    }
+
+    public boolean isPhraseMatchQuery(String query) {
+        if (query.isEmpty() || query.length() < 2) {
+            return false;
+        }
+
+        return (query.charAt(0) == '\"' && query.charAt(query.length() - 1) == '\"')
+                ? true
+                : false;
+    }
+
+    public void run() {
+        String testQuery = "test";
+        List<String> processedQuery = processQuery(testQuery);
+        Map<String, List<PageReference>> queryPage = retrieveQueryPages(processedQuery);
+
+
+        // filter out results if 
+
+            for(String token : sortedTokens) {
+                // get word positions 
+                for(pageReference : pagereferences list) {
+
+                    // List<Integer> tokenPositions = PageReference.getWordPositions(token);
+    
+                    for(Integer pos : tokenPositions) {
+                        // if at position don't match original skip 
+                        // if it does check the rest of the tokens 
+                        // i need another map for stemmed to map to original again :)
+                    }
+
+                    // check prev positions 
+                    // get position of token in original qury 
+                    // check all letters before it match in original setence
+                    // check next positions 
+                    // check all letters after it match in original sentence 
+                }
+            }
+        }
     }
 }
