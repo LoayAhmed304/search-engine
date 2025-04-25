@@ -14,14 +14,9 @@ public interface UrlsFrontierRepository extends MongoRepository<UrlDocument, Str
      * Finds the top 100 URLs sorted by frequency in descending order, returning
      * only the normalizedUrl field, for documents where isCrawled is false.
      *
-     * @return List of up to 100 normalized URLs where isCrawled is false
+     * @return List of up to 100 UrlDocument objects where isCrawled is false
      */
-    @Query(
-        value = "{ 'isCrawled': false }",
-        fields = "{ 'normalizedUrl': 1, '_id': 0 }",
-        sort = "{ 'frequency': -1 }"
-    )
-    List<String> findTop200ByFrequency();
+    List<UrlDocument> findTop100ByIsCrawledFalseOrderByFrequencyDesc();
 
     /**
      * Increments the frequency of a document with the given normalizedUrl.
@@ -54,7 +49,7 @@ public interface UrlsFrontierRepository extends MongoRepository<UrlDocument, Str
             incrementFrequency(normalizedUrl);
             return true;
         } else {
-            if (count() < 1000) {
+            if (count() < 6000) {
                 UrlDocument newDocument = new UrlDocument(
                     normalizedUrl,
                     1L,

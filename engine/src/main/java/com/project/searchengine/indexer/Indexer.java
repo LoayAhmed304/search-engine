@@ -1,5 +1,6 @@
 package com.project.searchengine.indexer;
 
+import com.project.searchengine.ranker.RankCalculator;
 import com.project.searchengine.server.model.*;
 import com.project.searchengine.server.service.*;
 import com.project.searchengine.utils.*;
@@ -103,8 +104,12 @@ public class Indexer {
             updatedUrlDocuments.add(urlDocument);
         }
 
-        // Save the tokens, updated URL documents and pages to the database
-        saveToDatabase(updatedUrlDocuments, savedPages);
+        // 7- Compute the term frequency (TF) for the tokens
+        Map<String, InvertedIndex> indexBuffer = tokenizer.getIndexBuffer();
+        RankCalculator.calculateTf(indexBuffer);
+
+        // 8- Save the tokens, updated URL documents and pages to the database
+        saveToDatabase(updatedUrlDocuments, savedPages, indexBuffer);
 
         // Reset tokenizer for the next batch
         //    tokenizer.resetForNewBatch();
@@ -144,13 +149,16 @@ public class Indexer {
      * @param savedPages The list of pages to be saved.
      */
 
-    public void saveToDatabase(List<UrlDocument> updatedUrlDocuments, List<Page> savedPages) {
-        // Save the inverted index in bulk
+    public void saveToDatabase(
+        List<UrlDocument> updatedUrlDocuments,
+        List<Page> savedPages,
+        Map<String, InvertedIndex> indexBuffer
+    ) {
         invertedIndexService.saveTokensInBulk(tokenizer.getIndexBuffer());
-
+        
         // Save the pages in bulk
         pageService.savePagesInBulk(savedPages);
-
+        
         // Save the updated URL documents in bulk
         urlsFrontierService.updateUrlDocumentsInBulk(updatedUrlDocuments);
     }

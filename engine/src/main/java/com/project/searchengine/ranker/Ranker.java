@@ -57,26 +57,16 @@ public class Ranker {
     void processToken(String token, Map<String, Double> scores) {
         List<PageReference> prs = wordResults.getOrDefault(token, Collections.emptyList());
 
-        double idf = getIDF(prs.size());
+        double idf = RankCalculator.getIDF(totalDocuments, prs.size());
         for (PageReference pr : prs) {
-            double pageRank = pr.getPageRank();
+            // double pageRank = pr.getPageRank();
 
-            double tf = RankCalculator.calculateTF(pr);
-            double score = RankCalculator.calculateScore(tf, idf, pageRank);
+            double tf = pr.getTf();
+            double score = RankCalculator.calculateScore(tf, idf, 0);
 
             String pageId = pr.getPageId();
             scores.merge(pageId, score, Double::sum);
         }
-    }
-
-    /**
-     * Simple computation for the normalized IDF value
-     *
-     * @param docsWithToken: number of documents containing the token
-     * @return normalized IDF value (double)
-     */
-    double getIDF(int docsWithToken) {
-        return Math.log((double) totalDocuments / docsWithToken);
     }
 
     /**
