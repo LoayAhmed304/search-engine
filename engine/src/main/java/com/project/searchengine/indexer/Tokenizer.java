@@ -14,6 +14,8 @@ import org.springframework.stereotype.Component;
 public class Tokenizer {
 
     private final Map<String, InvertedIndex> indexBuffer = new HashMap<>();
+    private final Map<String, Integer> pageTokenCounts = new HashMap<>();
+
     private final PorterStemmer stemmer = new PorterStemmer();
 
     SimpleTokenizer tokenizer = SimpleTokenizer.INSTANCE;
@@ -22,8 +24,6 @@ public class Tokenizer {
 
     @Autowired
     private final StopWordFilter stopWordFilter;
-
-    private Integer tokenCount = 0;
 
     public Tokenizer(StopWordFilter stopWordFilter) {
         this.stopWordFilter = stopWordFilter;
@@ -43,8 +43,13 @@ public class Tokenizer {
         for (String token : tokens) {
             String cleanedToken = cleanToken(token);
             if (!cleanedToken.isEmpty()) {
+                // Build the inverted index and add it to the index buffer
                 buildInvertedIndex(cleanedToken, pageId, position, fieldType);
-                tokenCount++;
+
+                // Increment token count for page id
+                pageTokenCounts.merge(pageId, 1, Integer::sum);
+
+                // Increment position to the next token
                 position++;
             }
         }
@@ -124,6 +129,12 @@ public class Tokenizer {
         return cleanedToken;
     }
 
+    public void resetForNewBatch() {
+        indexBuffer.clear();
+        pageTokenCounts.clear();
+        System.out.println("Reset tokenizer for new batch");
+    }
+
     /**
      * Load the tokenizer model from the specified input stream.
      *
@@ -152,10 +163,8 @@ public class Tokenizer {
     /**
      * Set the count of tokens for each page reference in the index buffer
      */
-    void setPageTokenCount() {
-        for (InvertedIndex invertedIndex : indexBuffer.values()) {
-            PageReference pageReference = invertedIndex.getPages().get(0);
-            pageReference.setPageTokenCount(tokenCount);
-        }
+    int getPageTokenCount(String pageId) {
+        int tokenCount = pageTokenCounts.getOrDefault(pageId, 0);
+        return tokenCount;
     }
 }

@@ -12,14 +12,16 @@ public class Page {
     private String url;
     private String title;
     private String content;
+    private int pageTokenCount;
     private double rank;
 
-    public Page(String id, String url, String title, String content) {
+    public Page(String id, String url, String title, String content, int pageTokenCount) {
         this.id = id;
         this.url = url;
         this.title = title;
         this.content = content;
         this.rank = 0.0;
+        this.pageTokenCount = pageTokenCount;
     }
 
     public String getId() {
@@ -60,6 +62,14 @@ public class Page {
 
     public void setRank(double rank) {
         this.rank = rank;
+    }
+
+    public int getPageTokenCount(int pageTokenCount) {
+        return pageTokenCount;
+    }
+
+    public void setPageTokenCount(int pageTokenCount) {
+        this.pageTokenCount = pageTokenCount;
     }
 
     @Override

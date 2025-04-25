@@ -80,22 +80,23 @@ public class Indexer {
             // Convert the document to a Jsoup Document object
             Document jsoupDocument = Jsoup.parse(document);
 
+            // Call the index method with the URL and the Jsoup Document object
+            indexDocument(url, jsoupDocument);
+
+            // Set the page token count in the page object
             // Check if the page already exists in the database
             String pageId = HashManager.hash(url);
             if (!pageService.existsById(pageId)) {
-                savedPages.add(new Page(pageId, url, jsoupDocument.title(), document));
+                int pageTokenCount = tokenizer.getPageTokenCount(pageId);
+                savedPages.add(
+                    new Page(pageId, url, jsoupDocument.title(), document, pageTokenCount)
+                );
             } else {
                 System.out.println("Page already exists for URL: " + url + ", skipping save.");
                 urlDocument.setIndexed(true);
                 updatedUrlDocuments.add(urlDocument);
                 continue;
             }
-
-            // Call the index method with the URL and the Jsoup Document object
-            indexDocument(url, jsoupDocument);
-
-            // Set the page token count
-            tokenizer.setPageTokenCount();
 
             // Add the document to the updatedUrlDocuments list
             urlDocument.setIndexed(true);
@@ -104,6 +105,9 @@ public class Indexer {
 
         // Save the tokens, updated URL documents and pages to the database
         saveToDatabase(updatedUrlDocuments, savedPages);
+
+        // Reset tokenizer for the next batch
+        //    tokenizer.resetForNewBatch();
 
         long duration = (System.nanoTime() - start) / 1_000_000;
         System.out.println(
@@ -141,13 +145,13 @@ public class Indexer {
      */
 
     public void saveToDatabase(List<UrlDocument> updatedUrlDocuments, List<Page> savedPages) {
-        // Save the updated URL documents in bulk
-        urlsFrontierService.updateUrlDocumentsInBulk(updatedUrlDocuments);
+        // Save the inverted index in bulk
+        invertedIndexService.saveTokensInBulk(tokenizer.getIndexBuffer());
 
         // Save the pages in bulk
         pageService.savePagesInBulk(savedPages);
 
-        // Save the inverted index in bulk
-        invertedIndexService.saveTokensInBulk(tokenizer.getIndexBuffer());
+        // Save the updated URL documents in bulk
+        urlsFrontierService.updateUrlDocumentsInBulk(updatedUrlDocuments);
     }
 }
