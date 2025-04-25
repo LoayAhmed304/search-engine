@@ -40,7 +40,6 @@ public class Indexer {
         while (true) {
             // Get a batch of non indexed documents from the database
             List<UrlDocument> urlDocuments = urlsFrontierService.getNotIndexedDocuments(BATCH_SIZE);
-            System.out.println(urlDocuments.size());
 
             // If there are no more documents to index, break the loop
             if (urlDocuments.isEmpty()) {
@@ -66,34 +65,44 @@ public class Indexer {
         List<Page> savedPages = new ArrayList<>();
 
         for (UrlDocument urlDocument : urlDocuments) {
-            // 1- Get the document from the database
+            // Get the document from the database
             String url = urlDocument.getNormalizedUrl();
             String document = CompressionUtil.decompress(urlDocument.getDocument());
 
             // Check null documents
             if (document == null) {
                 System.out.println("Skipping null document for URL:" + url);
+                urlDocument.setIndexed(true);
+                updatedUrlDocuments.add(urlDocument);
                 continue;
             }
 
-            // 2- Convert the document to a Jsoup Document object
+            // Convert the document to a Jsoup Document object
             Document jsoupDocument = Jsoup.parse(document);
 
-            // 3- Call the index method with the URL and the Jsoup Document object
+            // Check if the page already exists in the database
+            String pageId = HashManager.hash(url);
+            if (!pageService.existsById(pageId)) {
+                savedPages.add(new Page(pageId, url, jsoupDocument.title(), document));
+            } else {
+                System.out.println("Page already exists for URL: " + url + ", skipping save.");
+                urlDocument.setIndexed(true);
+                updatedUrlDocuments.add(urlDocument);
+                continue;
+            }
+
+            // Call the index method with the URL and the Jsoup Document object
             indexDocument(url, jsoupDocument);
 
-            // 4- Set the page token count
+            // Set the page token count
             tokenizer.setPageTokenCount();
 
-            // 5- Add the page to the pages list to bulk save it
-            savedPages.add(new Page(HashManager.hash(url), url, jsoupDocument.title(), document));
-
-            // 6- Add the document to the updatedUrlDocuments list
+            // Add the document to the updatedUrlDocuments list
             urlDocument.setIndexed(true);
             updatedUrlDocuments.add(urlDocument);
         }
 
-        // 7- Save the tokens, updated URL documents and pages to the database
+        // Save the tokens, updated URL documents and pages to the database
         saveToDatabase(updatedUrlDocuments, savedPages);
 
         long duration = (System.nanoTime() - start) / 1_000_000;
