@@ -1,5 +1,6 @@
 package com.project.searchengine.indexer;
 
+import com.project.searchengine.ranker.RankCalculator;
 import com.project.searchengine.server.model.InvertedIndex;
 import com.project.searchengine.server.model.PageReference;
 import java.util.*;
@@ -91,7 +92,7 @@ public class Tokenizer {
             .filter(p -> p.getPageId().equals(pageId))
             .findFirst()
             .orElseGet(() -> {
-                PageReference newPageReference = new PageReference(pageId, 0, 0.0);
+                PageReference newPageReference = new PageReference(pageId, 0);
                 invertedIndex.addPage(newPageReference);
                 return newPageReference;
             });
