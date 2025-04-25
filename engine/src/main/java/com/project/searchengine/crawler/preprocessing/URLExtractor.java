@@ -17,7 +17,7 @@ public class URLExtractor {
      */
     private static final ThreadLocal<Connection> threadLocalConnection = ThreadLocal.withInitial(
         () -> Jsoup.newSession()
-            .timeout(3_000)
+            .timeout(10_000)
             .ignoreHttpErrors(true)
             .followRedirects(true)
             .maxBodySize(2_000_000)

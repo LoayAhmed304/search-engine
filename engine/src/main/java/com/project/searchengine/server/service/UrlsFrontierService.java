@@ -4,6 +4,7 @@ import com.project.searchengine.server.model.UrlDocument;
 import com.project.searchengine.server.repository.UrlsFrontierRepository;
 import com.project.searchengine.utils.JsonParserUtil;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -21,12 +22,13 @@ public class UrlsFrontierService {
     /**
      * Retrieves the top 100 URLs sorted by frequency in descending order.
      *
-     * @return List of up to 100 UrlDocument objects
+     * @return List of up to 100 normalized URLs
      */
     public List<String> getTop100UrlsByFrequency() {
-        List<String> topUrls = urlsFrontierRepository.findTop200ByFrequency();
-
-        return JsonParserUtil.parseSingleField(topUrls, "normalizedUrl");
+        List<UrlDocument> topDocs = urlsFrontierRepository.findTop100ByIsCrawledFalseOrderByFrequencyDesc();
+        return topDocs.stream()
+            .map(UrlDocument::getNormalizedUrl)
+            .collect(Collectors.toList());
     }
 
     /**

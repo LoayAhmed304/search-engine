@@ -1,18 +1,27 @@
 package com.project.searchengine.crawler;
 
-import com.project.searchengine.crawler.preprocessing.*;
-import com.project.searchengine.utils.*;
-import java.util.*;
-import org.jsoup.nodes.*;
+import com.project.searchengine.crawler.preprocessing.URLExtractor;
+import com.project.searchengine.crawler.preprocessing.URLNormalizer;
+import com.project.searchengine.utils.CompressionUtil;
+import com.project.searchengine.utils.HashManager;
+import org.jsoup.nodes.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
 @Component
-public class Crawler implements Runnable {
+public class Crawler {
 
     private final UrlsFrontier urlsFrontier;
     private RobotsHandler robotsHandler;
     private static int currentBatch = 1;
+    private int numThreads; // Field to store the number of threads
 
     @Autowired
     public Crawler(UrlsFrontier urlsFrontier) {
@@ -20,10 +29,9 @@ public class Crawler implements Runnable {
         this.robotsHandler = new RobotsHandler();
     }
 
-    public void run() {
-        System.out.println("Crawler thread started: " + Thread.currentThread().getName());
-        crawl();
-        System.out.println("Crawler thread finished: " + Thread.currentThread().getName());
+    // Setter for numThreads
+    public void setNumThreads(int numThreads) {
+        this.numThreads = numThreads;
     }
 
     /**
@@ -35,55 +43,84 @@ public class Crawler implements Runnable {
     }
 
     /**
-     * Crawls the URLs managed by the frontier.
-     * It processes each URL in the current batch, fetches its content,
+     * Crawls the URLs managed by the frontier using multiple threads.
+     * It processes each URL in the current batch concurrently, fetches its content,
      * checks for duplicates, and handles linked pages.
      */
     public void crawl() {
         System.out.println("Starting the crawling process...");
         initCrawling();
 
+        // Validate numThreads
+        if (numThreads <= 0) {
+            System.err.println("Invalid number of threads: " + numThreads + ". Defaulting to 1 thread.");
+            numThreads = 1;
+        }
+
+        ExecutorService executor = Executors.newFixedThreadPool(numThreads);
+
         while (urlsFrontier.getNextUrlsBatch()) {
             System.out.println("\nProcessing batch of URLs number: " + currentBatch++);
+            System.out.println("Current batch size: " + urlsFrontier.currentUrlBatch.size());
 
-            urlsFrontier.currentUrlBatch
-                .stream()
-                .forEach(url -> {
-                    System.out.println("Crawling URL: " + url);
+            List<Future<?>> futures = new ArrayList<>();
+            for (String url : urlsFrontier.currentUrlBatch) {
+                futures.add(executor.submit(() -> processUrl(url)));
+            }
 
-                    Document pageContent = URLExtractor.getDocument(url);
-
-                    if (pageContent == null) {
-                        System.out.println("Failed to fetch content for URL: " + url);
-                        urlsFrontier.removeUrl(url);
-                        return;
-                    }
-
-                    String hashedDocument = HashManager.hash(pageContent.toString());
-
-                    if (urlsFrontier.isDuplicate(hashedDocument)) {
-                        System.out.println("Duplicate document found. Skipping URL: " + url);
-                        urlsFrontier.removeUrl(url);
-                        return;
-                    }
-
-                    Set<String> allLinks = URLExtractor.getURLs(pageContent);
-                    List<String> linkedPages = new ArrayList<>(allLinks);
-
-                    handleLinkedPages(linkedPages);
-
-                    urlsFrontier.saveCrawledDocument(
-                        url,
-                        CompressionUtil.compress(pageContent.toString()),
-                        hashedDocument,
-                        linkedPages
-                    );
-                });
+            // Wait for all tasks in the batch to complete
+            for (Future<?> future : futures) {
+                try {
+                    future.get();
+                } catch (Exception e) {
+                    System.err.println("Error processing URL: " + e.getMessage());
+                }
+            }
         }
-        System.out.println(
-            "Finished processing total batch of URLs of count: " + (currentBatch - 1)
-        );
+
+        executor.shutdown();
+        try {
+            if (!executor.awaitTermination(60, TimeUnit.SECONDS)) {
+                executor.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            executor.shutdownNow();
+        }
+
+        System.out.println("Finished processing total batch of URLs of count: " + (currentBatch - 1));
         System.out.println("Crawling process completed.");
+    }
+
+    private void processUrl(String url) {
+        System.out.println("Crawling URL: " + url + " on thread " + Thread.currentThread().getName());
+
+        Document pageContent = URLExtractor.getDocument(url);
+        String stringifiedPage = pageContent != null ? pageContent.toString() : null;
+
+        if (pageContent == null) {
+            System.out.println("Failed to fetch content for URL: " + url);
+            urlsFrontier.removeUrl(url);
+            return;
+        }
+
+        String hashedDocument = HashManager.hash(stringifiedPage);
+
+        if (urlsFrontier.isDuplicate(hashedDocument)) {
+            System.out.println("Duplicate document found. Skipping URL: " + url);
+            urlsFrontier.removeUrl(url);
+            return;
+        }
+
+        List<String> linkedPages = new ArrayList<>(URLExtractor.getURLs(pageContent));
+
+        handleLinkedPages(linkedPages);
+
+        urlsFrontier.saveCrawledDocument(
+            url,
+            CompressionUtil.compress(stringifiedPage),
+            hashedDocument,
+            linkedPages
+        );
     }
 
     /**
@@ -97,8 +134,7 @@ public class Crawler implements Runnable {
 
     /**
      * Handles the linked pages extracted from the crawled document.
-     * It checks if each linked page is allowed to be crawled based on robots.txt
-     * rules.
+     * It checks if each linked page is allowed to be crawled based on robots.txt rules.
      *
      * @param linkedPages List of linked pages to handle
      */
@@ -112,5 +148,9 @@ public class Crawler implements Runnable {
                 if (!urlsFrontier.handleUrl(normalizedUrl)) break;
             }
         }
+    }
+
+    public void test() {
+        crawl();
     }
 }
