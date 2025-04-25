@@ -1,4 +1,4 @@
-package com.project.searchengine;
+package com.project.searchengine.server;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

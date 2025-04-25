@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.*;
 import org.springframework.data.mongodb.core.BulkOperations.BulkMode;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.data.mongodb.core.query.*;
 import org.springframework.stereotype.Service;
@@ -20,12 +19,14 @@ public class UrlsFrontierService {
 
     private final UrlsFrontierRepository urlsFrontierRepository;
     private final MongoOperations mongoOperations;
+    
+    @Autowired
     private MongoTemplate mongoTemplate;
 
     @Autowired
-    public UrlsFrontierService(UrlsFrontierRepository urlsFrontierRepository) {
+    public UrlsFrontierService(UrlsFrontierRepository urlsFrontierRepository, MongoTemplate mongoTemplate) {
         this.urlsFrontierRepository = urlsFrontierRepository;
-        this.mongoOperations = mongoOperations;
+        this.mongoOperations = mongoTemplate;
     }
 
     /**
