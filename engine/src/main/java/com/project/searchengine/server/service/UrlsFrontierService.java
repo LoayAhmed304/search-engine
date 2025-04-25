@@ -140,7 +140,7 @@ public class UrlsFrontierService {
      */
     public List<UrlDocument> getNotIndexedDocuments(int limit) {
         Pageable pageable = PageRequest.of(0, limit);
-        return urlsFrontierRepository.findByIsIndexedFalse(pageable).getContent();
+        return urlsFrontierRepository.findByIsIndexedFalseAndIsCrawledTrue(pageable).getContent();
     }
 
     /**

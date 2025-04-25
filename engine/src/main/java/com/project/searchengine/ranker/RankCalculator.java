@@ -1,7 +1,10 @@
 package com.project.searchengine.ranker;
 
 import com.project.searchengine.server.model.InvertedIndex;
+import com.project.searchengine.server.model.Page;
 import com.project.searchengine.server.model.PageReference;
+import com.project.searchengine.server.repository.PageRepository;
+import com.project.searchengine.server.service.PageService;
 import java.util.*;
 
 public class RankCalculator {
@@ -15,13 +18,17 @@ public class RankCalculator {
      *
      * @param indexBuffer: Inverted index buffer
      */
-    public static void calculateTf(Map<String, InvertedIndex> indexBuffer) {
+    public static void calculateTf(
+        Map<String, InvertedIndex> indexBuffer,
+        Map<String, Integer> pageTokenCount
+    ) {
         for (InvertedIndex index : indexBuffer.values()) {
             for (PageReference pageReference : index.getPages()) {
                 // Calculate TF for each page reference
+                String pageId = pageReference.getPageId();
                 double tf =
                     (double) pageReference.getWordPositions().size() /
-                    (double) pageReference.getPageTokenCount();
+                    pageTokenCount.getOrDefault(pageId, 1);
 
                 // Update the page reference with the calculated TF
                 pageReference.setTf(tf);

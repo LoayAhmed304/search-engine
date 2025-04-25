@@ -49,6 +49,7 @@ public class UrlDocument {
         this.linkedPages = linkedPages;
         this.lastCrawled = lastCrawled;
         this.rank = 0.0;
+        this.isIndexed = false;
     }
 
     public String getId() {

@@ -33,9 +33,9 @@ class PageRankTest {
     void testInitializePagesRank() throws Exception {
         // Setup test data
         Map<String, Page> testPages = new HashMap<>();
-        testPages.put("url1", new Page("1", "url1", "xTitle", "xContent"));
-        testPages.put("url2", new Page("2", "url2", "yTitle", "yContent"));
-        testPages.put("url3", new Page("3", "url3", "zTitle", "zContent"));
+        testPages.put("url1", new Page("1", "url1", "xTitle", "xContent", 1));
+        testPages.put("url2", new Page("2", "url2", "yTitle", "yContent", 1));
+        testPages.put("url3", new Page("3", "url3", "zTitle", "zContent", 1));
 
         // Mock the page service to return our test pages
         when(pageService.getAllPages()).thenReturn(new ArrayList<>(testPages.values()));
@@ -124,9 +124,9 @@ class PageRankTest {
     void testComputePagesRank() throws Exception {
         // Setup test data
         Map<String, Page> testPages = new HashMap<>();
-        testPages.put("url1", new Page("1", "url1", "xTitle", "xContent"));
-        testPages.put("url2", new Page("2", "url2", "yTitle", "yContent"));
-        testPages.put("url3", new Page("3", "url3", "zTitle", "zContent"));
+        testPages.put("url1", new Page("1", "url1", "xTitle", "xContent", 1));
+        testPages.put("url2", new Page("2", "url2", "yTitle", "yContent", 1));
+        testPages.put("url3", new Page("3", "url3", "zTitle", "zContent", 1));
 
         for (Page page : testPages.values()) {
             page.setRank(1.0 / testPages.size());
@@ -187,9 +187,9 @@ class PageRankTest {
     @Test
     void testComputeAllRanks() {
         // 1. Create test Pages FIRST (using same constructor as production)
-        Page page1 = new Page("url1", "url1", "xTitle", "xContent");
-        Page page2 = new Page("url2", "url2", "yTitle", "yContent");
-        Page page3 = new Page("url3", "url3", "zTitle", "zContent");
+        Page page1 = new Page("url1", "url1", "xTitle", "xContent", 1);
+        Page page2 = new Page("url2", "url2", "yTitle", "yContent", 1);
+        Page page3 = new Page("url3", "url3", "zTitle", "zContent", 1);
 
         // 2. Create test UrlDocuments
         UrlDocument url1 = new UrlDocument(
