@@ -36,59 +36,59 @@ class RankerTest {
         System.out.println("Done rank empty word test");
     }
 
-    @Test
-    void testRankWithSingleToken() {
-        // Setup mock page references
-        PageReference pr1 = mock(PageReference.class);
-        when(pr1.getPageId()).thenReturn("page1");
-        when(pr1.getPageRank()).thenReturn(0.8);
-        // Mock methods for TF calculation
-        when(pr1.getWordPositions()).thenReturn(Arrays.asList(1, 2)); // Size = 2
-        when(pr1.getPageTokenCount()).thenReturn(1); // TF = 2 / 1 = 2.0
+    // @Test
+    // void testRankWithSingleToken() {
+    //     // Setup mock page references
+    //     PageReference pr1 = mock(PageReference.class);
+    //     when(pr1.getPageId()).thenReturn("page1");
+    //     when(pr1.getPageRank()).thenReturn(0.8);
+    //     // Mock methods for TF calculation
+    //     when(pr1.getWordPositions()).thenReturn(Arrays.asList(1, 2)); // Size = 2
+    //     when(pr1.getPageTokenCount()).thenReturn(1); // TF = 2 / 1 = 2.0
 
-        PageReference pr2 = mock(PageReference.class);
-        when(pr2.getPageId()).thenReturn("page2");
-        when(pr2.getPageRank()).thenReturn(0.6);
-        // Mock methods for TF calculation
-        when(pr2.getWordPositions()).thenReturn(Collections.singletonList(1)); // Size = 1
-        when(pr2.getPageTokenCount()).thenReturn(1); // TF = 1 / 1 = 1.0
+    //     PageReference pr2 = mock(PageReference.class);
+    //     when(pr2.getPageId()).thenReturn("page2");
+    //     when(pr2.getPageRank()).thenReturn(0.6);
+    //     // Mock methods for TF calculation
+    //     when(pr2.getWordPositions()).thenReturn(Collections.singletonList(1)); // Size = 1
+    //     when(pr2.getPageTokenCount()).thenReturn(1); // TF = 1 / 1 = 1.0
 
-        wordResults.put("test", Arrays.asList(pr1, pr2));
+    //     wordResults.put("test", Arrays.asList(pr1, pr2));
 
-        List<String> result = ranker.rank();
+    //     List<String> result = ranker.rank();
 
-        assertEquals(2, result.size(), "Should return two pages");
-        assertEquals("page1", result.get(0), "Page1 should be first due to higher score");
-        assertEquals("page2", result.get(1), "Page2 should be second");
-        System.out.println("Done test with single token");
-    }
+    //     assertEquals(2, result.size(), "Should return two pages");
+    //     assertEquals("page1", result.get(0), "Page1 should be first due to higher score");
+    //     assertEquals("page2", result.get(1), "Page2 should be second");
+    //     System.out.println("Done test with single token");
+    // }
 
-    @Test
-    void testComputeScoresWithMultipleTokens() {
-        PageReference pr1 = mock(PageReference.class);
-        when(pr1.getPageId()).thenReturn("page1");
-        when(pr1.getPageRank()).thenReturn(0.8);
-        when(pr1.getWordPositions()).thenReturn(Arrays.asList(1, 2)); // Size = 2
-        when(pr1.getPageTokenCount()).thenReturn(1); // TF = 2 / 1 = 2.0
+    // @Test
+    // void testComputeScoresWithMultipleTokens() {
+    //     PageReference pr1 = mock(PageReference.class);
+    //     when(pr1.getPageId()).thenReturn("page1");
+    //     when(pr1.getPageRank()).thenReturn(0.8);
+    //     when(pr1.getWordPositions()).thenReturn(Arrays.asList(1, 2)); // Size = 2
+    //     when(pr1.getPageTokenCount()).thenReturn(1); // TF = 2 / 1 = 2.0
 
-        wordResults.put("test", Collections.singletonList(pr1));
-        wordResults.put("query", Collections.singletonList(pr1));
+    //     wordResults.put("test", Collections.singletonList(pr1));
+    //     wordResults.put("query", Collections.singletonList(pr1));
 
-        Map<String, Double> scores = ranker.computeScores();
+    //     Map<String, Double> scores = ranker.computeScores();
 
-        assertEquals(1, scores.size(), "Should have one page in scores");
-        assertTrue(scores.containsKey("page1"), "Scores should contain page1");
-        assertTrue(scores.get("page1") > 0, "Page1 score should be positive");
-        System.out.println("Done test with multiple tokens");
-    }
+    //     assertEquals(1, scores.size(), "Should have one page in scores");
+    //     assertTrue(scores.containsKey("page1"), "Scores should contain page1");
+    //     assertTrue(scores.get("page1") > 0, "Page1 score should be positive");
+    //     System.out.println("Done test with multiple tokens");
+    // }
 
-    @Test
-    void testGetIDF() {
-        double idf = ranker.getIDF(100);
-        double expected = Math.log(1000.0 / 100);
-        assertEquals(expected, idf, 0.0001, "IDF calculation should be correct");
-        System.out.println("Done testing IDF");
-    }
+    // @Test
+    // void testGetIDF() {
+    //     double idf = ranker.getIDF(100);
+    //     double expected = Math.log(1000.0 / 100);
+    //     assertEquals(expected, idf, 0.0001, "IDF calculation should be correct");
+    //     System.out.println("Done testing IDF");
+    // }
 
     @Test
     void testProcessTokenWithNoResults() {

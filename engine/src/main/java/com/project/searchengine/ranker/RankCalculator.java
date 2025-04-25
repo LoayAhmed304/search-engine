@@ -13,7 +13,7 @@ public class RankCalculator {
      * Calculates the weighted Term Frequency and saves it in the PageReference object
      * TF(weighted) = number of token occurence in document / total tokens in document
      *
-     * @param pageReference: PageReference that the token is part of
+     * @param indexBuffer: Inverted index buffer
      */
     public static void calculateTf(Map<String, InvertedIndex> indexBuffer) {
         for (InvertedIndex index : indexBuffer.values()) {
@@ -40,5 +40,15 @@ public class RankCalculator {
      */
     public static double calculateScore(double tf, double idf, double pageRank) {
         return TF_IDF_COEFF * tf * idf + PAGE_RANK_COEFF * pageRank;
+    }
+
+    /**
+     * Simple computation for the normalized IDF value
+     *
+     * @param docsWithToken: number of documents containing the token
+     * @return normalized IDF value (double)
+     */
+    public static double getIDF(long totalDocumentsCount, int docsWithToken) {
+        return Math.log((double) totalDocumentsCount / docsWithToken);
     }
 }
