@@ -40,6 +40,7 @@ public class Indexer {
         while (true) {
             // Get a batch of non indexed documents from the database
             List<UrlDocument> urlDocuments = urlsFrontierService.getNotIndexedDocuments(BATCH_SIZE);
+            System.out.println(urlDocuments.size());
 
             // If there are no more documents to index, break the loop
             if (urlDocuments.isEmpty()) {

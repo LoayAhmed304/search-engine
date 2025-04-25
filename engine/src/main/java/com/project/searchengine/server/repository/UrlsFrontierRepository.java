@@ -102,7 +102,7 @@ public interface UrlsFrontierRepository extends MongoRepository<UrlDocument, Str
      * @param limit The maximum number of documents to return
      * @return List of UrlDocument objects
      */
-    Page<UrlDocument> findByIsIndexedFalse(Pageable limit);
+    Page<UrlDocument> findByIsIndexedFalseAndIsCrawledTrue(Pageable limit);
 
     /**
      * Deletes a document with the given normalizedUrl from the database.
