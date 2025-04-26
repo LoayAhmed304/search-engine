@@ -6,6 +6,10 @@ import com.project.searchengine.server.repository.PageRepository;
 import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.*;
+import org.springframework.data.mongodb.core.BulkOperations.BulkMode;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -53,15 +57,14 @@ public class PageService {
     }
 
     public void setRanks(Map<String, Double> ranks) {
-        List<Page> pages = pageRepository.findRanksByIds(new ArrayList<>(ranks.keySet()));
-
-        for (Page page : pages) {
-            page.setRank(ranks.get(page.getId()));
-        }
-
-        // bulk?
-        // savePagesInBulk(pages);
-        pageRepository.saveAll(pages);
+        BulkOperations bulkOps = mongoTemplate.bulkOps(BulkMode.UNORDERED, Page.class);
+        ranks.forEach((url, rank) -> {
+            bulkOps.updateOne(
+                Query.query(Criteria.where("url").is(url)),
+                new Update().set("rank", rank)
+            );
+        });
+        bulkOps.execute();
     }
 
     /**

@@ -14,6 +14,6 @@ public interface PageRepository extends MongoRepository<Page, String> {
 
     public Page getPageById(String id);
 
-    @Query(value = "{ '_id': {$in:?0}}", fields = "{ 'rank' :1 }")
-    List<Page> findRanksByIds(List<String> ids);
+    @Query(value = "{ 'url': {$in:?0}}", fields = "{ 'rank' :1 }")
+    List<Page> findRanksByUrls(List<String> ids);
 }

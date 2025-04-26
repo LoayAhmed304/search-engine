@@ -5,6 +5,7 @@ import com.project.searchengine.server.model.UrlDocument;
 import com.project.searchengine.server.service.PageService;
 import com.project.searchengine.server.service.UrlsFrontierService;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -30,10 +31,15 @@ public class PageRank {
      */
     public boolean computeAllRanks() {
         try {
-            Map<String, UrlDocument> allUrls = urlFrontier
-                .getAllUrls()
+            List<UrlDocument> allUrlsList = urlFrontier.getAllUrls();
+
+            if (allUrlsList == null || allUrlsList.isEmpty()) return false;
+
+            Map<String, UrlDocument> allUrls = allUrlsList
                 .stream()
                 .collect(Collectors.toMap(UrlDocument::getNormalizedUrl, Function.identity()));
+
+            if (allUrls.isEmpty()) return false;
 
             computeOutgoingLinksCount(allUrls);
 
@@ -44,15 +50,20 @@ public class PageRank {
             Map<String, Double> previousRanks = new HashMap<>(currentRanks);
 
             for (int i = 0; i < MAX_ITERATIONS; i++) {
+                System.out.println("Pagerank computation loop #" + i + ". Not converged yet");
                 currentRanks = computePagesRank(incomingLinks, currentRanks);
 
                 if (hasConverged(previousRanks, currentRanks)) break;
                 previousRanks = new HashMap<>(currentRanks);
             }
+            System.out.println("Finished the loop - converged");
 
             // bulk update the pages here, the currentRanks
             pageService.setRanks(currentRanks);
             return true;
+        } catch (Exception e) {
+            System.out.println("Exception in PageRank: " + e);
+            return false;
         } finally {
             outgoingLinksCount.clear();
         }
@@ -79,8 +90,8 @@ public class PageRank {
         Map<String, List<String>> incomingLinks,
         Map<String, Double> currentRanks
     ) {
-        Map<String, Double> newRanks = new HashMap<>();
-
+        Map<String, Double> newRanks = new ConcurrentHashMap<>();
+        System.out.println("Inside computePagesRank");
         currentRanks
             .keySet()
             .parallelStream()
@@ -91,6 +102,8 @@ public class PageRank {
                     Integer outLinksCount = outgoingLinksCount.get(incoming);
 
                     if (outLinksCount != null && outLinksCount > 0) {
+                        Double incomingRank = currentRanks.get(incoming);
+                        if (incomingRank == null) continue;
                         curRank += currentRanks.get(incoming) / outLinksCount;
                     }
                 }
@@ -99,6 +112,7 @@ public class PageRank {
                 curRank += 1 - DAMPING_FACTOR;
                 newRanks.put(url, curRank);
             });
+        System.out.println("Outside computePagesRank");
 
         return newRanks;
     }
