@@ -20,8 +20,6 @@ public class PageRankRunner implements CommandLineRunner {
 
         pageRank.computeAllRanks();
 
-        System.out.println(
-            "PageRank took: " + (System.currentTimeMillis() - start) / 60000 + " minutes"
-        );
+        System.out.println("PageRank took: " + (System.currentTimeMillis() - start) + " ms");
     }
 }
