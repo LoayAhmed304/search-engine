@@ -36,32 +36,18 @@ public class PageRank {
             List<UrlDocument> allUrlsList = urlFrontier.getAllUrls();
             if (allUrlsList == null || allUrlsList.isEmpty()) return false;
 
-            Map<String, UrlDocument> allUrls = allUrlsList
-                .stream()
-                .collect(Collectors.toMap(UrlDocument::getNormalizedUrl, Function.identity()));
+            Map<String, UrlDocument> allUrls = mapUrls(allUrlsList);
             if (allUrls.isEmpty()) return false;
 
-            // 2) Compute outgoing links count map, to be easier to retrieve instead of going to db <String url, int outLinks>
+            // 2) Initialize the outgoing links count, incoming links map, and rank for all pages
             computeOutgoingLinksCount(allUrls);
-
-            // 3) Compute incoming links map <String url, List<String urls>> and initialize the pages ranks
             Map<String, List<String>> incomingLinks = computeIncomingLinks(allUrls);
             currentRanks = initializePagesRank(allUrls);
 
-            // 4) Main loop: update ranks for all pages each iteration, till convergence or reaching loop iterations threshold
+            // 3) Main loop
+            runPageRankIterations(incomingLinks);
 
-            Map<String, Double> previousRanks = new HashMap<>(currentRanks); // For convergence checking
-            int i = 0;
-            for (i = 0; i < MAX_ITERATIONS; i++) {
-                System.out.println("Pagerank computation loop #" + i + ". Not converged yet");
-                currentRanks = computePagesRank(incomingLinks, currentRanks);
-
-                if (hasConverged(previousRanks, currentRanks)) break;
-                previousRanks = new HashMap<>(currentRanks);
-            }
-            System.out.println("Finished the loop - converged after " + (i + 1) + " iterations");
-
-            // 5) Bulk update all pages ranks here in the database
+            // 4) Bulk update all pages ranks in the database
             pageService.setRanks(currentRanks);
             return true;
         } catch (Exception e) {
@@ -73,16 +59,32 @@ public class PageRank {
     }
 
     /**
+     * Keep iterating over all pages and update their page rank at each iteration till convergence or threshold
+     * @param incomingLinks Adjancency list that has the incoming urls for each url
+     */
+    private void runPageRankIterations(Map<String, List<String>> incomingLinks) {
+        Map<String, Double> previousRanks = new HashMap<>(currentRanks); // For convergence checking
+
+        for (int i = 0; i < MAX_ITERATIONS; i++) {
+            System.out.println("Pagerank computation loop #" + i + ". Not converged yet");
+            currentRanks = computePagesRank(incomingLinks);
+
+            if (hasConverged(previousRanks)) {
+                System.out.println("Converged after " + (i + 1) + " iterations");
+                break;
+            }
+            previousRanks = new HashMap<>(currentRanks);
+        }
+    }
+
+    /**
      * Computes all pages ranks from one another (one iteration)
      * @param incomingLinks List containing the documents that point to each document
-     * @param currentRanks List containing the current pages ranks
      * @return New ranks after this computation iteration
      */
-    Map<String, Double> computePagesRank(
-        Map<String, List<String>> incomingLinks,
-        Map<String, Double> currentRanks
-    ) {
+    Map<String, Double> computePagesRank(Map<String, List<String>> incomingLinks) {
         Map<String, Double> newRanks = new ConcurrentHashMap<>();
+
         currentRanks
             .keySet()
             .parallelStream()
@@ -135,14 +137,12 @@ public class PageRank {
         // for every page, add it to the outgoing links from the url frontier
         for (UrlDocument urlDoc : allUrls.values()) { // loop over every url in the url frontier (not all necessarily crawled)
             String curUrl = urlDoc.getNormalizedUrl(); // extract its url
-            List<String> outgoingPagesUrls = urlDoc.getLinkedPages(); // extract its outgoing links array
 
             // loop over every link in the outgoing links array, and add current url to its incoming urls map
-            for (String pageLink : outgoingPagesUrls) {
+            for (String pageLink : urlDoc.getLinkedPages()) {
                 incomingLinks.computeIfAbsent(pageLink, k -> new ArrayList<>()).add(curUrl);
             }
         }
-
         return incomingLinks;
     }
 
@@ -163,16 +163,22 @@ public class PageRank {
      * @param newRanks Current pages ranks
      * @return boolean indicating whether it has converged
      */
-    private boolean hasConverged(Map<String, Double> oldRanks, Map<String, Double> newRanks) {
+    private boolean hasConverged(Map<String, Double> oldRanks) {
         double totalChange = 0.0;
-        for (Map.Entry<String, Double> entry : newRanks.entrySet()) {
+        for (Map.Entry<String, Double> entry : currentRanks.entrySet()) {
             String url = entry.getKey();
             double newRank = entry.getValue();
             double oldRank = oldRanks.getOrDefault(url, 0.0);
             totalChange += Math.abs(newRank - oldRank);
         }
 
-        double averageChange = totalChange / newRanks.size();
+        double averageChange = totalChange / currentRanks.size();
         return averageChange < CONVERGE_THRESHOLD;
+    }
+
+    private Map<String, UrlDocument> mapUrls(List<UrlDocument> allUrlsList) {
+        return allUrlsList
+            .stream()
+            .collect(Collectors.toMap(UrlDocument::getNormalizedUrl, Function.identity()));
     }
 }
