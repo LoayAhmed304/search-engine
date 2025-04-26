@@ -7,21 +7,16 @@ import java.util.*;
 
 public class Ranker {
 
-    private final List<String> queryTokens;
     private final Map<String, List<PageReference>> queryResults;
     private final long totalDocuments;
-    private final PageService pageService;
     private final PageReferenceService pageReferenceService;
 
     public Ranker(
-        String query,
         Map<String, List<PageReference>> queryResults,
         PageService pageService,
         PageReferenceService pageReferenceService
     ) {
-        this.queryTokens = Arrays.asList(query.split("\\s+"));
         this.queryResults = queryResults;
-        this.pageService = pageService;
         this.totalDocuments = pageService.getTotalDocuments();
         this.pageReferenceService = pageReferenceService;
     }
@@ -45,8 +40,8 @@ public class Ranker {
     Map<String, Double> computeScores() {
         Map<String, Double> scores = new HashMap<>();
 
-        for (String token : queryResults.keySet()) {
-            processToken(token, scores);
+        for (List<PageReference> prs : queryResults.values()) {
+            processToken(prs, scores);
         }
 
         return scores; // return sorted pages ids (strings) according to their values in scores Map
@@ -58,17 +53,16 @@ public class Ranker {
      * @param token: the token (word) desired to process
      * @param scores: Map object by reference, to update the total score of every page (<pageId, score>)
      */
-    void processToken(String token, Map<String, Double> scores) {
-        List<PageReference> prs = queryResults.get(token);
-
+    void processToken(List<PageReference> prs, Map<String, Double> scores) {
         double idf = RankCalculator.getIDF(totalDocuments, prs.size());
         for (PageReference pr : prs) {
-            double pageRank = this.pageReferenceService.getPageRank(pr.getPageId());
+            String pageId = pr.getPageId();
+
+            double pageRank = this.pageReferenceService.getPageRank(pageId);
 
             double tf = pr.getTf();
             double score = RankCalculator.calculateScore(tf, idf, pageRank);
 
-            String pageId = pr.getPageId();
             scores.merge(pageId, score, Double::sum);
         }
     }
