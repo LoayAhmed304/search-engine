@@ -1,25 +1,29 @@
 package com.project.searchengine.ranker;
 
 import com.project.searchengine.server.model.PageReference;
+import com.project.searchengine.server.service.PageReferenceService;
 import com.project.searchengine.server.service.PageService;
 import java.util.*;
 
 public class Ranker {
 
     private final List<String> queryTokens;
-    private final Map<String, List<PageReference>> wordResults;
+    private final Map<String, List<PageReference>> queryResults;
     private final long totalDocuments;
     private final PageService pageService;
+    private final PageReferenceService pageReferenceService;
 
     public Ranker(
         String query,
-        Map<String, List<PageReference>> wordResults,
-        PageService pageService
+        Map<String, List<PageReference>> queryResults,
+        PageService pageService,
+        PageReferenceService pageReferenceService
     ) {
         this.queryTokens = Arrays.asList(query.split("\\s+"));
-        this.wordResults = wordResults;
+        this.queryResults = queryResults;
         this.pageService = pageService;
         this.totalDocuments = pageService.getTotalDocuments();
+        this.pageReferenceService = pageReferenceService;
     }
 
     /**
@@ -41,7 +45,7 @@ public class Ranker {
     Map<String, Double> computeScores() {
         Map<String, Double> scores = new HashMap<>();
 
-        for (String token : queryTokens) {
+        for (String token : queryResults.keySet()) {
             processToken(token, scores);
         }
 
@@ -55,14 +59,14 @@ public class Ranker {
      * @param scores: Map object by reference, to update the total score of every page (<pageId, score>)
      */
     void processToken(String token, Map<String, Double> scores) {
-        List<PageReference> prs = wordResults.getOrDefault(token, Collections.emptyList());
+        List<PageReference> prs = queryResults.get(token);
 
         double idf = RankCalculator.getIDF(totalDocuments, prs.size());
         for (PageReference pr : prs) {
-            // double pageRank = pr.getPageRank();
+            double pageRank = this.pageReferenceService.getPageRank(pr.getPageId());
 
             double tf = pr.getTf();
-            double score = RankCalculator.calculateScore(tf, idf, 0);
+            double score = RankCalculator.calculateScore(tf, idf, pageRank);
 
             String pageId = pr.getPageId();
             scores.merge(pageId, score, Double::sum);
