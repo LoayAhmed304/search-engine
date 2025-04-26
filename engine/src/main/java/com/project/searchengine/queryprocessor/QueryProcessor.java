@@ -84,12 +84,11 @@ public class QueryProcessor {
      * @param page A list of tokens from the search query.
      * @return body content tokens
      */
-    private String[] getPageBodyContent(PageReference page) {
-        String pageId = page.getPageId();
-        Optional<Page> pageOptional = pageRepository.findById(pageId);
-        Page fullPage = pageOptional.get();
+    private String[] getPageBodyContent(PageReference referencePage) {
+        String pageId = referencePage.getPageId();
+        Page page = pageRepository.getPageById(pageId);
 
-        String content = fullPage.getContent();
+        String content = page.getContent();
         Document document = Jsoup.parse(content);
         String bodyContent = document.body().text();
 

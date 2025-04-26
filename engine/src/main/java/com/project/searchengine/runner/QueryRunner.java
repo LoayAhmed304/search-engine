@@ -18,7 +18,7 @@ public class QueryRunner implements CommandLineRunner {
         System.out.println("Starting the query processor...");
         long start = System.currentTimeMillis();
 
-        String testQuery = "\"better test case\"";
+        String testQuery = "\"python data science\"";
         // String testQuery = "how to study math";
 
         queryProcessor.process(testQuery);
