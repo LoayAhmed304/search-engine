@@ -3,6 +3,7 @@ package com.project.searchengine.queryprocessor;
 import java.util.*;
 
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -10,15 +11,10 @@ import com.project.searchengine.indexer.StopWordFilter;
 import com.project.searchengine.server.model.Page;
 import com.project.searchengine.server.model.PageReference;
 import com.project.searchengine.server.repository.PageRepository;
+import com.project.searchengine.server.service.QueryService;
 
 import opennlp.tools.stemmer.PorterStemmer;
 import opennlp.tools.tokenize.*;
-
-import com.project.searchengine.server.service.PageService;
-import com.project.searchengine.server.service.QueryService;
-
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
 
 @Component
 public class QueryProcessor {
@@ -32,6 +28,7 @@ public class QueryProcessor {
     private Map<String, String> processedWordToOriginal;
     private boolean isPhraseMatcher;
     private static Integer snippetSize = 30;
+    private List<String> originalWords;
 
     @Autowired
     private PageRepository pageRepository;
@@ -40,6 +37,7 @@ public class QueryProcessor {
         this.stopWordFilter = stopWordFilter;
         this.queryService = queryService;
         this.processedWordToOriginal = new HashMap<>();
+        this.originalWords = new ArrayList<>();
     }
 
     /**
@@ -60,6 +58,15 @@ public class QueryProcessor {
 
         query = query.toLowerCase();
         String tokens[] = tokenizer.tokenize(query);
+
+        // keep track of original tokenized words
+        originalWords.clear();
+        originalWords.addAll(Arrays.asList(tokens));
+
+        if (isPhraseMatcher) {
+            originalWords.remove(0);
+            originalWords.remove(originalWords.size() - 1);
+        }
 
         for (String token : tokens) {
             String originalWord = token;
@@ -99,7 +106,7 @@ public class QueryProcessor {
     }
 
     /**
-     * @param query 
+     * @param query
      * @return whether it is a phrase matching query or not
      */
     private boolean isPhraseMatchQuery(String query) {
@@ -128,9 +135,9 @@ public class QueryProcessor {
             // starting punctution don't add space after
             if (token.matches("[\\(\\[\\{]")) {
                 snippet.append(token);
-            // closing punctution don't add space before
+                // closing punctution don't add space before
             } else if (nextToken != null
-                    && nextToken.matches("[.,!?;:\"'/)\\]\\\\]")) {
+                    && nextToken.matches("[.,!?;:’\"'/)\\]\\\\]")) {
                 snippet.append(token);
             } else {
                 snippet.append(token).append(" ");
@@ -156,13 +163,52 @@ public class QueryProcessor {
         return tokenizer.tokenize(bodyContent.toLowerCase());
     }
 
+
+    private boolean isPhraseMatchFound(String[] bodyTokens, String token, int pos) {
+        // check positions around it
+        int tokenIndex = this.originalWords.indexOf(token);
+        int querySize = originalWords.size();
+
+        // System.out.println(tokenIndex + " " + querySize);
+
+        boolean found = true;
+
+        // check letters before
+        int offset = pos - 1;
+        int prevTokenIndex = tokenIndex - 1;
+
+        while (found && prevTokenIndex >= 0 && offset >= 0) {
+            String prevToken = originalWords.get(prevTokenIndex);
+
+            if (!prevToken.equals(bodyTokens[offset])) {
+                found = false;
+            }
+            offset--;
+            prevTokenIndex--;
+        }
+
+        offset = pos + 1;
+        int nextTokenIndex = tokenIndex + 1;
+
+        while (found && offset < bodyTokens.length && nextTokenIndex < querySize) {
+            String nextToken = originalWords.get(nextTokenIndex);
+
+            if (!nextToken.equals(bodyTokens[offset])) {
+                found = false;
+            }
+            offset++;
+            nextTokenIndex++;
+        }
+        return found;
+    }
+    
     /**
      * generate snippets from result pages
+     * 
      * @param token
      * @param pages reference pages for each token
-     * @return map of each page and its snippets 
+     * @return map of each page and its snippets
      */
-
     public Map<PageReference, List<String>> processPages(String token, List<PageReference> pages) {
         Map<PageReference, List<String>> pageSnippets = new HashMap<>();
         String originalWord = processedWordToOriginal.get(token);
@@ -177,12 +223,21 @@ public class QueryProcessor {
                     continue;
                 }
 
+                // exclude header positions for now 
                 String stemmedToken = stemmer.stem(bodyTokens[pos]);
                 if (!stemmedToken.equals(token)) {
                     continue;
                 }
 
-                if (!isPhraseMatcher || bodyTokens[pos].equals(originalWord)) {
+                if (isPhraseMatcher && bodyTokens[pos].equals(originalWord)) {
+                    boolean found = isPhraseMatchFound(bodyTokens, token, pos);
+                    if (found) {
+                        String snippet = generateSnippet(bodyTokens, pos, snippetSize);
+                        snippets.add(snippet);
+                    }
+                }
+
+                if (!isPhraseMatcher) {
                     String snippet = generateSnippet(bodyTokens, pos, snippetSize);
                     snippets.add(snippet);
                 }
@@ -216,6 +271,7 @@ public class QueryProcessor {
 
     public void process(String query) {
         this.isPhraseMatcher = isPhraseMatchQuery(query);
+
         List<String> processedQuery = processQuery(query);
 
         Map<String, List<PageReference>> queryPages = retrieveQueryPages(processedQuery);
@@ -224,8 +280,19 @@ public class QueryProcessor {
         List<PageReference> minTokenPages = queryPages.get(minToken);
 
         System.out.println("min token: " + minToken);
+        int minTokenIndex = this.originalWords.indexOf(minToken);
 
-        Map<PageReference, List<String>> pageSnippets = processPages(minToken, minTokenPages);
+        System.out.println(minTokenIndex);
+
+        // for (Map.Entry<String, List<PageReference>> entry : queryPages.entrySet()) {
+        // String token = entry.getKey();
+        // List<PageReference> pages = entry.getValue();
+        // System.out.println("Token: " + token + " | Pages Found: " + (pages != null ?
+        // pages.size() : 0));
+        // }
+
+        Map<PageReference, List<String>> pageSnippets = processPages(minToken,
+                minTokenPages);
 
         for (Map.Entry<PageReference, List<String>> entry : pageSnippets.entrySet()) {
             PageReference page = entry.getKey();
@@ -233,9 +300,13 @@ public class QueryProcessor {
 
             System.out.println("Page: " + page.getPageId());
             for (String snippet : snippets) {
-                System.out.println("- Snippet: " + snippet);
+                System.out.println("-> Snippet: " + snippet);
             }
             System.out.println();
         }
+
+        // for (String word : originalWords) {
+        // System.out.println(word);
+        // }
     }
 }
