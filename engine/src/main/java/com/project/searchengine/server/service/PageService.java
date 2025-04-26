@@ -52,6 +52,18 @@ public class PageService {
         return pageRepository.getPageById(id);
     }
 
+    public void setRanks(Map<String, Double> ranks) {
+        List<Page> pages = pageRepository.findRanksByIds(new ArrayList<>(ranks.keySet()));
+
+        for (Page page : pages) {
+            page.setRank(ranks.get(page.getId()));
+        }
+
+        // bulk?
+        // savePagesInBulk(pages);
+        pageRepository.saveAll(pages);
+    }
+
     /**
      * Saves a list of pages in bulk to the database.
      *
