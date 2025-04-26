@@ -14,11 +14,13 @@ public class QueryService {
     @Autowired
     private InvertedIndexService invertedIndexService;
 
-    public List<PageReference> getTokenPages(String token) {
-        InvertedIndex invertedIndex = invertedIndexService.getInvertedIndex(token);
-        
-        return invertedIndex != null ? invertedIndex.getPages() : Collections.emptyList();
+    @Autowired
+    public QueryService(InvertedIndexService invertedIndexService) {
+        this.invertedIndexService = invertedIndexService;
     }
 
-
+    public List<PageReference> getTokenPages(String token) {
+        InvertedIndex invertedIndex = invertedIndexService.getInvertedIndex(token);
+        return invertedIndex != null ? invertedIndex.getPages() : Collections.emptyList();
+    }
 }

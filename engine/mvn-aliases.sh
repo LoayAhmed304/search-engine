@@ -9,6 +9,9 @@ case "$1" in
   "index")
     mvn spring-boot:run -Dspring-boot.run.profiles=indexer
     ;;
+  "query")
+    mvn spring-boot:run -Dspring-boot.run.profiles=query
+    ;;
   *)
     echo "Usage: $0 [run crawler|run ranker|run indexer]"
     ;;

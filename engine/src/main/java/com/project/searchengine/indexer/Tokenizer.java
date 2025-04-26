@@ -45,8 +45,8 @@ public class Tokenizer {
             if (!cleanedToken.isEmpty()) {
                 buildInvertedIndex(cleanedToken, pageId, position, fieldType);
                 tokenCount++;
-                position++;
             }
+            position++;
         }
     }
 

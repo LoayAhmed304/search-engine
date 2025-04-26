@@ -8,4 +8,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface InvertedIndexRepository extends MongoRepository<InvertedIndex, String> {
     List<InvertedIndex> findAllByWordIn(Collection<String> words);
+    InvertedIndex findByWord(String word);
 }

@@ -26,7 +26,8 @@ public class InvertedIndexService {
      * @return The inverted index for the given word.
      */
     public InvertedIndex getInvertedIndex(String word) {
-        return invertedIndexRepository.findById(word).orElse(null);
+        InvertedIndex result = invertedIndexRepository.findByWord(word);
+        return result;
     }
 
     /**
@@ -40,14 +41,12 @@ public class InvertedIndexService {
             Set<String> allWords = indexBuffer.keySet();
             List<InvertedIndex> existingIndices = invertedIndexRepository.findAllByWordIn(allWords);
             Set<String> existingWordSet = new HashSet<>(
-                existingIndices.stream().map(InvertedIndex::getWord).toList()
-            );
+                    existingIndices.stream().map(InvertedIndex::getWord).toList());
 
             // 2- Create bulk operations
             BulkOperations bulkOps = mongoTemplate.bulkOps(
-                BulkOperations.BulkMode.UNORDERED,
-                InvertedIndex.class
-            );
+                    BulkOperations.BulkMode.UNORDERED,
+                    InvertedIndex.class);
 
             // 3- Insert or update the indices
             for (InvertedIndex index : indexBuffer.values()) {
@@ -72,11 +71,10 @@ public class InvertedIndexService {
             try {
                 BulkWriteResult result = bulkOps.execute();
                 System.out.println(
-                    "Inserted: " +
-                    result.getInsertedCount() +
-                    ", Updated: " +
-                    result.getModifiedCount()
-                );
+                        "Inserted: " +
+                                result.getInsertedCount() +
+                                ", Updated: " +
+                                result.getModifiedCount());
             } catch (Exception e) {
                 System.err.println("Error saving tokens: " + e.getMessage());
             }
