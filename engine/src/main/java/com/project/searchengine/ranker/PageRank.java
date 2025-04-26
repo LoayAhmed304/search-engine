@@ -1,6 +1,5 @@
 package com.project.searchengine.ranker;
 
-import com.project.searchengine.server.model.Page;
 import com.project.searchengine.server.model.UrlDocument;
 import com.project.searchengine.server.service.PageService;
 import com.project.searchengine.server.service.UrlsFrontierService;
@@ -8,7 +7,9 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.springframework.stereotype.Component;
 
+@Component
 public class PageRank {
 
     private static final double DAMPING_FACTOR = 0.85;
