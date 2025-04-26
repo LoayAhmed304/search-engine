@@ -1,0 +1,61 @@
+package com.project.searchengine.queryprocessor;
+
+import java.util.List;
+
+public class PhraseMatcher {
+    /**
+     * @param query
+     * @return whether it is a phrase matching query or not
+     */
+    public static boolean isPhraseMatchQuery(String query) {
+        if (query.isEmpty() || query.length() < 2) {
+            return false;
+        }
+
+        return (query.charAt(0) == '\"'
+                && query.charAt(query.length() - 1) == '\"')
+                        ? true
+                        : false;
+    }
+
+    public static boolean isPhraseMatchFound(String[] bodyTokens,
+            List<String> originalWords, String token, int pos) {
+
+        // check positions around it
+        int tokenIndex = originalWords.indexOf(token);
+        int querySize = originalWords.size();
+
+        // System.out.println(tokenIndex + " " + querySize);
+
+        boolean found = true;
+
+        // check letters before
+        int offset = pos - 1;
+        int prevTokenIndex = tokenIndex - 1;
+
+        while (found && prevTokenIndex >= 0 && offset >= 0) {
+            String prevToken = originalWords.get(prevTokenIndex);
+
+            if (!prevToken.equals(bodyTokens[offset])) {
+                found = false;
+            }
+            offset--;
+            prevTokenIndex--;
+        }
+
+        offset = pos + 1;
+        int nextTokenIndex = tokenIndex + 1;
+
+        while (found && offset < bodyTokens.length && nextTokenIndex < querySize) {
+            String nextToken = originalWords.get(nextTokenIndex);
+
+            if (!nextToken.equals(bodyTokens[offset])) {
+                found = false;
+            }
+            offset++;
+            nextTokenIndex++;
+        }
+        return found;
+    }
+
+}
