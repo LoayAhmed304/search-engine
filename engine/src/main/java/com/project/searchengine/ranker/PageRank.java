@@ -50,14 +50,15 @@ public class PageRank {
 
             Map<String, Double> previousRanks = new HashMap<>(currentRanks);
 
-            for (int i = 0; i < MAX_ITERATIONS; i++) {
+            int i = 0;
+            for (i = 0; i < MAX_ITERATIONS; i++) {
                 System.out.println("Pagerank computation loop #" + i + ". Not converged yet");
                 currentRanks = computePagesRank(incomingLinks, currentRanks);
 
                 if (hasConverged(previousRanks, currentRanks)) break;
                 previousRanks = new HashMap<>(currentRanks);
             }
-            System.out.println("Finished the loop - converged");
+            System.out.println("Finished the loop - converged after " + (i + 1) + " iterations");
 
             // bulk update the pages here, the currentRanks
             pageService.setRanks(currentRanks);
@@ -92,7 +93,6 @@ public class PageRank {
         Map<String, Double> currentRanks
     ) {
         Map<String, Double> newRanks = new ConcurrentHashMap<>();
-        System.out.println("Inside computePagesRank");
         currentRanks
             .keySet()
             .parallelStream()
@@ -113,7 +113,6 @@ public class PageRank {
                 curRank += 1 - DAMPING_FACTOR;
                 newRanks.put(url, curRank);
             });
-        System.out.println("Outside computePagesRank");
 
         return newRanks;
     }
