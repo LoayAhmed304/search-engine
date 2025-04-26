@@ -15,19 +15,22 @@ public class URLExtractor {
      * A reusable connection to be used for fetching documents.
      * This is a static field to avoid creating a new connection for each request.
      */
-    private static final Connection connection = Jsoup.newSession()
-            .timeout(5_000) 
-            .ignoreHttpErrors(true) // Don't throw exceptions on HTTP errors
-            .followRedirects(true) 
-            .maxBodySize(2_000_000); 
+    private static final ThreadLocal<Connection> threadLocalConnection = ThreadLocal.withInitial(
+        () -> Jsoup.newSession()
+            .timeout(10_000)
+            .ignoreHttpErrors(true)
+            .followRedirects(true)
+            .maxBodySize(2_000_000)
+    );
 
     /**
      * Fetches the document from the passed URL using a reusable connection.
      */
     public static Document getDocument(String url) {
         try {
-            Connection.Response res = connection.url(url).execute();
-
+            Connection connection = threadLocalConnection.get().url(url);
+            Connection.Response res = connection.execute();
+            
             // Only accept successful (200) responses with HTML content
             if (res.statusCode() == 200 &&
                     res.contentType() != null &&

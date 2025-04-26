@@ -81,4 +81,58 @@ public class InvertedIndexService {
             indexBuffer.clear();
         }
     }
+
+    /**
+     * Saves a list of inverted indices in bulk to the database.
+     *
+     * @param indexBuffer Map of word to InvertedIndex objects to be saved
+     */
+    public void saveTokensInBulk(Map<String, InvertedIndex> indexBuffer) {
+        if (!indexBuffer.isEmpty()) {
+            // 1- Query existing words from the DB
+            Set<String> allWords = indexBuffer.keySet();
+            List<InvertedIndex> existingIndices = invertedIndexRepository.findAllByWordIn(allWords);
+            Set<String> existingWordSet = new HashSet<>(
+                existingIndices.stream().map(InvertedIndex::getWord).toList()
+            );
+
+            // 2- Create bulk operations
+            BulkOperations bulkOps = mongoTemplate.bulkOps(
+                BulkOperations.BulkMode.UNORDERED,
+                InvertedIndex.class
+            );
+
+            // 3- Insert or update the indices
+            for (InvertedIndex index : indexBuffer.values()) {
+                String word = index.getWord();
+                Query query = new Query(Criteria.where("word").is(word));
+                Update update = new Update();
+                if (existingWordSet.contains(word)) {
+                    // Update existing word
+                    for (PageReference page : index.getPages()) {
+                        // Update the page reference
+                        update.addToSet("pages", page);
+                    }
+
+                    bulkOps.updateOne(query, update);
+                } else {
+                    // Insert new word
+                    bulkOps.insert(index);
+                }
+            }
+
+            try {
+                BulkWriteResult result = bulkOps.execute();
+                System.out.println(
+                    "Inserted: " +
+                    result.getInsertedCount() +
+                    ", Updated: " +
+                    result.getModifiedCount()
+                );
+            } catch (Exception e) {
+                System.err.println("Error saving tokens: " + e.getMessage());
+            }
+            indexBuffer.clear();
+        }
+    }
 }

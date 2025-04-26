@@ -2,13 +2,11 @@ package com.project.searchengine.server;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import com.project.searchengine.server.model.Page;
+import com.project.searchengine.server.repository.PageRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
-
-import com.project.searchengine.server.model.Page;
-import com.project.searchengine.server.repository.PageRepository;
-
 
 @DataMongoTest
 public class PageRepositoryTest {
@@ -19,7 +17,7 @@ public class PageRepositoryTest {
     @Test
     public void testSavePage() {
         // Arrange
-        Page page = new Page("1", "https://www.example.com", "example", "Search engine");
+        Page page = new Page("1", "https://www.example.com", "example", "Search engine", 1);
 
         // Act
         pageRepository.save(page);

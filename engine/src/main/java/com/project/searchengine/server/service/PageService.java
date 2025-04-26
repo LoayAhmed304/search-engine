@@ -39,6 +39,20 @@ public class PageService {
     }
 
     /**
+     * Check if a page already exists in the database
+     *
+     * @param pageId Id of the page
+     * @return page exists or not
+     */
+    public boolean existsById(String pageId) {
+        return pageRepository.existsById(pageId);
+    }
+
+    public Page getPage(String id) {
+        return pageRepository.getPageById(id);
+    }
+
+    /**
      * Saves a list of pages in bulk to the database.
      *
      * @param pages List of Page objects to be saved
