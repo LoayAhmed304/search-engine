@@ -19,10 +19,16 @@ import opennlp.tools.tokenize.*;
 @Component
 public class QueryProcessor {
     private final QueryService queryService;
-    
-    private boolean isPhraseMatcher;
+
     private static Integer snippetSize = 30;
     private final SimpleTokenizer tokenizer = SimpleTokenizer.INSTANCE;
+    private final PorterStemmer stemmer = new PorterStemmer();
+
+    @Autowired
+    private QueryTokenizer queryTokenizer;
+
+    @Autowired
+    private PhraseMatcher phraseMatcher;
 
     @Autowired
     private PageRepository pageRepository;
@@ -48,22 +54,7 @@ public class QueryProcessor {
         return queryPages;
     }
 
-    /**
-     * @param query
-     * @return whether it is a phrase matching query or not
-     */
-    private boolean isPhraseMatchQuery(String query) {
-        if (query.isEmpty() || query.length() < 2) {
-            return false;
-        }
-
-        return (query.charAt(0) == '\"'
-                && query.charAt(query.length() - 1) == '\"')
-                        ? true
-                        : false;
-    }
-
-    public String generateSnippet(String[] bodyTokens, int matchPosition, int snippetSize) {
+    private String generateSnippet(String[] bodyTokens, int matchPosition, int snippetSize) {
         int halfSnippet = snippetSize / 2;
 
         int startIndex = Math.max(0, matchPosition - halfSnippet);
@@ -106,91 +97,30 @@ public class QueryProcessor {
         return tokenizer.tokenize(bodyContent.toLowerCase());
     }
 
+    public List<PageReference> filterPages(String token,
+            Map<String, String> tokenizedToOriginal, List<PageReference> pages) {
 
-    private boolean isPhraseMatchFound(String[] bodyTokens, String token, int pos) {
-        // check positions around it
-        int tokenIndex = this.originalWords.indexOf(token);
-        int querySize = originalWords.size();
-
-        // System.out.println(tokenIndex + " " + querySize);
-
-        boolean found = true;
-
-        // check letters before
-        int offset = pos - 1;
-        int prevTokenIndex = tokenIndex - 1;
-
-        while (found && prevTokenIndex >= 0 && offset >= 0) {
-            String prevToken = originalWords.get(prevTokenIndex);
-
-            if (!prevToken.equals(bodyTokens[offset])) {
-                found = false;
-            }
-            offset--;
-            prevTokenIndex--;
-        }
-
-        offset = pos + 1;
-        int nextTokenIndex = tokenIndex + 1;
-
-        while (found && offset < bodyTokens.length && nextTokenIndex < querySize) {
-            String nextToken = originalWords.get(nextTokenIndex);
-
-            if (!nextToken.equals(bodyTokens[offset])) {
-                found = false;
-            }
-            offset++;
-            nextTokenIndex++;
-        }
-        return found;
-    }
-    
-    /**
-     * generate snippets from result pages
-     * 
-     * @param token
-     * @param pages reference pages for each token
-     * @return map of each page and its snippets
-     */
-    public Map<PageReference, List<String>> processPages(String token, List<PageReference> pages) {
-        Map<PageReference, List<String>> pageSnippets = new HashMap<>();
-        String originalWord = processedWordToOriginal.get(token);
+        List<PageReference> filteredPages = new ArrayList<>();
 
         for (PageReference page : pages) {
             List<Integer> positions = page.getWordPositions();
             String[] bodyTokens = getPageBodyContent(page);
-            List<String> snippets = new ArrayList<>();
 
             for (Integer pos : positions) {
                 if (pos >= bodyTokens.length) {
                     continue;
                 }
 
-                // exclude header positions for now 
+                // !! temp: exclude header positions for now
                 String stemmedToken = stemmer.stem(bodyTokens[pos]);
                 if (!stemmedToken.equals(token)) {
                     continue;
                 }
-
-                if (isPhraseMatcher && bodyTokens[pos].equals(originalWord)) {
-                    boolean found = isPhraseMatchFound(bodyTokens, token, pos);
-                    if (found) {
-                        String snippet = generateSnippet(bodyTokens, pos, snippetSize);
-                        snippets.add(snippet);
-                    }
-                }
-
-                if (!isPhraseMatcher) {
-                    String snippet = generateSnippet(bodyTokens, pos, snippetSize);
-                    snippets.add(snippet);
-                }
+                break;
             }
-
-            if (!snippets.isEmpty()) {
-                pageSnippets.put(page, snippets);
-            }
+            filteredPages.add(page);
         }
-        return pageSnippets;
+        return filteredPages;
     }
 
     /**
@@ -213,43 +143,21 @@ public class QueryProcessor {
     }
 
     public void process(String query) {
-        this.isPhraseMatcher = isPhraseMatchQuery(query);
+        QueryTokenizationResult queryTokenizationResult = queryTokenizer.tokenizeQuery(query);
 
-        List<String> processedQuery = processQuery(query);
+        List<String> tokenizedQuery = queryTokenizationResult.getTokenizedQuery();
+        Map<String, String> tokenizedToOriginal = queryTokenizationResult.getTokenizedToOriginal();
+        List<String> originalWords = queryTokenizationResult.getOriginalWords();
 
-        Map<String, List<PageReference>> queryPages = retrieveQueryPages(processedQuery);
+        Map<String, List<PageReference>> queryPages = retrieveQueryPages(tokenizedQuery);
 
-        String minToken = getMinPagesToken(queryPages);
-        List<PageReference> minTokenPages = queryPages.get(minToken);
+        for (Map.Entry<String, List<PageReference>> entry : queryPages.entrySet()) {
+            String token = entry.getKey();
+            List<PageReference> pages = filterPages(token, tokenizedToOriginal, entry.getValue());
 
-        System.out.println("min token: " + minToken);
-        int minTokenIndex = this.originalWords.indexOf(minToken);
-
-        System.out.println(minTokenIndex);
-
-        // for (Map.Entry<String, List<PageReference>> entry : queryPages.entrySet()) {
-        // String token = entry.getKey();
-        // List<PageReference> pages = entry.getValue();
-        // System.out.println("Token: " + token + " | Pages Found: " + (pages != null ?
-        // pages.size() : 0));
-        // }
-
-        Map<PageReference, List<String>> pageSnippets = processPages(minToken,
-                minTokenPages);
-
-        for (Map.Entry<PageReference, List<String>> entry : pageSnippets.entrySet()) {
-            PageReference page = entry.getKey();
-            List<String> snippets = entry.getValue();
-
-            System.out.println("Page: " + page.getPageId());
-            for (String snippet : snippets) {
-                System.out.println("-> Snippet: " + snippet);
-            }
-            System.out.println();
+            System.out.println("Token: " + token + " | Pages Found: " + (pages != null ? pages.size() : 0));
         }
 
-        // for (String word : originalWords) {
-        // System.out.println(word);
-        // }
+
     }
 }

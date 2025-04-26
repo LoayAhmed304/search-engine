@@ -6,16 +6,23 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
 import com.project.searchengine.indexer.StopWordFilter;
 
 import opennlp.tools.stemmer.PorterStemmer;
 import opennlp.tools.tokenize.SimpleTokenizer;
 
+@Component
 public class QueryTokenizer {
 
     private final StopWordFilter stopWordFilter;
     private final PorterStemmer stemmer = new PorterStemmer();
     private final SimpleTokenizer tokenizer = SimpleTokenizer.INSTANCE;
+
+    @Autowired
+    private PhraseMatcher phraseMatcher;
 
     public QueryTokenizer(StopWordFilter stopWordFilter) {
         this.stopWordFilter = stopWordFilter;
@@ -42,7 +49,7 @@ public class QueryTokenizer {
         String tokens[] = tokenizer.tokenize(query);
         List<String> originalWords = new ArrayList<>(Arrays.asList(tokens));
         
-        if (PhraseMatcher.isPhraseMatchQuery(query)) {
+        if (phraseMatcher.isPhraseMatchQuery(query)) {
             originalWords.remove(0);
             originalWords.remove(originalWords.size() - 1);
         }

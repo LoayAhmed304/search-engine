@@ -2,12 +2,15 @@ package com.project.searchengine.queryprocessor;
 
 import java.util.List;
 
+import org.springframework.stereotype.Component;
+
+@Component
 public class PhraseMatcher {
     /**
      * @param query
      * @return whether it is a phrase matching query or not
      */
-    public static boolean isPhraseMatchQuery(String query) {
+    public boolean isPhraseMatchQuery(String query) {
         if (query.isEmpty() || query.length() < 2) {
             return false;
         }
@@ -18,7 +21,7 @@ public class PhraseMatcher {
                         : false;
     }
 
-    public static boolean isPhraseMatchFound(String[] bodyTokens,
+    public boolean isPhraseMatchFound(String[] bodyTokens,
             List<String> originalWords, String token, int pos) {
 
         // check positions around it
