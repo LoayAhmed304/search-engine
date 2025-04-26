@@ -19,86 +19,29 @@ import opennlp.tools.tokenize.*;
 @Component
 public class QueryProcessor {
     private final QueryService queryService;
-
-    private final StopWordFilter stopWordFilter;
-    private final PorterStemmer stemmer = new PorterStemmer();
-
-    SimpleTokenizer tokenizer = SimpleTokenizer.INSTANCE;
-
-    private Map<String, String> processedWordToOriginal;
+    
     private boolean isPhraseMatcher;
     private static Integer snippetSize = 30;
-    private List<String> originalWords;
+    private final SimpleTokenizer tokenizer = SimpleTokenizer.INSTANCE;
 
     @Autowired
     private PageRepository pageRepository;
 
-    public QueryProcessor(StopWordFilter stopWordFilter, QueryService queryService) {
-        this.stopWordFilter = stopWordFilter;
+    public QueryProcessor(QueryService queryService) {
         this.queryService = queryService;
-        this.processedWordToOriginal = new HashMap<>();
-        this.originalWords = new ArrayList<>();
-    }
-
-    /**
-     * Query processing matches the indexer to ensure queries & indexed documents
-     * match
-     * 
-     * 1. converts query to lower case
-     * 2. tokenizes query using OpenNLP's SimpleTokenizer
-     * 3. Removes stop words using StopWordFilter
-     * 4. porter stemming on each token
-     * 5. removes any remaining non-alphabetics
-     * 
-     * @param query: the search query itself
-     * @return List of cleaned tokens ready for search
-     */
-    public List<String> processQuery(String query) {
-        List<String> processedQuery = new ArrayList<>();
-
-        query = query.toLowerCase();
-        String tokens[] = tokenizer.tokenize(query);
-
-        // keep track of original tokenized words
-        originalWords.clear();
-        originalWords.addAll(Arrays.asList(tokens));
-
-        if (isPhraseMatcher) {
-            originalWords.remove(0);
-            originalWords.remove(originalWords.size() - 1);
-        }
-
-        for (String token : tokens) {
-            String originalWord = token;
-
-            if (stopWordFilter.isStopWord(token)) {
-                continue;
-            }
-
-            token = stemmer.stem(token);
-            token = token.replaceAll("[^a-z]", "");
-
-            processedWordToOriginal.put(token, originalWord);
-
-            if (!token.isEmpty()) {
-                processedQuery.add(token);
-            }
-        }
-
-        return processedQuery;
     }
 
     /**
      * Gets the result pages for each token in the processed query.
      *
-     * @param processedQuery A list of tokens from the search query.
+     * @param tokenizedQuery A list of tokens from the search query.
      * @return A map where the key is the token, and the value is a list of pages
      *         containing that token.
      */
-    public Map<String, List<PageReference>> retrieveQueryPages(List<String> processedQuery) {
+    public Map<String, List<PageReference>> retrieveQueryPages(List<String> tokenizedQuery) {
         Map<String, List<PageReference>> queryPages = new HashMap<>();
 
-        for (String token : processedQuery) {
+        for (String token : tokenizedQuery) {
             List<PageReference> tokenPages = queryService.getTokenPages(token);
             queryPages.put(token, tokenPages);
         }
