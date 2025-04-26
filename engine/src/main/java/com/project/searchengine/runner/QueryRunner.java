@@ -19,6 +19,7 @@ public class QueryRunner implements CommandLineRunner {
         long start = System.currentTimeMillis();
 
         String testQuery = "\"better test case\"";
+        // String testQuery = "how to study math";
 
         queryProcessor.process(testQuery);
         System.out.println("quering took: " + (System.currentTimeMillis() - start) + "ms");

@@ -7,7 +7,6 @@ import org.jsoup.nodes.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.project.searchengine.indexer.StopWordFilter;
 import com.project.searchengine.server.model.Page;
 import com.project.searchengine.server.model.PageReference;
 import com.project.searchengine.server.repository.PageRepository;
@@ -97,15 +96,21 @@ public class QueryProcessor {
         return tokenizer.tokenize(bodyContent.toLowerCase());
     }
 
-    public List<PageReference> filterPages(String token,
-            Map<String, String> tokenizedToOriginal, List<PageReference> pages) {
+    public Map<PageReference, List<String>> processPages(
+            String token,
+            List<PageReference> pages,
+            QueryTokenizationResult queryTokenizationResult) {
 
-        List<PageReference> filteredPages = new ArrayList<>();
+        Map<PageReference, List<String>> pageSnippets = new HashMap<>();
+        boolean isPhraseMatch = queryTokenizationResult.getIsPhraseMatch();
+        List<String> originalWords = queryTokenizationResult.getOriginalWords();
 
         for (PageReference page : pages) {
             List<Integer> positions = page.getWordPositions();
             String[] bodyTokens = getPageBodyContent(page);
+            List<String> snippets = new ArrayList<>();
 
+            // check at each position if it matches or not
             for (Integer pos : positions) {
                 if (pos >= bodyTokens.length) {
                     continue;
@@ -116,11 +121,20 @@ public class QueryProcessor {
                 if (!stemmedToken.equals(token)) {
                     continue;
                 }
-                break;
+
+                boolean isMatchFound = phraseMatcher.isPhraseMatchFound(bodyTokens, originalWords, token, pos);
+
+                if (!isPhraseMatch || isPhraseMatch && isMatchFound) {
+                    String snippet = generateSnippet(bodyTokens, pos, snippetSize);
+                    snippets.add(snippet);
+                }
             }
-            filteredPages.add(page);
+
+            if (!snippets.isEmpty()) {
+                pageSnippets.put(page, snippets);
+            }
         }
-        return filteredPages;
+        return pageSnippets;
     }
 
     /**
@@ -142,22 +156,51 @@ public class QueryProcessor {
         return minToken;
     }
 
+    private void displaySnippets(Map<PageReference, List<String>> pageSnippets) {
+        for (Map.Entry<PageReference, List<String>> entry : pageSnippets.entrySet()) {
+            PageReference page = entry.getKey();
+            List<String> snippets = entry.getValue();
+
+            System.out.println("Page: " + page.getPageId());
+            for (String snippet : snippets) {
+                System.out.println("-> Snippet: " + snippet);
+            }
+            System.out.println();
+        }
+    }
+
     public void process(String query) {
         QueryTokenizationResult queryTokenizationResult = queryTokenizer.tokenizeQuery(query);
-
         List<String> tokenizedQuery = queryTokenizationResult.getTokenizedQuery();
-        Map<String, String> tokenizedToOriginal = queryTokenizationResult.getTokenizedToOriginal();
-        List<String> originalWords = queryTokenizationResult.getOriginalWords();
 
         Map<String, List<PageReference>> queryPages = retrieveQueryPages(tokenizedQuery);
 
         for (Map.Entry<String, List<PageReference>> entry : queryPages.entrySet()) {
             String token = entry.getKey();
-            List<PageReference> pages = filterPages(token, tokenizedToOriginal, entry.getValue());
-
+            List<PageReference> pages = entry.getValue();
             System.out.println("Token: " + token + " | Pages Found: " + (pages != null ? pages.size() : 0));
         }
 
+        // phrase matching
+        boolean isPhraseMatch = phraseMatcher.isPhraseMatchQuery(query);
+
+        if (isPhraseMatch) {
+            // get the token that has minimum number of result pages
+            String minPagesToken = getMinPagesToken(queryPages);
+            List<PageReference> minPages = queryPages.get(minPagesToken);
+
+            // find exact phrase match
+            Map<PageReference, List<String>> minPagesSnippets = processPages(minPagesToken, minPages,
+                    queryTokenizationResult);
+            displaySnippets(minPagesSnippets);
+
+        } else {
+            for (String token : queryPages.keySet()) {
+                List<PageReference> pages = queryPages.get(token);
+                Map<PageReference, List<String>> pageSnippets = processPages(token, pages, queryTokenizationResult);
+                displaySnippets(pageSnippets);
+            }
+        }
 
     }
 }

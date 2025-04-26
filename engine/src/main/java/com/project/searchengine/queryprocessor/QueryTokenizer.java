@@ -49,7 +49,9 @@ public class QueryTokenizer {
         String tokens[] = tokenizer.tokenize(query);
         List<String> originalWords = new ArrayList<>(Arrays.asList(tokens));
         
-        if (phraseMatcher.isPhraseMatchQuery(query)) {
+        boolean isPhraseMatch = phraseMatcher.isPhraseMatchQuery(query);
+
+        if (isPhraseMatch) {
             originalWords.remove(0);
             originalWords.remove(originalWords.size() - 1);
         }
@@ -72,6 +74,6 @@ public class QueryTokenizer {
             }
         }
 
-        return new QueryTokenizationResult(tokenizedQuery, tokenizedToOriginal, originalWords);
+        return new QueryTokenizationResult(tokenizedQuery, tokenizedToOriginal, originalWords, isPhraseMatch);
     }
 }

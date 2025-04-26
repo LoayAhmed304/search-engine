@@ -21,6 +21,15 @@ public class PhraseMatcher {
                         : false;
     }
 
+    /**
+     * Checks if a given token is part of a phrase match in the body content or not
+     *
+     * @param bodyTokens:  
+     * @param originalWords: original query words
+     * @param token: token to match
+     * @param pos: position of the current token in body content
+     * @return true if the token is part of a matching phrase false otherwise.
+     */
     public boolean isPhraseMatchFound(String[] bodyTokens,
             List<String> originalWords, String token, int pos) {
 
@@ -60,5 +69,4 @@ public class PhraseMatcher {
         }
         return found;
     }
-
 }
