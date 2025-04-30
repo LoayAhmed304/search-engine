@@ -18,8 +18,8 @@ public class QueryRunner implements CommandLineRunner {
         System.out.println("Starting the query processor...");
         long start = System.currentTimeMillis();
 
-        String testQuery = "\"python data science\"";
-        // String testQuery = "how to study math";
+        // String testQuery = "\"data science\"";
+        String testQuery = "how to study math";
 
         queryProcessor.process(testQuery);
         System.out.println("quering took: " + (System.currentTimeMillis() - start) + "ms");

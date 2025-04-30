@@ -1,6 +1,9 @@
 package com.project.searchengine.queryprocessor;
 
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -101,6 +104,7 @@ public class QueryProcessor {
             QueryTokenizationResult queryTokenizationResult) {
 
         Map<PageReference, String> pageSnippet = new HashMap<>();
+
         boolean isPhraseMatch = queryTokenizationResult.getIsPhraseMatch();
         List<String> originalWords = queryTokenizationResult.getOriginalWords();
 
@@ -114,7 +118,7 @@ public class QueryProcessor {
                     continue;
                 }
 
-                // exclude header positions 
+                // exclude header positions
                 String stemmedToken = stemmer.stem(bodyTokens[pos]);
                 if (!stemmedToken.equals(token)) {
                     continue;
@@ -177,6 +181,7 @@ public class QueryProcessor {
         for (Map.Entry<String, List<PageReference>> entry : queryPages.entrySet()) {
             String token = entry.getKey();
             List<PageReference> pages = entry.getValue();
+
             System.out.println("Token: " + token + " | Pages Found: " + (pages != null ? pages.size() : 0));
         }
 
@@ -188,25 +193,47 @@ public class QueryProcessor {
             String minPagesToken = getMinPagesToken(queryPages);
             List<PageReference> minPages = queryPages.get(minPagesToken);
 
-            // get first 20 pages only for now
-            if (minPages.size() > 20) {
-                minPages = minPages.subList(0, 20);
-            }
             // find exact phrase match
             Map<PageReference, String> minPagesSnippets = processPages(minPagesToken, minPages,
                     queryTokenizationResult);
             displaySnippets(minPagesSnippets);
 
-        } else {
+        }
+        if (!isPhraseMatch) {
+            ExecutorService executorService = Executors.newFixedThreadPool(8);
+
             for (String token : queryPages.keySet()) {
                 List<PageReference> pages = queryPages.get(token);
-                // get first 20 pages only for now
-                if (pages.size() > 20) {
-                    pages = pages.subList(0, 20);
+
+                // process in batches
+                int batchSize = 25;
+                List<Future<Map<PageReference, String>>> futures = new ArrayList<>();
+
+                for (int start = 0; start < pages.size(); start += batchSize) {
+                    int end = Math.min(start + batchSize, pages.size());
+                    List<PageReference> batch = pages.subList(start, end);
+
+                    Future<Map<PageReference, String>> future = executorService
+                            .submit(() -> processPages(token, batch, queryTokenizationResult));
+
+                    futures.add(future);
                 }
-                Map<PageReference, String> pageSnippets = processPages(token, pages,
-                        queryTokenizationResult);
-                displaySnippets(pageSnippets);
+
+                // Wait for all tasks in the batch to
+                Map<PageReference, String> allSnippets = new HashMap<>();
+
+                for (Future<Map<PageReference, String>> future : futures) {
+                    try {
+                        Map<PageReference, String> batchSnippets = future.get();
+                        allSnippets.putAll(batchSnippets);
+                    } catch (Exception e) {
+                        System.err.println("Error in processing token page: " + e.getMessage());
+                    }
+                }
+
+                // finally 
+                displaySnippets(allSnippets);
+
             }
         }
     }
