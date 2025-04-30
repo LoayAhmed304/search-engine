@@ -1,25 +1,24 @@
 package com.project.searchengine.ranker;
 
 import com.project.searchengine.server.model.PageReference;
+import com.project.searchengine.server.service.PageReferenceService;
 import com.project.searchengine.server.service.PageService;
 import java.util.*;
 
 public class Ranker {
 
-    private final List<String> queryTokens;
-    private final Map<String, List<PageReference>> wordResults;
+    private final Map<String, List<PageReference>> queryResults;
     private final long totalDocuments;
-    private final PageService pageService;
+    private final PageReferenceService pageReferenceService;
 
     public Ranker(
-        String query,
-        Map<String, List<PageReference>> wordResults,
-        PageService pageService
+        Map<String, List<PageReference>> queryResults,
+        PageService pageService,
+        PageReferenceService pageReferenceService
     ) {
-        this.queryTokens = Arrays.asList(query.split("\\s+"));
-        this.wordResults = wordResults;
-        this.pageService = pageService;
+        this.queryResults = queryResults;
         this.totalDocuments = pageService.getTotalDocuments();
+        this.pageReferenceService = pageReferenceService;
     }
 
     /**
@@ -40,9 +39,10 @@ public class Ranker {
      */
     Map<String, Double> computeScores() {
         Map<String, Double> scores = new HashMap<>();
+        Map<String, Double> pagesRanks = getPagesRanks();
 
-        for (String token : queryTokens) {
-            processToken(token, scores);
+        for (List<PageReference> prs : queryResults.values()) {
+            processToken(prs, scores, pagesRanks);
         }
 
         return scores; // return sorted pages ids (strings) according to their values in scores Map
@@ -54,17 +54,20 @@ public class Ranker {
      * @param token: the token (word) desired to process
      * @param scores: Map object by reference, to update the total score of every page (<pageId, score>)
      */
-    void processToken(String token, Map<String, Double> scores) {
-        List<PageReference> prs = wordResults.getOrDefault(token, Collections.emptyList());
-
+    void processToken(
+        List<PageReference> prs,
+        Map<String, Double> scores,
+        Map<String, Double> pagesRanks
+    ) {
         double idf = RankCalculator.getIDF(totalDocuments, prs.size());
         for (PageReference pr : prs) {
-            // double pageRank = pr.getPageRank();
+            String pageId = pr.getPageId();
+
+            double pageRank = pagesRanks.getOrDefault(pageId, 0.0);
 
             double tf = pr.getTf();
-            double score = RankCalculator.calculateScore(tf, idf, 0);
+            double score = RankCalculator.calculateScore(tf, idf, pageRank);
 
-            String pageId = pr.getPageId();
             scores.merge(pageId, score, Double::sum);
         }
     }
@@ -79,5 +82,16 @@ public class Ranker {
         List<String> result = new ArrayList<>(scores.keySet());
         result.sort((page1, page2) -> Double.compare(scores.get(page2), scores.get(page1)));
         return result;
+    }
+
+    Map<String, Double> getPagesRanks() {
+        Set<String> pageIds = new HashSet<>();
+        for (List<PageReference> prs : queryResults.values()) {
+            for (PageReference pr : prs) {
+                pageIds.add(pr.getPageId());
+            }
+        }
+
+        return pageReferenceService.getPagesRanks(new ArrayList<>(pageIds));
     }
 }
