@@ -76,6 +76,7 @@ public class QueryProcessor {
                 snippet.append(token).append(" ");
             }
         }
+        snippet.append("...");
 
         return snippet.toString().trim();
     }
@@ -95,45 +96,39 @@ public class QueryProcessor {
         return tokenizer.tokenize(bodyContent.toLowerCase());
     }
 
-    public Map<PageReference, List<String>> processPages(
+    public Map<PageReference, String> processPages(
             String token,
             List<PageReference> pages,
             QueryTokenizationResult queryTokenizationResult) {
 
-        Map<PageReference, List<String>> pageSnippets = new HashMap<>();
+        Map<PageReference, String> pageSnippet = new HashMap<>();
         boolean isPhraseMatch = queryTokenizationResult.getIsPhraseMatch();
         List<String> originalWords = queryTokenizationResult.getOriginalWords();
 
         for (PageReference page : pages) {
             List<Integer> positions = page.getWordPositions();
             String[] bodyTokens = getPageBodyContent(page);
-            List<String> snippets = new ArrayList<>();
 
-            // check at each position if it matches or not
+            // get one snippet only for each page
             for (Integer pos : positions) {
                 if (pos >= bodyTokens.length) {
                     continue;
                 }
 
-                // !! temp: exclude header positions for now
-                String stemmedToken = stemmer.stem(bodyTokens[pos]);
-                if (!stemmedToken.equals(token)) {
-                    continue;
+                boolean isMatchFound = false;
+                if (isPhraseMatch) {
+                    isMatchFound = phraseMatcher.isPhraseMatchFound(bodyTokens, originalWords, token, pos);
                 }
-
-                boolean isMatchFound = phraseMatcher.isPhraseMatchFound(bodyTokens, originalWords, token, pos);
 
                 if (!isPhraseMatch || isPhraseMatch && isMatchFound) {
                     String snippet = generateSnippet(bodyTokens, pos, snippetSize);
-                    snippets.add(snippet);
+
+                    pageSnippet.put(page, snippet);
+                    break;
                 }
             }
-
-            if (!snippets.isEmpty()) {
-                pageSnippets.put(page, snippets);
-            }
         }
-        return pageSnippets;
+        return pageSnippet;
     }
 
     /**
@@ -155,20 +150,20 @@ public class QueryProcessor {
         return minToken;
     }
 
-    private void displaySnippets(Map<PageReference, List<String>> pageSnippets) {
-        for (Map.Entry<PageReference, List<String>> entry : pageSnippets.entrySet()) {
+    private void displaySnippets(Map<PageReference, String> pageSnippet) {
+        for (Map.Entry<PageReference, String> entry : pageSnippet.entrySet()) {
             PageReference page = entry.getKey();
-            List<String> snippets = entry.getValue();
+            String snippet = entry.getValue();
 
             System.out.println("Page: " + page.getPageId());
-            for (String snippet : snippets) {
-                System.out.println("-> Snippet: " + snippet);
-            }
-            System.out.println();
+            System.out.println("-> Snippet: " + snippet);
+
+            System.out.println("--------------------------------------------------");
         }
     }
 
     public void process(String query) {
+
         QueryTokenizationResult queryTokenizationResult = queryTokenizer.tokenizeQuery(query);
         List<String> tokenizedQuery = queryTokenizationResult.getTokenizedQuery();
 
@@ -188,18 +183,26 @@ public class QueryProcessor {
             String minPagesToken = getMinPagesToken(queryPages);
             List<PageReference> minPages = queryPages.get(minPagesToken);
 
+            // get first 20 pages only for now
+            if (minPages.size() > 20) {
+                minPages = minPages.subList(0, 20);
+            }
             // find exact phrase match
-            Map<PageReference, List<String>> minPagesSnippets = processPages(minPagesToken, minPages,
+            Map<PageReference, String> minPagesSnippets = processPages(minPagesToken, minPages,
                     queryTokenizationResult);
             displaySnippets(minPagesSnippets);
 
         } else {
             for (String token : queryPages.keySet()) {
                 List<PageReference> pages = queryPages.get(token);
-                Map<PageReference, List<String>> pageSnippets = processPages(token, pages, queryTokenizationResult);
+                // get first 20 pages only for now
+                if (pages.size() > 20) {
+                    pages = pages.subList(0, 20);
+                }
+                Map<PageReference, String> pageSnippets = processPages(token, pages,
+                        queryTokenizationResult);
                 displaySnippets(pageSnippets);
             }
         }
-
     }
 }
