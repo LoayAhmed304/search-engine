@@ -19,7 +19,7 @@ import opennlp.tools.tokenize.*;
 public class QueryProcessor {
     private final QueryService queryService;
 
-    private static Integer snippetSize = 30;
+    private static Integer snippetSize = 40;
     private final SimpleTokenizer tokenizer = SimpleTokenizer.INSTANCE;
     private final PorterStemmer stemmer = new PorterStemmer();
 
@@ -65,18 +65,17 @@ public class QueryProcessor {
             String token = bodyTokens[i];
             String nextToken = (i + 1 < bodyTokens.length) ? bodyTokens[i + 1] : null;
 
-            // starting punctution don't add space after
-            if (token.matches("[\\(\\[\\{]")) {
+            boolean isOpeningPunct = token.matches("[\\(\\[\\{]");
+            boolean isClosingNextPunct = nextToken != null && nextToken.matches("[.,!?;:’\"'/)\\]\\\\]");
+
+            if (isOpeningPunct) {
                 snippet.append(token);
-                // closing punctution don't add space before
-            } else if (nextToken != null
-                    && nextToken.matches("[.,!?;:’\"'/)\\]\\\\]")) {
+            } else if (isClosingNextPunct) {
                 snippet.append(token);
             } else {
                 snippet.append(token).append(" ");
             }
         }
-        snippet.append("...");
 
         return snippet.toString().trim();
     }
@@ -112,6 +111,12 @@ public class QueryProcessor {
             // get one snippet only for each page
             for (Integer pos : positions) {
                 if (pos >= bodyTokens.length) {
+                    continue;
+                }
+
+                // exclude header positions 
+                String stemmedToken = stemmer.stem(bodyTokens[pos]);
+                if (!stemmedToken.equals(token)) {
                     continue;
                 }
 

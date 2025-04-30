@@ -11,62 +11,70 @@ public class PhraseMatcher {
      * @return whether it is a phrase matching query or not
      */
     public boolean isPhraseMatchQuery(String query) {
-        if (query.isEmpty() || query.length() < 2) {
-            return false;
+        return query.matches("^\".{1,}\"$");
+    }
+
+    private boolean isValidTokenIndex(int tokenIndex, int querySize) {
+        return tokenIndex >= 0 && tokenIndex < querySize;
+    }
+
+    private boolean isValidOffset(int offset, int bodyTokensLength) {
+        return offset >= 0 && offset < bodyTokensLength;
+    }
+
+    private boolean findMatchAroundToken(String[] bodyTokens,
+            List<String> originalWords,
+            int tokenIndex, int pos, boolean isBeforeToken) {
+
+        boolean found = true;
+        int offset = isBeforeToken ? pos - 1 : pos + 1;
+        int currentTokenIndex = isBeforeToken ? tokenIndex - 1 : tokenIndex + 1;
+        int querySize = originalWords.size();
+
+        while (found &&
+                isValidOffset(offset, bodyTokens.length)
+                && isValidTokenIndex(currentTokenIndex, querySize)) {
+
+            String currentToken = originalWords.get(currentTokenIndex);
+
+            if (!currentToken.equals(bodyTokens[offset])) {
+                found = false;
+            }
+
+            offset = isBeforeToken ? offset - 1 : offset + 1;
+            currentTokenIndex = isBeforeToken ? currentTokenIndex - 1 : currentTokenIndex + 1;
+            currentTokenIndex++;
         }
 
-        return (query.charAt(0) == '\"'
-                && query.charAt(query.length() - 1) == '\"')
-                        ? true
-                        : false;
+        return found;
     }
 
     /**
      * Checks if a given token is part of a phrase match in the body content or not
      *
-     * @param bodyTokens:  
+     * @param bodyTokens:
      * @param originalWords: original query words
-     * @param token: token to match
-     * @param pos: position of the current token in body content
+     * @param token:         token to match
+     * @param pos:           position of the current token in body content
      * @return true if the token is part of a matching phrase false otherwise.
      */
     public boolean isPhraseMatchFound(String[] bodyTokens,
             List<String> originalWords, String token, int pos) {
 
-        // check positions around it
         int tokenIndex = originalWords.indexOf(token);
-        int querySize = originalWords.size();
 
-        // System.out.println(tokenIndex + " " + querySize);
+        if (tokenIndex == -1)
+            return false;
 
-        boolean found = true;
+        boolean isMatchFound = false;
+        boolean isBeforeToken = true;
 
-        // check letters before
-        int offset = pos - 1;
-        int prevTokenIndex = tokenIndex - 1;
+        isMatchFound = findMatchAroundToken(bodyTokens, originalWords, tokenIndex, pos, isBeforeToken);
 
-        while (found && prevTokenIndex >= 0 && offset >= 0) {
-            String prevToken = originalWords.get(prevTokenIndex);
-
-            if (!prevToken.equals(bodyTokens[offset])) {
-                found = false;
-            }
-            offset--;
-            prevTokenIndex--;
+        if (isMatchFound) {
+           isMatchFound =  findMatchAroundToken(bodyTokens, originalWords, tokenIndex, pos, !isBeforeToken);
         }
 
-        offset = pos + 1;
-        int nextTokenIndex = tokenIndex + 1;
-
-        while (found && offset < bodyTokens.length && nextTokenIndex < querySize) {
-            String nextToken = originalWords.get(nextTokenIndex);
-
-            if (!nextToken.equals(bodyTokens[offset])) {
-                found = false;
-            }
-            offset++;
-            nextTokenIndex++;
-        }
-        return found;
+        return isMatchFound;
     }
 }
