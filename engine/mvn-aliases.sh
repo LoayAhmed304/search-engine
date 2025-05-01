@@ -9,7 +9,13 @@ case "$1" in
     mvn spring-boot:run -Dspring-boot.run.profiles=pagerank
     ;;
   "rank")
-    mvn spring-boot:run -Dspring-boot.run.profiles=ranker
+    # Run without arguments if no query is provided
+    if [ -n "$2" ]; then
+      QUERY="$2"
+      mvn spring-boot:run -Dspring-boot.run.profiles=ranker -Dspring-boot.run.arguments="\"${QUERY}\""
+    else
+      mvn spring-boot:run -Dspring-boot.run.profiles=ranker
+    fi
     ;;
   "index")
     mvn spring-boot:run -Dspring-boot.run.profiles=indexer
@@ -18,7 +24,7 @@ case "$1" in
     mvn spring-boot:run -Dspring-boot.run.profiles=query
     ;;
   *)
-    echo "Usage: $0 [crawl [thread_count]|rank|index]"
+    echo "Usage: $0 [crawl [thread_count] | rank [query_string] | index]"
     echo "Example: $0 crawl 20"
     ;;
 esac

@@ -5,9 +5,7 @@ import com.project.searchengine.queryprocessor.QueryTokenizationResult;
 import com.project.searchengine.queryprocessor.QueryTokenizer;
 import com.project.searchengine.ranker.Ranker;
 import com.project.searchengine.server.model.PageReference;
-import com.project.searchengine.server.service.PageService;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
@@ -29,7 +27,13 @@ public class RankerRunner implements CommandLineRunner {
     @Override
     public void run(String... args) {
         try {
-            String query = "study math";
+            String query = "study math"; // Default query
+            for (String arg : args) {
+                if (!arg.startsWith("--")) {
+                    query = arg;
+                    break;
+                }
+            }
             System.out.println("Processing query: \"" + query + "\"");
 
             // 1) Tokenize query
@@ -49,7 +53,7 @@ public class RankerRunner implements CommandLineRunner {
             }
 
             if (result.isEmpty()) {
-                System.out.println("No found for the query");
+                System.out.println("Nothing found for the query");
                 return;
             }
 
