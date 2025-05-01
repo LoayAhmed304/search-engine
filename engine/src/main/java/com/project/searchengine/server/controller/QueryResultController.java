@@ -3,7 +3,7 @@ package com.project.searchengine.server.controller;
 import com.project.searchengine.server.dto.QueryResult;
 import com.project.searchengine.server.model.*;
 import com.project.searchengine.server.service.*;
-import com.project.searchengine.server.service.SearchQueryService;
+
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +19,13 @@ public class QueryResultController {
     @Autowired
     private SearchQueryService searchQueryService;
 
+    /**
+     * Handles GET requests to the /search endpoint.
+     * Processes the search query and returns a list of QueryResult objects.
+     * 
+     * @param query The search query to process.
+     * @return A ResponseEntity containing a list of QueryResult objects.
+     */
     @GetMapping("/search")
     public ResponseEntity<List<QueryResult>> getQuery(@RequestParam String query) {
         List<QueryResult> results = queryResultService.getQueryResults(query);
@@ -29,7 +36,13 @@ public class QueryResultController {
         return ResponseEntity.ok(results);
     }
 
-    @GetMapping("/suggestions")
+    /**
+     * Handles GET requests to the /suggestions endpoint.s
+     * Returns a list of all search queries in the database.
+     * 
+     * @return A ResponseEntity containing a list of SearchQuery objects.
+     */
+    @GetMapping("history")
     public ResponseEntity<List<SearchQuery>> getSuggestions() {
         List<SearchQuery> suggestions = searchQueryService.suggestions();
         return ResponseEntity.ok(suggestions);

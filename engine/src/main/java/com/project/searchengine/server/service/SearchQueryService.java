@@ -16,6 +16,12 @@ public class SearchQueryService {
         this.searchQueryRepository = searchQueryRepository;
     }
 
+    /**
+     * Saves the search query to the database.
+     *
+     * @param query The search query to save.
+     * @throws Exception if the query already exists in the database.
+     */
     public void saveSearchQuery(SearchQuery query) {
         // Save the search query to the database
         try {
@@ -26,6 +32,9 @@ public class SearchQueryService {
         }
     }
 
+    /**
+     * Returns a list of all search queries in the database.
+     */
     public List<SearchQuery> suggestions() {
         return searchQueryRepository.findAll();
     }
