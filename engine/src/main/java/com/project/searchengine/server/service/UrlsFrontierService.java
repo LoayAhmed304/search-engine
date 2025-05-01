@@ -30,10 +30,9 @@ public class UrlsFrontierService {
      * @return List of up to 100 normalized URLs
      */
     public List<String> getTop100UrlsByFrequency() {
-        List<UrlDocument> topDocs = urlsFrontierRepository.findTop100ByIsCrawledFalseOrderByFrequencyDesc();
-        return topDocs.stream()
-            .map(UrlDocument::getNormalizedUrl)
-            .collect(Collectors.toList());
+        List<UrlDocument> topDocs =
+            urlsFrontierRepository.findTop100ByIsCrawledFalseOrderByFrequencyDesc();
+        return topDocs.stream().map(UrlDocument::getNormalizedUrl).collect(Collectors.toList());
     }
 
     /**
@@ -81,7 +80,14 @@ public class UrlsFrontierService {
      * @return list of all Urls stored (not necessarily crawled)
      */
     public List<UrlDocument> getAllUrls() {
-        return urlsFrontierRepository.findAll();
+        try {
+            // Fetch only normalized_url and linked_pages
+            Query query = new Query();
+            query.fields().include("normalizedUrl").include("linkedPages");
+            return mongoTemplate.find(query, UrlDocument.class);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to fetch URLs: " + e.getMessage(), e);
+        }
     }
 
     /**

@@ -5,6 +5,9 @@ case "$1" in
     THREAD_COUNT=${2:-20}
     mvn spring-boot:run -Dspring-boot.run.profiles=crawler -Dspring-boot.run.arguments="--threads=${THREAD_COUNT}"
     ;;
+  "pagerank")
+    mvn spring-boot:run -Dspring-boot.run.profiles=pagerank
+    ;;
   "rank")
     mvn spring-boot:run -Dspring-boot.run.profiles=ranker
     ;;
