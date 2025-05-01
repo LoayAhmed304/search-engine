@@ -28,4 +28,10 @@ public class QueryResultController {
 
         return ResponseEntity.ok(results);
     }
+
+    @GetMapping("/suggestions")
+    public ResponseEntity<List<SearchQuery>> getSuggestions() {
+        List<SearchQuery> suggestions = searchQueryService.suggestions();
+        return ResponseEntity.ok(suggestions);
+    }
 }
