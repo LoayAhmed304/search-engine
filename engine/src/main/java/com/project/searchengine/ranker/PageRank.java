@@ -45,10 +45,17 @@ public class PageRank {
             currentRanks = initializePagesRank(allUrls);
 
             // 3) Main loop
+            long algoTime = System.currentTimeMillis();
             runPageRankIterations(incomingLinks);
+            System.out.println(
+                "PageRank Algorithm took: " + (System.currentTimeMillis() - algoTime)
+            );
 
+            long saveTime = System.currentTimeMillis();
             // 4) Bulk update all pages ranks in the database
             pageService.setRanks(currentRanks);
+            System.out.println("Saving took: " + (System.currentTimeMillis() - saveTime));
+
             return true;
         } catch (Exception e) {
             System.out.println("Exception in PageRank: " + e);
@@ -176,9 +183,15 @@ public class PageRank {
         return averageChange < CONVERGE_THRESHOLD;
     }
 
+    /**
+     * Maps the URLs to their corresponding UrlDocument objects.
+     * @param allUrlsList: List of UrlDocument objects
+     * @return Map<String, UrlDocument> where the key is the normalized URL and the value is the UrlDocument object
+     */
     private Map<String, UrlDocument> mapUrls(List<UrlDocument> allUrlsList) {
         return allUrlsList
             .stream()
+            .filter(doc -> doc.getNormalizedUrl() != null)
             .collect(Collectors.toMap(UrlDocument::getNormalizedUrl, Function.identity()));
     }
 }

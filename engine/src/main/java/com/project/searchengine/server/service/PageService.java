@@ -6,7 +6,6 @@ import com.project.searchengine.server.repository.PageRepository;
 import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.*;
-import org.springframework.data.mongodb.core.BulkOperations.BulkMode;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
@@ -56,15 +55,30 @@ public class PageService {
         return pageRepository.getPageById(id);
     }
 
+    /**
+     * Bulk update the ranks of pages in the database.
+     *  This function uses MongoDB's bulk operations for efficiency.
+     * @param ranks: A map where the key is the page URL and the value is the rank to be updated/set.
+     */
     public void setRanks(Map<String, Double> ranks) {
-        BulkOperations bulkOps = mongoTemplate.bulkOps(BulkMode.UNORDERED, Page.class);
-        ranks.forEach((url, rank) -> {
-            bulkOps.updateOne(
-                Query.query(Criteria.where("url").is(url)),
-                new Update().set("rank", rank)
-            );
-        });
-        bulkOps.execute();
+        if (ranks == null || ranks.isEmpty()) return;
+
+        BulkOperations bulkOps = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED, "pages");
+
+        for (Map.Entry<String, Double> entry : ranks.entrySet()) {
+            Query query = new Query(Criteria.where("url").is(entry.getKey()));
+            Update update = new Update().set("rank", entry.getValue());
+            bulkOps.upsert(query, update);
+        }
+
+        BulkWriteResult result = bulkOps.execute();
+        System.out.println(
+            "PageRank bulk update completed: " +
+            result.getModifiedCount() +
+            " modified, " +
+            result.getUpserts().size() +
+            " upserted"
+        );
     }
 
     /**
