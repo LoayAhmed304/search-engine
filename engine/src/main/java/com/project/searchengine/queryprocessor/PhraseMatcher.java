@@ -14,13 +14,35 @@ public class PhraseMatcher {
         return query.matches("^\".{1,}\"$");
     }
 
+    /**
+     * @param tokenIndex
+     * @param querySize  length of query
+     * @return whether the tokenIndex is a valid index or not
+     */
     private boolean isValidTokenIndex(int tokenIndex, int querySize) {
         return tokenIndex >= 0 && tokenIndex < querySize;
     }
 
+    /**
+     * @param tokenIndex
+     * @param bodyTokensLength
+     * @return whether the offset is a valid index or not
+     */
     private boolean isValidOffset(int offset, int bodyTokensLength) {
         return offset >= 0 && offset < bodyTokensLength;
     }
+
+    /**
+     * Find if the words before or after a specific token (depending on
+     * isBeforeToken) match or not
+     * 
+     * @param bodyTokens
+     * @param originalWords list of the query original words before tokenization
+     * @param tokenIndex
+     * @param isBeforeToken to determine if the match is before the anchor token or
+     *                      after it
+     * @return true if a match is found
+     */
 
     private boolean findMatchAroundToken(String[] bodyTokens,
             List<String> originalWords,
@@ -72,7 +94,7 @@ public class PhraseMatcher {
         isMatchFound = findMatchAroundToken(bodyTokens, originalWords, tokenIndex, pos, isBeforeToken);
 
         if (isMatchFound) {
-           isMatchFound =  findMatchAroundToken(bodyTokens, originalWords, tokenIndex, pos, !isBeforeToken);
+            isMatchFound = findMatchAroundToken(bodyTokens, originalWords, tokenIndex, pos, !isBeforeToken);
         }
 
         return isMatchFound;
