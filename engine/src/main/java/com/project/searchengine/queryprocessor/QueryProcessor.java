@@ -1,48 +1,38 @@
 package com.project.searchengine.queryprocessor;
 
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.project.searchengine.server.model.Page;
 import com.project.searchengine.server.model.PageReference;
-import com.project.searchengine.server.repository.PageRepository;
 import com.project.searchengine.server.service.QueryService;
-
-import opennlp.tools.stemmer.PorterStemmer;
-import opennlp.tools.tokenize.*;
 
 @Component
 public class QueryProcessor {
     private final QueryService queryService;
 
-    private static Integer snippetSize = 40;
-    private final SimpleTokenizer tokenizer = SimpleTokenizer.INSTANCE;
-    private final PorterStemmer stemmer = new PorterStemmer();
-
     @Autowired
     private QueryTokenizer queryTokenizer;
 
     @Autowired
-    private PhraseMatcher phraseMatcher;
+    private SnippetGenerator snippetGenerator;
 
     @Autowired
-    private PageRepository pageRepository;
+    private PhraseMatcher phraseMatcher;
+
+    private final int batchSize = 2;
+    private final int threadsNum = 20;
 
     public QueryProcessor(QueryService queryService) {
         this.queryService = queryService;
     }
 
     /**
-     * Gets the result pages for each token in the processed query.
+     * Retrieves the result pages for each token in the processed query
      *
-     * @param tokenizedQuery A list of tokens from the search query.
+     * @param tokenizedQuery A list of tokens from the search query
      * @return A map where the key is the token, and the value is a list of pages
      *         containing that token.
      */
@@ -56,93 +46,12 @@ public class QueryProcessor {
         return queryPages;
     }
 
-    private String generateSnippet(String[] bodyTokens, int matchPosition, int snippetSize) {
-        int halfSnippet = snippetSize / 2;
-
-        int startIndex = Math.max(0, matchPosition - halfSnippet);
-        int endIndex = Math.min(bodyTokens.length, matchPosition + halfSnippet);
-
-        StringBuilder snippet = new StringBuilder();
-
-        for (int i = startIndex; i < endIndex; i++) {
-            String token = bodyTokens[i];
-            String nextToken = (i + 1 < bodyTokens.length) ? bodyTokens[i + 1] : null;
-
-            boolean isOpeningPunct = token.matches("[\\(\\[\\{]");
-            boolean isClosingNextPunct = nextToken != null && nextToken.matches("[.,!?;:’\"'/)\\]\\\\]");
-
-            if (isOpeningPunct) {
-                snippet.append(token);
-            } else if (isClosingNextPunct) {
-                snippet.append(token);
-            } else {
-                snippet.append(token).append(" ");
-            }
-        }
-
-        return snippet.toString().trim();
-    }
-
     /**
-     * @param page A list of tokens from the search query.
-     * @return body content tokens
-     */
-    private String[] getPageBodyContent(PageReference referencePage) {
-        String pageId = referencePage.getPageId();
-        Page page = pageRepository.getPageById(pageId);
-
-        String content = page.getContent();
-        Document document = Jsoup.parse(content);
-        String bodyContent = document.body().text();
-
-        return tokenizer.tokenize(bodyContent.toLowerCase());
-    }
-
-    public Map<PageReference, String> processPages(
-            String token,
-            List<PageReference> pages,
-            QueryTokenizationResult queryTokenizationResult) {
-
-        Map<PageReference, String> pageSnippet = new HashMap<>();
-
-        boolean isPhraseMatch = queryTokenizationResult.getIsPhraseMatch();
-        List<String> originalWords = queryTokenizationResult.getOriginalWords();
-
-        for (PageReference page : pages) {
-            List<Integer> positions = page.getWordPositions();
-            String[] bodyTokens = getPageBodyContent(page);
-
-            // get one snippet only for each page
-            for (Integer pos : positions) {
-                if (pos >= bodyTokens.length) {
-                    continue;
-                }
-
-                // exclude header positions
-                String stemmedToken = stemmer.stem(bodyTokens[pos]);
-                if (!stemmedToken.equals(token)) {
-                    continue;
-                }
-
-                boolean isMatchFound = false;
-                if (isPhraseMatch) {
-                    isMatchFound = phraseMatcher.isPhraseMatchFound(bodyTokens, originalWords, token, pos);
-                }
-
-                if (!isPhraseMatch || isPhraseMatch && isMatchFound) {
-                    String snippet = generateSnippet(bodyTokens, pos, snippetSize);
-
-                    pageSnippet.put(page, snippet);
-                    break;
-                }
-            }
-        }
-        return pageSnippet;
-    }
-
-    /**
-     * @param page A list of tokens from the search query.
-     * @return body content tokens
+     * Finds the token with the minimum number of associated pages
+     *
+     * @param queryPages A map where the key is the token, and the value is a list
+     *                   of pages containing that token
+     * @return The token with the fewest associated pages
      */
     private String getMinPagesToken(Map<String, List<PageReference>> queryPages) {
         String minToken = "";
@@ -159,6 +68,12 @@ public class QueryProcessor {
         return minToken;
     }
 
+    /**
+     * Helper function to displays snippets for the given pages and their associated snippets
+     *
+     * @param pageSnippet A map where the key is a page reference, and the value is
+     *                    the snippet for that page
+     */
     private void displaySnippets(Map<PageReference, String> pageSnippet) {
         for (Map.Entry<PageReference, String> entry : pageSnippet.entrySet()) {
             PageReference page = entry.getKey();
@@ -171,70 +86,89 @@ public class QueryProcessor {
         }
     }
 
+    /**
+     * Retrieves snippets for a batch of pages based on the query and token
+     *
+     * @param query The original search query
+     * @param token The token for which snippets are being retrieved
+     * @param pages A list of pages to retrieve snippets for
+     * @return A map where the key is a page reference, and the value is the snippet
+     *         for that page.
+     */
+    private Map<PageReference, String> getBatchSnippets(String query, String token, List<PageReference> pages) {
+        ExecutorService executorService = Executors.newFixedThreadPool(threadsNum);
+
+        QueryTokenizationResult queryTokenizationResult = queryTokenizer.tokenizeQuery(query);
+        List<Future<Map<PageReference, String>>> futures = new ArrayList<>();
+
+
+        for (int start = 0; start < pages.size(); start += batchSize) {
+
+            int end = Math.min(start + batchSize, pages.size());
+            List<PageReference> batch = pages.subList(start, end);
+
+            Future<Map<PageReference, String>> future = executorService
+                    .submit(() -> snippetGenerator.getPagesSnippets(token, batch, queryTokenizationResult));
+
+            futures.add(future);
+        }
+
+        Map<PageReference, String> allSnippets = new HashMap<>();
+
+        for (Future<Map<PageReference, String>> future : futures) {
+            try {
+                Map<PageReference, String> batchSnippets = future.get();
+                allSnippets.putAll(batchSnippets);
+            } catch (Exception e) {
+                System.err.println("Error in processing token page: " + e.getMessage());
+            }
+        }
+
+        displaySnippets(allSnippets);
+
+        executorService.shutdown();
+        return allSnippets;
+    }
+
+
+    /**
+     * Processes the given query by tokenizing it, retrieving pages for each token,
+     * and generating snippets for the relevant pages.
+     *
+     * @param query The search query to process.
+     */
     public void process(String query) {
 
         QueryTokenizationResult queryTokenizationResult = queryTokenizer.tokenizeQuery(query);
         List<String> tokenizedQuery = queryTokenizationResult.getTokenizedQuery();
-
         Map<String, List<PageReference>> queryPages = retrieveQueryPages(tokenizedQuery);
 
         for (Map.Entry<String, List<PageReference>> entry : queryPages.entrySet()) {
             String token = entry.getKey();
-            List<PageReference> pages = entry.getValue();
+            List<PageReference> tokenPages = entry.getValue();
 
-            System.out.println("Token: " + token + " | Pages Found: " + (pages != null ? pages.size() : 0));
+            System.out.println("Token: " + token + " | Pages Found: " + (tokenPages != null ? tokenPages.size() : 0));
         }
 
         // phrase matching
         boolean isPhraseMatch = phraseMatcher.isPhraseMatchQuery(query);
 
         if (isPhraseMatch) {
-            // get the token that has minimum number of result pages
+            // get token which has min number of pages first
             String minPagesToken = getMinPagesToken(queryPages);
             List<PageReference> minPages = queryPages.get(minPagesToken);
-
-            // find exact phrase match
-            Map<PageReference, String> minPagesSnippets = processPages(minPagesToken, minPages,
-                    queryTokenizationResult);
-            displaySnippets(minPagesSnippets);
-
+            minPages.subList(0, 20);
+            getBatchSnippets(query, minPagesToken, minPages);
         }
-        if (!isPhraseMatch) {
-            ExecutorService executorService = Executors.newFixedThreadPool(8);
 
-            for (String token : queryPages.keySet()) {
-                List<PageReference> pages = queryPages.get(token);
-
-                // process in batches
-                int batchSize = 25;
-                List<Future<Map<PageReference, String>>> futures = new ArrayList<>();
-
-                for (int start = 0; start < pages.size(); start += batchSize) {
-                    int end = Math.min(start + batchSize, pages.size());
-                    List<PageReference> batch = pages.subList(start, end);
-
-                    Future<Map<PageReference, String>> future = executorService
-                            .submit(() -> processPages(token, batch, queryTokenizationResult));
-
-                    futures.add(future);
-                }
-
-                // Wait for all tasks in the batch to
-                Map<PageReference, String> allSnippets = new HashMap<>();
-
-                for (Future<Map<PageReference, String>> future : futures) {
-                    try {
-                        Map<PageReference, String> batchSnippets = future.get();
-                        allSnippets.putAll(batchSnippets);
-                    } catch (Exception e) {
-                        System.err.println("Error in processing token page: " + e.getMessage());
-                    }
-                }
-
-                // finally 
-                displaySnippets(allSnippets);
-
-            }
+        if(!isPhraseMatch) {
+            for(Map.Entry<String, List<PageReference>> entry : queryPages.entrySet()) {
+                String token = entry.getKey();
+                List<PageReference> tokenPages = entry.getValue();
+                tokenPages = tokenPages.subList(0, 20);
+                getBatchSnippets(query, token, tokenPages);
+                break;
+            } 
         }
     }
 }
