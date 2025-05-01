@@ -69,7 +69,8 @@ public class QueryProcessor {
     }
 
     /**
-     * Helper function to displays snippets for the given pages and their associated snippets
+     * Helper function to displays snippets for the given pages and their associated
+     * snippets
      *
      * @param pageSnippet A map where the key is a page reference, and the value is
      *                    the snippet for that page
@@ -101,7 +102,6 @@ public class QueryProcessor {
         QueryTokenizationResult queryTokenizationResult = queryTokenizer.tokenizeQuery(query);
         List<Future<Map<PageReference, String>>> futures = new ArrayList<>();
 
-
         for (int start = 0; start < pages.size(); start += batchSize) {
 
             int end = Math.min(start + batchSize, pages.size());
@@ -124,10 +124,9 @@ public class QueryProcessor {
             }
         }
 
-        
         executorService.shutdown();
 
-              try {
+        try {
             if (!executorService.awaitTermination(60, TimeUnit.SECONDS)) {
                 executorService.shutdownNow();
             }
@@ -138,7 +137,6 @@ public class QueryProcessor {
         // displaySnippets(allSnippets);
         return allSnippets;
     }
-
 
     /**
      * Processes the given query by tokenizing it, retrieving pages for each token,
@@ -170,14 +168,14 @@ public class QueryProcessor {
             getBatchSnippets(query, minPagesToken, minPages);
         }
 
-        if(!isPhraseMatch) {
-            for(Map.Entry<String, List<PageReference>> entry : queryPages.entrySet()) {
+        if (!isPhraseMatch) {
+            for (Map.Entry<String, List<PageReference>> entry : queryPages.entrySet()) {
                 String token = entry.getKey();
                 List<PageReference> tokenPages = entry.getValue();
                 // tokenPages = tokenPages.subList(0, 20);
                 getBatchSnippets(query, token, tokenPages);
                 break;
-            } 
+            }
         }
     }
 }
