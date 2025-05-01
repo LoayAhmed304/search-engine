@@ -26,7 +26,7 @@ public class Indexer {
     @Autowired
     private UrlsFrontierService urlsFrontierService;
 
-    public static int BATCH_SIZE = 100;
+    public static int BATCH_SIZE = 150;
     public static int currentBatch = 1;
 
     /**

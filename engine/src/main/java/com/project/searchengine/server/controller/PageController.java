@@ -8,9 +8,9 @@ import org.springframework.web.bind.annotation.RestController;
 import com.project.searchengine.server.model.Page;
 
 import java.util.List;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
 
+@RequestMapping("/api")
 @RestController
 public class PageController {
 
@@ -19,12 +19,11 @@ public class PageController {
 
     @GetMapping("/pages")
     public List<Page> getAllPages() {
-        return pageService.getAllPages();
+        return pageService.getAllPages().subList(0, 10);
     }
 
     @PostMapping("/page")
     public Page createPage(@RequestBody Page page) {
         return pageService.createPage(page);
     }
-
 }

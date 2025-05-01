@@ -24,6 +24,7 @@ public class QueryProcessor {
 
     private final int batchSize = 2;
     private final int threadsNum = 20;
+    private Map<PageReference, String> allPagesSnippets = new HashMap<>();
 
     public QueryProcessor(QueryService queryService) {
         this.queryService = queryService;
@@ -113,12 +114,10 @@ public class QueryProcessor {
             futures.add(future);
         }
 
-        Map<PageReference, String> allSnippets = new HashMap<>();
-
         for (Future<Map<PageReference, String>> future : futures) {
             try {
                 Map<PageReference, String> batchSnippets = future.get();
-                allSnippets.putAll(batchSnippets);
+                allPagesSnippets.putAll(batchSnippets);
             } catch (Exception e) {
                 System.err.println("Error in processing token page: " + e.getMessage());
             }
@@ -135,7 +134,7 @@ public class QueryProcessor {
         }
 
         // displaySnippets(allSnippets);
-        return allSnippets;
+        return allPagesSnippets;
     }
 
     /**
@@ -177,5 +176,9 @@ public class QueryProcessor {
                 break;
             }
         }
+    }
+
+    public Map<PageReference, String> getAllPagesSnippets() {
+        return allPagesSnippets;
     }
 }

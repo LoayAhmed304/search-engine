@@ -15,7 +15,7 @@ import opennlp.tools.tokenize.SimpleTokenizer;
 
 @Component
 public class SnippetGenerator {
-    private static Integer snippetSize = 35;
+    private static Integer snippetSize = 100;
     private final SimpleTokenizer tokenizer = SimpleTokenizer.INSTANCE;
     private final PorterStemmer stemmer = new PorterStemmer();
 
