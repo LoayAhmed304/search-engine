@@ -95,7 +95,7 @@ public class UrlDocument {
     public byte[] getDocument() {
         return document;
     }
-
+    
     public void setDocument(byte[] document) {
         this.document = document;
     }

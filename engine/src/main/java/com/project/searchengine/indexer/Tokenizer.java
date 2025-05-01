@@ -51,8 +51,8 @@ public class Tokenizer {
                 pagesTokensCount.merge(pageId, 1, Integer::sum);
 
                 // Increment position to the next token
-                position++;
             }
+            position++;
         }
     }
 

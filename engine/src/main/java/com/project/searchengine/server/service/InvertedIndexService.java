@@ -26,8 +26,10 @@ public class InvertedIndexService {
      * @return The inverted index for the given word.
      */
     public InvertedIndex getInvertedIndex(String word) {
-        return invertedIndexRepository.findById(word).orElse(null);
+        InvertedIndex result = invertedIndexRepository.findByWord(word);
+        return result;
     }
+
 
     /**
      * Saves a list of inverted indices in bulk to the database.

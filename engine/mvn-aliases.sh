@@ -11,6 +11,9 @@ case "$1" in
   "index")
     mvn spring-boot:run -Dspring-boot.run.profiles=indexer
     ;;
+  "query")
+    mvn spring-boot:run -Dspring-boot.run.profiles=query
+    ;;
   *)
     echo "Usage: $0 [crawl [thread_count]|rank|index]"
     echo "Example: $0 crawl 20"

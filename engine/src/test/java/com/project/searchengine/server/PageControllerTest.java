@@ -27,6 +27,7 @@ public class PageControllerTest {
     @Test
     void testGetAllPages() {
         // Arrange
+
         Page page1 = new Page("1", "https://www.google.com", "Google", "Search engine", 1);
         List<Page> pages = Arrays.asList(page1);
 
