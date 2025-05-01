@@ -1,7 +1,9 @@
 #!/bin/bash
 case "$1" in
   "crawl")
-    mvn spring-boot:run -Dspring-boot.run.profiles=crawler
+    # Default to 20 threads if no thread count is provided
+    THREAD_COUNT=${2:-20}
+    mvn spring-boot:run -Dspring-boot.run.profiles=crawler -Dspring-boot.run.arguments="--threads=${THREAD_COUNT}"
     ;;
   "rank")
     mvn spring-boot:run -Dspring-boot.run.profiles=ranker
@@ -10,6 +12,7 @@ case "$1" in
     mvn spring-boot:run -Dspring-boot.run.profiles=indexer
     ;;
   *)
-    echo "Usage: $0 [run crawler|run ranker|run indexer]"
+    echo "Usage: $0 [crawl [thread_count]|rank|index]"
+    echo "Example: $0 crawl 20"
     ;;
 esac
