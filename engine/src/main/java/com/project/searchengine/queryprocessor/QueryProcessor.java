@@ -7,11 +7,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.project.searchengine.server.model.PageReference;
-import com.project.searchengine.server.service.QueryService;
+import com.project.searchengine.server.service.InvertedIndexService;
 
 @Component
 public class QueryProcessor {
-    private final QueryService queryService;
+
+    @Autowired
+    private InvertedIndexService invertedIndexService;
 
     @Autowired
     private QueryTokenizer queryTokenizer;
@@ -26,10 +28,6 @@ public class QueryProcessor {
     private final int threadsNum = 20;
     private Map<PageReference, String> allPagesSnippets = new HashMap<>();
 
-    public QueryProcessor(QueryService queryService) {
-        this.queryService = queryService;
-    }
-
     /**
      * Retrieves the result pages for each token in the processed query
      *
@@ -41,7 +39,7 @@ public class QueryProcessor {
         Map<String, List<PageReference>> queryPages = new HashMap<>();
 
         for (String token : tokenizedQuery) {
-            List<PageReference> tokenPages = queryService.getTokenPages(token);
+            List<PageReference> tokenPages = invertedIndexService.getTokenPages(token);
             queryPages.put(token, tokenPages);
         }
         return queryPages;
