@@ -150,16 +150,16 @@ public class Indexer {
      * @param updatedUrlDocuments The list of URL documents to be updated.
      * @param savedPages The list of pages to be saved.
      */
-
     public void saveToDatabase(
         List<UrlDocument> updatedUrlDocuments,
         List<Page> savedPages,
         Map<String, InvertedIndex> indexBuffer
     ) {
-        invertedIndexService.saveTokensInBulk(tokenizer.getIndexBuffer());
-
         // Save the pages in bulk
         pageService.savePagesInBulk(savedPages);
+
+        // Save the inverted index in bulk
+        invertedIndexService.saveTokensInBulk(tokenizer.getIndexBuffer());
 
         // Save the updated URL documents in bulk
         urlsFrontierService.updateUrlDocumentsInBulk(updatedUrlDocuments);

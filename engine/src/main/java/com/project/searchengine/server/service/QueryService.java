@@ -2,12 +2,12 @@ package com.project.searchengine.server.service;
 
 import com.project.searchengine.server.model.*;
 import java.util.*;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class QueryService {
+
     @Autowired
     private InvertedIndexService invertedIndexService;
 
