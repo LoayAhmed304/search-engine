@@ -61,8 +61,8 @@ public class UrlsFrontierService {
      *
      * @param url The original URL to upsert
      */
-    public boolean upsertUrl(String url) {
-        return urlsFrontierRepository.upsertUrl(url);
+    public boolean upsertUrl(String url, int MAX_URLS) {
+        return urlsFrontierRepository.upsertUrl(url, MAX_URLS);
     }
 
     /**
@@ -70,9 +70,9 @@ public class UrlsFrontierService {
      *
      * @param seedUrls List of seed URLs to insert
      */
-    public void initializeFrontier(List<String> seedUrls) {
+    public void initializeFrontier(List<String> seedUrls, int MAX_URLS) {
         for (String url : seedUrls) {
-            upsertUrl(url);
+            upsertUrl(url, MAX_URLS);
         }
     }
 

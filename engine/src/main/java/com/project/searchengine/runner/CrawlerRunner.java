@@ -17,7 +17,19 @@ public class CrawlerRunner implements CommandLineRunner {
     public void run(String... args) {
         System.out.println("Starting the crawler...");
         long start = System.currentTimeMillis();
-        int numThreads = 5; // User-defined thread count
+        int numThreads = 20; // Default thread count
+        
+        // Parse arguments for thread count
+        for (String arg : args) {
+            if (arg.startsWith("--threads=")) {
+                try {
+                    numThreads = Integer.parseInt(arg.substring(10));
+                    System.out.println("Using " + numThreads + " threads for crawling");
+                } catch (NumberFormatException e) {
+                    System.out.println("Invalid thread count, using default: " + numThreads);
+                }
+            }
+        }
 
         crawler.setNumThreads(numThreads);
         crawler.crawl();

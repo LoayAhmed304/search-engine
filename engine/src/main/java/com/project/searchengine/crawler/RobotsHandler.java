@@ -8,8 +8,7 @@ import org.jsoup.Jsoup;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.*;
 
 /**
  * This class is responsible for handling robots.txt files with shared caching.
