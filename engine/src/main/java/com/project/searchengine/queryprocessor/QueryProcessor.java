@@ -124,9 +124,18 @@ public class QueryProcessor {
             }
         }
 
-        // displaySnippets(allSnippets);
-
+        
         executorService.shutdown();
+
+              try {
+            if (!executorService.awaitTermination(60, TimeUnit.SECONDS)) {
+                executorService.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            executorService.shutdownNow();
+        }
+
+        // displaySnippets(allSnippets);
         return allSnippets;
     }
 
@@ -165,7 +174,7 @@ public class QueryProcessor {
             for(Map.Entry<String, List<PageReference>> entry : queryPages.entrySet()) {
                 String token = entry.getKey();
                 List<PageReference> tokenPages = entry.getValue();
-                tokenPages = tokenPages.subList(0, 20);
+                // tokenPages = tokenPages.subList(0, 20);
                 getBatchSnippets(query, token, tokenPages);
                 break;
             } 
