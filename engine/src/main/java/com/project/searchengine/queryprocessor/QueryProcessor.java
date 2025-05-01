@@ -178,7 +178,15 @@ public class QueryProcessor {
         }
     }
 
-    public Map<PageReference, String> getAllPagesSnippets() {
+    /**
+     * Returns all the snippets generated for the pages.
+     *
+     * @return A map where the key is a page reference, and the value is the snippet
+     *         for that page.
+     */
+    public Map<PageReference, String> getAllPagesSnippets(String query) {
+        allPagesSnippets.clear(); 
+        process(query);
         return allPagesSnippets;
     }
 }
