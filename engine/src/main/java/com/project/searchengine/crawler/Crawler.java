@@ -1,19 +1,14 @@
 package com.project.searchengine.crawler;
 
-import com.project.searchengine.crawler.preprocessing.URLExtractor;
-import com.project.searchengine.crawler.preprocessing.URLNormalizer;
+import com.project.searchengine.crawler.preprocessing.*;
 import com.project.searchengine.utils.CompressionUtil;
 import com.project.searchengine.utils.HashManager;
 import org.jsoup.nodes.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.concurrent.*;
 
 @Component
 public class Crawler {
@@ -21,7 +16,7 @@ public class Crawler {
     private final UrlsFrontier urlsFrontier;
     private RobotsHandler robotsHandler;
     private static int currentBatch = 1;
-    private int numThreads; // Field to store the number of threads
+    private int numThreads; 
 
     @Autowired
     public Crawler(UrlsFrontier urlsFrontier) {
@@ -148,9 +143,5 @@ public class Crawler {
                 if (!urlsFrontier.handleUrl(normalizedUrl)) break;
             }
         }
-    }
-
-    public void test() {
-        crawl();
     }
 }

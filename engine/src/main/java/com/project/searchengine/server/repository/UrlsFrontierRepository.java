@@ -44,12 +44,12 @@ public interface UrlsFrontierRepository extends MongoRepository<UrlDocument, Str
      * @return false if the URL existed and was updated, true if a new document was
      *         created
      */
-    default boolean upsertUrl(String normalizedUrl) {
+    default boolean upsertUrl(String normalizedUrl, int MAX_URLS) {
         if (existsByNormalizedUrl(normalizedUrl)) {
             incrementFrequency(normalizedUrl);
             return true;
         } else {
-            if (count() < 6000) {
+            if (count() < MAX_URLS) {
                 UrlDocument newDocument = new UrlDocument(
                     normalizedUrl,
                     1L,

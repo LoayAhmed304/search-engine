@@ -1,13 +1,9 @@
 package com.project.searchengine.crawler.preprocessing;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.HashSet;
-import java.util.Set;
-import org.jsoup.Connection;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
+import java.net.*;
+import java.util.*;
+import org.jsoup.*;
+import org.jsoup.nodes.*;
 import org.jsoup.select.Elements;
 
 public class URLExtractor {
@@ -91,7 +87,7 @@ public class URLExtractor {
                 scheme.equalsIgnoreCase("mailto") ||
                 scheme.equalsIgnoreCase("tel") ||
                 scheme.equalsIgnoreCase("sms") ||
-                !(scheme.equalsIgnoreCase("http") || scheme.equalsIgnoreCase("https"));
+                !(scheme.equalsIgnoreCase("http") || scheme.equalsIgnoreCase("https") || scheme.equalsIgnoreCase("ftp"));
     }
 
     /**

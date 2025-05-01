@@ -16,7 +16,7 @@ public class UrlsFrontier {
     private UrlsFrontierService urlsFrontierService;
 
     private final String SEEDS_FILE_PATH = Paths.get("src/main/resources/seeds.txt").toString();
-    public static final int BATCH_SIZE = 200;
+    public static final int BATCH_SIZE = 100;
     public static final int MAX_URLS = 6000;
     public List<String> currentUrlBatch = Collections.synchronizedList(new ArrayList<>());
     public Set<String> hashedDocsCache = ConcurrentHashMap.newKeySet();
@@ -39,7 +39,7 @@ public class UrlsFrontier {
     public void seedFrontier() {
         List<String> seedUrls = readSeeds();
         System.out.println("Seeding the frontier with " + seedUrls.size() + " URLs." + seedUrls);
-        urlsFrontierService.initializeFrontier(seedUrls);
+        urlsFrontierService.initializeFrontier(seedUrls, MAX_URLS);
     }
 
     /**
@@ -91,7 +91,7 @@ public class UrlsFrontier {
      * @return true if the URL was newly added, false if it already existed and was updated
      */
     public boolean handleUrl(String url) {
-        return urlsFrontierService.upsertUrl(url);
+        return urlsFrontierService.upsertUrl(url, MAX_URLS);
     }
 
     /**
