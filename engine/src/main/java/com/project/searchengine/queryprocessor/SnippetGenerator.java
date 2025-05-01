@@ -1,10 +1,7 @@
 package com.project.searchengine.queryprocessor;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.jsoup.Jsoup;
+import java.util.*;
+import org.jsoup.*;
 import org.jsoup.nodes.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -18,7 +15,7 @@ import opennlp.tools.tokenize.SimpleTokenizer;
 
 @Component
 public class SnippetGenerator {
-    private static Integer snippetSize = 30;
+    private static Integer snippetSize = 35;
     private final SimpleTokenizer tokenizer = SimpleTokenizer.INSTANCE;
     private final PorterStemmer stemmer = new PorterStemmer();
 
@@ -57,7 +54,9 @@ public class SnippetGenerator {
     }
 
     /**
-     * @param page A list of tokens from the search query.
+     * Gets the tokenized body contnet of reference page provided 
+     * 
+     * @param referencePage 
      * @return body content tokens
      */
     private String[] getPageBodyContent(PageReference referencePage) {
@@ -71,7 +70,11 @@ public class SnippetGenerator {
         return tokenizer.tokenize(bodyContent.toLowerCase());
     }
 
-    public Map<PageReference, String> getAllPagesSnippet(
+    /**
+     * @param token A list of tokens from the search query.
+     * @return body content tokens
+     */
+    public Map<PageReference, String> getPagesSnippets(
             String token,
             List<PageReference> pages,
             QueryTokenizationResult queryTokenizationResult) {
