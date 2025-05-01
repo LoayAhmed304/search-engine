@@ -124,7 +124,7 @@ public class QueryProcessor {
             }
         }
 
-        displaySnippets(allSnippets);
+        // displaySnippets(allSnippets);
 
         executorService.shutdown();
         return allSnippets;
