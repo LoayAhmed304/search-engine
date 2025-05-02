@@ -5,6 +5,9 @@ import com.project.searchengine.server.service.PageReferenceService;
 import com.project.searchengine.server.service.PageService;
 import java.util.*;
 
+import org.springframework.stereotype.Component;
+
+@Component
 public class Ranker {
 
     private final Map<String, List<PageReference>> queryResults;

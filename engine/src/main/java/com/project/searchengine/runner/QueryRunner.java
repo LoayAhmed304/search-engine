@@ -19,7 +19,7 @@ public class QueryRunner implements CommandLineRunner {
         long start = System.currentTimeMillis();
 
         // String testQuery = "\"data science\"";
-        String testQuery = "data structures and algorithms";
+        String testQuery = "studying math";
 
         queryProcessor.process(testQuery);
         System.out.println("quering took: " + (System.currentTimeMillis() - start) + "ms");

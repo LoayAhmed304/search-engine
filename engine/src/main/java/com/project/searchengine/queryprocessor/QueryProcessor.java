@@ -27,13 +27,14 @@ public class QueryProcessor {
     private PhraseMatcher phraseMatcher;
 
 
-    // @Autowired
-    // private Ranker ranker;
+    @Autowired
+    private Ranker ranker;
 
     private final int batchSize = 2;
     private final int threadsNum = 10;
 
-    private Map<String, String> allPagesSnippets = new HashMap<>(); // map of page id with its snippet
+    private final Map<String, String> allPagesSnippets = new ConcurrentHashMap<>();// map of page id with its snippet
+    Map<String, PageReference> pageIdToPageReference;
     private Integer resultPagesNumber = 0;
 
     /**
@@ -95,6 +96,7 @@ public class QueryProcessor {
                 allPagesSnippets.putAll(batchSnippets);
             } catch (Exception e) {
                 System.err.println("Error in processing token page: " + e.getMessage());
+                e.printStackTrace();
             }
         }
 
@@ -106,6 +108,7 @@ public class QueryProcessor {
             }
         } catch (InterruptedException e) {
             executorService.shutdownNow();
+            e.printStackTrace();
         }
 
         displaySnippets(allPagesSnippets);
@@ -156,6 +159,7 @@ public class QueryProcessor {
         if (isPhraseMatch) {
             // filter the pages based on the phrase match
             queryPages = phraseMatcher.filterPhraseMatchPages(queryPages, queryResult);
+            // update results number
 
             for (Map.Entry<String, List<PageReference>> entry : queryPages.entrySet()) {
                 String token = entry.getKey();
@@ -175,10 +179,12 @@ public class QueryProcessor {
         }
 
         if (!isPhraseMatch) {
+            List<String> rankedPages = ranker.rank();
+
             for (Map.Entry<String, List<PageReference>> entry : queryPages.entrySet()) {
                 String token = entry.getKey();
                 List<PageReference> tokenPages = entry.getValue();
-                tokenPages = tokenPages.subList(0, 20);
+                // tokenPages = tokenPages.subList(0, 20);
                 getBatchSnippets(query, token, tokenPages);
                 break;
             }

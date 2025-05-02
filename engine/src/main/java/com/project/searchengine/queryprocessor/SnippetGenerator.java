@@ -19,7 +19,11 @@ public class SnippetGenerator {
     @Autowired
     private PageReferenceService pageReferenceService;
 
-    private String generateSnippet(String[] bodyTokens,
+    @Autowired
+    private PhraseMatcher phraseMatcher;
+
+    private String generateSnippet(String token,
+            String[] bodyTokens,
             int matchPosition,
             QueryResult queryResult) {
 
@@ -33,69 +37,59 @@ public class SnippetGenerator {
 
         StringBuilder snippet = new StringBuilder();
 
-        String openningPunctuation = "[\\(\\[\\{]";
-        String closingPunctuation = "[.,!?;:'\"'/)\\]\\\\]";
+        String openingPunctuation = "[\\(\\[\\{-]";
+        String closingPunctuation = "[.,!?;:\"'\\)\\]\\}-]";
 
         // Calculate the range of tokens to highlight if it's a phrase match
         Set<Integer> highlightPositions = new HashSet<>();
-        highlightPositions.add(matchPosition); // Always highlight the main match position
 
         if (isPhraseMatch && queryWords != null && !queryWords.isEmpty()) {
             // For phrase matching, we need to highlight multiple consecutive words
-            int phraseLength = queryWords.size();
-            // Check if we have a forward phrase match
-            if (matchPosition + phraseLength <= bodyTokens.length) {
-                boolean isForwardMatch = true;
-                for (int i = 0; i < phraseLength; i++) {
-                    String stemmedToken = stemmer.stem(bodyTokens[matchPosition + i].toLowerCase());
-                    String stemmedQuery = stemmer.stem(queryWords.get(i).toLowerCase());
-                    if (!stemmedToken.equals(stemmedQuery)) {
-                        isForwardMatch = false;
-                        break;
-                    }
-                }
-                if (isForwardMatch) {
-                    for (int i = 0; i < phraseLength; i++) {
-                        highlightPositions.add(matchPosition + i);
-                    }
-                }
-            }
+            boolean isMatchFound = phraseMatcher.isPhraseMatchFound(bodyTokens,
+                    queryWords,
+                    token,
+                    matchPosition);
 
-            // Check if we have a backward phrase match (if forward didn't match)
-            if (highlightPositions.size() <= 1 && matchPosition - phraseLength + 1 >= 0) {
-                boolean isBackwardMatch = true;
-                for (int i = 0; i < phraseLength; i++) {
-                    String stemmedToken = stemmer.stem(bodyTokens[matchPosition - phraseLength + 1 + i].toLowerCase());
-                    String stemmedQuery = stemmer.stem(queryWords.get(i).toLowerCase());
-                    if (!stemmedToken.equals(stemmedQuery)) {
-                        isBackwardMatch = false;
-                        break;
-                    }
-                }
-                if (isBackwardMatch) {
-                    for (int i = 0; i < phraseLength; i++) {
-                        highlightPositions.add(matchPosition - phraseLength + 1 + i);
-                    }
+            // If a match is found, highlight the positions of the words in the phrase
+
+            if (isMatchFound) {
+                int phraseLength = queryWords.size();
+                int tokenIndex = queryWords.indexOf(token);
+
+                int start = Math.max(0, matchPosition - tokenIndex);
+                int end = Math.min(bodyTokens.length - 1, start + phraseLength - 1);
+
+                highlightPositions.add(matchPosition);
+
+                // add them to highlight positions
+                // highlight the part after the token
+                for (int i = start; i <= end; i++) {
+                    highlightPositions.add(i);
                 }
             }
         }
 
         for (int i = startIndex; i < endIndex; i++) {
-            String token = bodyTokens[i];
-            String stemmedToken = stemmer.stem(token.toLowerCase());
+            String bodyToken = bodyTokens[i];
+
+            String stemmedToken = bodyToken.matches("[a-zA-Z]+")
+                    ? stemmer.stem(bodyToken.toLowerCase())
+                    : bodyToken.toLowerCase();
 
             String nextToken = (i + 1 < bodyTokens.length) ? bodyTokens[i + 1] : null;
 
-            boolean isOpeningPunctuation = token.matches(openningPunctuation);
-            boolean isClosingNextPunctuation = (nextToken != null) && nextToken.matches(closingPunctuation);
+            boolean isOpeningPunctuation = bodyToken.matches(openingPunctuation);
+            boolean isClosingNextPunctuation = (nextToken != null) &&
+                    nextToken.matches(closingPunctuation);
 
             // Check if current token should be highlighted
             boolean shouldHighlight = highlightPositions.contains(i);
 
-            if (shouldHighlight || tokenizedQuery.contains(stemmedToken)) {
-                snippet.append("<strong>").append(token).append("</strong>");
+            if (shouldHighlight || (!isPhraseMatch &&
+                    tokenizedQuery.contains(stemmedToken))) {
+                snippet.append("<strong>").append(bodyToken).append("</strong>");
             } else {
-                snippet.append(token);
+                snippet.append(bodyToken);
             }
 
             // Add spacing as needed
@@ -113,7 +107,7 @@ public class SnippetGenerator {
      * @param token       A stemmed token from the search query
      * @param pages       A list of PageReference objects
      * @param queryResult The result container to help generate the snippet
-     * @return A map of page ID to its  snippet
+     * @return A map of page ID to its snippet
      */
     public Map<String, String> getPagesSnippets(
             String token,
@@ -130,13 +124,17 @@ public class SnippetGenerator {
 
             // get one snippet only for each page
             for (Integer pos : positions) {
+                if (pos < 0 || pos >= bodyTokens.length) {
+                    continue;
+                }
+
                 // exclude header positions for now
                 String stemmedToken = stemmer.stem(bodyTokens[pos]);
                 if (!stemmedToken.equals(token)) {
                     continue;
                 }
 
-                String snippet = generateSnippet(bodyTokens, pos, queryResult);
+                String snippet = generateSnippet(token, bodyTokens, pos, queryResult);
                 pageSnippet.put(pageId, snippet);
                 break;
             }
