@@ -137,9 +137,10 @@ public class Crawler {
         if (!urlsFrontier.hasReachedThreshold()) {
             for (String linkedUrl : linkedPages) {
                 String normalizedUrl = URLNormalizer.normalizeUrl(linkedUrl);
-
+                if (normalizedUrl == null) continue; // Skip invalid or non-English URLs
+    
                 if (!robotsHandler.isUrlAllowed(normalizedUrl)) continue;
-
+    
                 if (!urlsFrontier.handleUrl(normalizedUrl)) break;
             }
         }
