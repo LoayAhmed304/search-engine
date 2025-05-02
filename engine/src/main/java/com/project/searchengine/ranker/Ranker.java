@@ -4,22 +4,15 @@ import com.project.searchengine.server.model.PageReference;
 import com.project.searchengine.server.service.PageReferenceService;
 import com.project.searchengine.server.service.PageService;
 import java.util.*;
-
 import org.springframework.stereotype.Component;
 
 @Component
 public class Ranker {
 
-    private final Map<String, List<PageReference>> queryResults;
     private final long totalDocuments;
     private final PageReferenceService pageReferenceService;
 
-    public Ranker(
-        Map<String, List<PageReference>> queryResults,
-        PageService pageService,
-        PageReferenceService pageReferenceService
-    ) {
-        this.queryResults = queryResults;
+    public Ranker(PageService pageService, PageReferenceService pageReferenceService) {
         this.totalDocuments = pageService.getTotalDocuments();
         this.pageReferenceService = pageReferenceService;
     }
@@ -29,8 +22,8 @@ public class Ranker {
      *
      * @return ranked list of the results pages IDs [String, ...]
      */
-    public List<String> rank() {
-        Map<String, Double> scores = computeScores();
+    public List<String> rank(Map<String, List<PageReference>> queryResults) {
+        Map<String, Double> scores = computeScores(queryResults);
 
         return sortedPages(scores); // return sorted pages ids (strings) according to their values in scores Map
     }
@@ -40,9 +33,9 @@ public class Ranker {
      *
      * @return Map with page_id as its key, and page score as its value
      */
-    Map<String, Double> computeScores() {
+    Map<String, Double> computeScores(Map<String, List<PageReference>> queryResults) {
         Map<String, Double> scores = new HashMap<>();
-        Map<String, Double> pagesRanks = getPagesRanks();
+        Map<String, Double> pagesRanks = getPagesRanks(queryResults);
 
         for (List<PageReference> prs : queryResults.values()) {
             processToken(prs, scores, pagesRanks);
@@ -54,14 +47,14 @@ public class Ranker {
     /**
      * Processes a single token's score
      *
-     * @param token: the token (word) desired to process
-     * @param scores: Map object by reference, to update the total score of every page (<pageId, score>)
+     * @param token:  the token (word) desired to process
+     * @param scores: Map object by reference, to update the total score of every
+     *                page (<pageId, score>)
      */
     void processToken(
-        List<PageReference> prs,
-        Map<String, Double> scores,
-        Map<String, Double> pagesRanks
-    ) {
+            List<PageReference> prs,
+            Map<String, Double> scores,
+            Map<String, Double> pagesRanks) {
         double idf = RankCalculator.getIDF(totalDocuments, prs.size());
         for (PageReference pr : prs) {
             String pageId = pr.getPageId();
@@ -76,7 +69,8 @@ public class Ranker {
     }
 
     /**
-     * Creates the sorted pages IDs according to their score in the scores Map <page ID, score>
+     * Creates the sorted pages IDs according to their score in the scores Map <page
+     * ID, score>
      *
      * @param scores: Map of score corresponding to each page
      * @return sorted array of page IDs ([String, ...])
@@ -87,7 +81,7 @@ public class Ranker {
         return result;
     }
 
-    Map<String, Double> getPagesRanks() {
+    Map<String, Double> getPagesRanks(Map<String, List<PageReference>> queryResults) {
         Set<String> pageIds = new HashSet<>();
         for (List<PageReference> prs : queryResults.values()) {
             for (PageReference pr : prs) {
