@@ -46,7 +46,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 
@@ -69,14 +69,12 @@ const prevPage = () => currentPage.value--;
 
 const mockResults = ref([])
 
-onMounted(() => {
-  // Get search query from URL
-  const searchQuery = route.query.q || ''
-  
+// Extract search functionality into a reusable function
+const performSearch = (searchQuery) => {
   isLoading.value = true
+  currentPage.value = 0 // Reset to first page
   fetchStartTime.value = performance.now() // Start the timer
   
-  // Fetch results from the API using the actual query
   search(searchQuery, 0)
     .then((data) => {
       console.log(data)
@@ -96,6 +94,17 @@ onMounted(() => {
     .finally(() => {
       isLoading.value = false
     })
+}
+
+watch(() => route.query.q, (newQuery) => {
+  if (newQuery !== undefined) {
+    performSearch(newQuery || '')
+  }
+})
+
+onMounted(() => {
+  const searchQuery = route.query.q || ''
+  performSearch(searchQuery)
 })
 
 const paginatedResults = computed(() =>
