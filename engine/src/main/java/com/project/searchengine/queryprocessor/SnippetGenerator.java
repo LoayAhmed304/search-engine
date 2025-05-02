@@ -108,27 +108,28 @@ public class SnippetGenerator {
     }
 
     /**
-     * @param token A list of tokens from the search query.
-     * @return body content tokens
+     * Generates snippets for the given pages based on a search token
+     *
+     * @param token       A stemmed token from the search query
+     * @param pages       A list of PageReference objects
+     * @param queryResult The result container to help generate the snippet
+     * @return A map of page ID to its  snippet
      */
-    public Map<PageReference, String> getPagesSnippets(
+    public Map<String, String> getPagesSnippets(
             String token,
             List<PageReference> pages,
             QueryResult queryResult) {
 
-        Map<PageReference, String> pageSnippet = new HashMap<>();
+        Map<String, String> pageSnippet = new HashMap<>();
 
         for (PageReference page : pages) {
             List<Integer> positions = page.getWordPositions();
             String bodyContent = pageReferenceService.getPageBodyContent(page);
             String[] bodyTokens = tokenizer.tokenize(bodyContent.toLowerCase());
+            String pageId = page.getPageId();
 
             // get one snippet only for each page
             for (Integer pos : positions) {
-                // if (pos >= bodyTokens.length) {
-                // continue;
-                // }
-
                 // exclude header positions for now
                 String stemmedToken = stemmer.stem(bodyTokens[pos]);
                 if (!stemmedToken.equals(token)) {
@@ -136,7 +137,7 @@ public class SnippetGenerator {
                 }
 
                 String snippet = generateSnippet(bodyTokens, pos, queryResult);
-                pageSnippet.put(page, snippet);
+                pageSnippet.put(pageId, snippet);
                 break;
             }
         }

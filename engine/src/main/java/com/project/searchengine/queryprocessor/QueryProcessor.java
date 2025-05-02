@@ -3,13 +3,10 @@ package com.project.searchengine.queryprocessor;
 import java.util.*;
 import java.util.concurrent.*;
 
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.project.searchengine.ranker.Ranker;
-import com.project.searchengine.server.model.Page;
 import com.project.searchengine.server.model.PageReference;
 import com.project.searchengine.server.repository.PageRepository;
 import com.project.searchengine.server.service.InvertedIndexService;
@@ -31,19 +28,15 @@ public class QueryProcessor {
     @Autowired
     private PhraseMatcher phraseMatcher;
 
-    @Autowired
-    private PageRepository pageRepository;
 
     // @Autowired
     // private Ranker ranker;
 
-    private final SimpleTokenizer tokenizer = SimpleTokenizer.INSTANCE;
-
     private final int batchSize = 2;
-    private final int threadsNum = 20;
+    private final int threadsNum = 10;
 
     Map<String, String[]> pageTokensCache = new HashMap<>(); // map of pages ids with its body tokens
-    private Map<PageReference, String> allPagesSnippets = new HashMap<>(); // map of page id with its snippet
+    private Map<String, String> allPagesSnippets = new HashMap<>(); // map of page id with its snippet
 
     /**
      * Retrieves the result pages for each token in the processed query
@@ -63,25 +56,6 @@ public class QueryProcessor {
     }
 
     /**
-     * Gets the tokenized body contnet of reference page provided
-     * 
-     * @param referencePage
-     * @return body content tokens
-     */
-    public String[] getPageBodyContent(PageReference referencePage) {
-
-        // get the tokenized body content
-        String pageId = referencePage.getPageId();
-        Page page = pageRepository.getPageById(pageId);
-
-        String content = page.getContent();
-        Document document = Jsoup.parse(content);
-        String bodyContent = document.body().text();
-
-        return tokenizer.tokenize(bodyContent.toLowerCase());
-    }
-
-    /**
      * Retrieves snippets for a batch of pages based on the query and token
      *
      * @param query The original search query
@@ -90,26 +64,26 @@ public class QueryProcessor {
      * @return A map where the key is a page reference, and the value is the snippet
      *         for that page.
      */
-    private Map<PageReference, String> getBatchSnippets(String query, String token, List<PageReference> pages) {
+    private Map<String, String> getBatchSnippets(String query, String token, List<PageReference> pages) {
         ExecutorService executorService = Executors.newFixedThreadPool(threadsNum);
 
         QueryResult queryResult = queryTokenizer.tokenizeQuery(query);
-        List<Future<Map<PageReference, String>>> futures = new ArrayList<>();
+        List<Future<Map<String, String>>> futures = new ArrayList<>();
 
         for (int start = 0; start < pages.size(); start += batchSize) {
 
             int end = Math.min(start + batchSize, pages.size());
             List<PageReference> batch = pages.subList(start, end);
 
-            Future<Map<PageReference, String>> future = executorService
+            Future<Map<String, String>> future = executorService
                     .submit(() -> snippetGenerator.getPagesSnippets(token, batch, queryResult));
 
             futures.add(future);
         }
 
-        for (Future<Map<PageReference, String>> future : futures) {
+        for (Future<Map<String, String>> future : futures) {
             try {
-                Map<PageReference, String> batchSnippets = future.get();
+                Map<String, String> batchSnippets = future.get();
                 allPagesSnippets.putAll(batchSnippets);
             } catch (Exception e) {
                 System.err.println("Error in processing token page: " + e.getMessage());
@@ -137,12 +111,12 @@ public class QueryProcessor {
      * @param pageSnippet A map where the key is a page reference, and the value is
      *                    the snippet for that page
      */
-    private void displaySnippets(Map<PageReference, String> pageSnippet) {
-        for (Map.Entry<PageReference, String> entry : pageSnippet.entrySet()) {
-            PageReference page = entry.getKey();
+    private void displaySnippets(Map<String, String> pageSnippet) {
+        for (Map.Entry<String, String> entry : pageSnippet.entrySet()) {
+            String pageID = entry.getKey();
             String snippet = entry.getValue();
 
-            System.out.println("Page: " + page.getPageId());
+            System.out.println("Page: " + pageID);
             System.out.println("-> Snippet: " + snippet);
 
             System.out.println("--------------------------------------------------");
@@ -209,10 +183,9 @@ public class QueryProcessor {
      * @return A map where the key is a page reference, and the value is the snippet
      *         for that page.
      */
-    public Map<PageReference, String> getAllPagesSnippets(String query) {
+    public Map<String, String> getAllPagesSnippets(String query) {
         allPagesSnippets.clear();
         process(query);
         return allPagesSnippets;
     }
-
 }
