@@ -74,7 +74,7 @@ public class Ranker {
             multiplier += 0.25 * Math.log(1.0 + fieldWordCount.getOrDefault("h2", 0));
 
             // penalize pages without h1
-            if (!fieldWordCount.getOrDefault("h1", 0).equals(0)) {
+            if (fieldWordCount.getOrDefault("h1", 0).equals(0)) {
                 multiplier *= 0.6;
             }
 
