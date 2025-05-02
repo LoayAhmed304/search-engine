@@ -179,7 +179,7 @@ public class QueryProcessor {
         }
 
         if (!isPhraseMatch) {
-            List<String> rankedPages = ranker.rank();
+            // List<String> rankedPages = ranker.rank();
 
             for (Map.Entry<String, List<PageReference>> entry : queryPages.entrySet()) {
                 String token = entry.getKey();
