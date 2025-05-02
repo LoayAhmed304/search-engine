@@ -42,7 +42,7 @@ public class QueryResultController {
      * 
      * @return A ResponseEntity containing a list of SearchQuery objects.
      */
-    @GetMapping("history")
+    @GetMapping("/history")
     public ResponseEntity<List<SearchQuery>> getSuggestions() {
         List<SearchQuery> suggestions = searchQueryService.suggestions();
         return ResponseEntity.ok(suggestions);
