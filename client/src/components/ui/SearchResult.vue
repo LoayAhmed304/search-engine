@@ -11,15 +11,15 @@
       </div>
     </div>
 
-    <p class="search-result__content" v-html="content"></p>
+    <p class="search-result__content" v-html="snippet"></p>
   </div>
 </template>
 
 <script setup>
 defineProps({
-  title: String,
   url: String,
-  content: String,
+  title: String,
+  snippet: String,
 })
 </script>
 
