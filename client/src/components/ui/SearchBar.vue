@@ -48,6 +48,7 @@
 <script setup>
 import { ref, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { getSearchHistory } from '@/services/searchServices'
 
 import BaseButton from './BaseButton.vue'
 
@@ -92,6 +93,8 @@ onMounted(() => {
   } else if (route.query.q) {
     searchQuery.value = route.query.q
   }
+
+  fetchSuggestions();
 })
 
 const submitSearchQuery = () => {
@@ -99,14 +102,23 @@ const submitSearchQuery = () => {
 
   if (searchQuery.value.length === 0)
     return;
-  
+
   router.push({ path: '/search', query: { q: searchQuery.value } })
 
   showSuggestions.value = false
   suggestions.value = []
 }
 
-const fetchSuggestions = async (query) => {
+const fetchSuggestions = () => {
+  getSearchHistory()
+    .then((data) => {
+      console.log('Fetched search history:', data)
+      // return data
+    })
+    .catch((error) => {
+      console.error('Error fetching search history:', error)
+      return []
+    })
   return ['temp 1', 'temp 2']
 }
 

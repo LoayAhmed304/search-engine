@@ -69,11 +69,10 @@ const prevPage = () => currentPage.value--;
 
 const mockResults = ref([])
 
-// Extract search functionality into a reusable function
 const performSearch = (searchQuery) => {
   isLoading.value = true
   currentPage.value = 0 // Reset to first page
-  fetchStartTime.value = performance.now() // Start the timer
+  fetchStartTime.value = performance.now()
   
   search(searchQuery, 0)
     .then((data) => {
@@ -139,7 +138,7 @@ const setPage = (page) => {
   max-width: 1000px;
   width: 100%;
   overflow-x: hidden;
-  align-items: flex-start; /* Add this line to align children to the left */
+  align-items: flex-start; 
 }
 
 .pagination {
