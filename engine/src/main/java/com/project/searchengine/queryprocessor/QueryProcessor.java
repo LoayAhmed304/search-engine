@@ -10,7 +10,6 @@ import com.project.searchengine.ranker.Ranker;
 import com.project.searchengine.server.model.PageReference;
 import com.project.searchengine.server.service.InvertedIndexService;
 
-
 @Component
 public class QueryProcessor {
 
@@ -26,16 +25,17 @@ public class QueryProcessor {
     @Autowired
     private PhraseMatcher phraseMatcher;
 
-
     @Autowired
     private Ranker ranker;
 
-    private final int batchSize = 2;
-    private final int threadsNum = 10;
+    private final int threadsNum = 20;
 
-    private final Map<String, String> allPagesSnippets = new ConcurrentHashMap<>();// map of page id with its snippet
-    Map<String, PageReference> pageIdToPageReference;
+    private int pageNumber = 0; // zero indexed
+    private int pageSize = 20;
+
     private Integer resultPagesNumber = 0;
+    private final Map<String, String> allPagesSnippets = Collections.synchronizedMap(new LinkedHashMap<>());
+    private List<Map<PageReference, String>> rankedPageBatches;
 
     /**
      * Retrieves the result pages for each token in the processed query
@@ -73,19 +73,21 @@ public class QueryProcessor {
      * @return A map where the key is a page reference, and the value is the snippet
      *         for that page.
      */
-    private Map<String, String> getBatchSnippets(String query, String token, List<PageReference> pages) {
+    private Map<String, String> getBatchSnippets(String query) {
+        // based on page number get map
+        Map<PageReference, String> rankedPages = rankedPageBatches.get(pageNumber);
+
         ExecutorService executorService = Executors.newFixedThreadPool(threadsNum);
 
         QueryResult queryResult = queryTokenizer.tokenizeQuery(query);
         List<Future<Map<String, String>>> futures = new ArrayList<>();
 
-        for (int start = 0; start < pages.size(); start += batchSize) {
-
-            int end = Math.min(start + batchSize, pages.size());
-            List<PageReference> batch = pages.subList(start, end);
+        for (Map.Entry<PageReference, String> entry : rankedPages.entrySet()) {
+            PageReference page = entry.getKey();
+            String token = entry.getValue();
 
             Future<Map<String, String>> future = executorService
-                    .submit(() -> snippetGenerator.getPagesSnippets(token, batch, queryResult));
+                    .submit(() -> snippetGenerator.getPagesSnippets(token, page, queryResult));
 
             futures.add(future);
         }
@@ -135,6 +137,31 @@ public class QueryProcessor {
     }
 
     /**
+     * Splits a given map into a list of smaller maps
+     *
+     * @param originalMap The original map to be split
+     * @param size        Size of each partiition
+     * @return A list of smaller maps, where each map contains at most {@code size} entries
+     */
+    public static List<Map<PageReference, String>> splitMap(Map<PageReference, String> originalMap, int size) {
+        List<Map<PageReference, String>> result = new ArrayList<>();
+        List<Map.Entry<PageReference, String>> entryList = new ArrayList<>(originalMap.entrySet());
+
+        for (int i = 0; i < entryList.size(); i += size) {
+            int end = Math.min(i + size, entryList.size());
+            Map<PageReference, String> batchMap = new LinkedHashMap<>();
+
+            for (int j = i; j < end; j++) {
+                Map.Entry<PageReference, String> entry = entryList.get(j);
+                batchMap.put(entry.getKey(), entry.getValue());
+            }
+            result.add(batchMap);
+        }
+
+        return result;
+    }
+
+    /**
      * Processes the given query by tokenizing it, retrieving pages for each token,
      * and generating snippets for the relevant pages.
      *
@@ -157,38 +184,19 @@ public class QueryProcessor {
         boolean isPhraseMatch = phraseMatcher.isPhraseMatchQuery(query);
 
         if (isPhraseMatch) {
-            // filter the pages based on the phrase match
+            // filter the pages based on the phrase match first
             queryPages = phraseMatcher.filterPhraseMatchPages(queryPages, queryResult);
-            // update results number
-
-            for (Map.Entry<String, List<PageReference>> entry : queryPages.entrySet()) {
-                String token = entry.getKey();
-                List<PageReference> tokenPages = entry.getValue();
-                System.out.println("token: " + token + " Filtered Pages: " + tokenPages.size());
-            }
-
-            // get the page snippets
-            for (Map.Entry<String, List<PageReference>> entry : queryPages.entrySet()) {
-                String token = entry.getKey();
-                List<PageReference> tokenPages = entry.getValue();
-                // get first 20 pages
-                tokenPages = tokenPages.subList(0, 20);
-                getBatchSnippets(query, token, tokenPages);
-                break;
-            }
         }
 
-        if (!isPhraseMatch) {
-            // List<String> rankedPages = ranker.rank();
+        Map<PageReference, String> rankedPages = ranker.rank(queryPages);
+        this.rankedPageBatches = splitMap(rankedPages, pageSize);
 
-            for (Map.Entry<String, List<PageReference>> entry : queryPages.entrySet()) {
-                String token = entry.getKey();
-                List<PageReference> tokenPages = entry.getValue();
-                // tokenPages = tokenPages.subList(0, 20);
-                getBatchSnippets(query, token, tokenPages);
-                break;
-            }
-        }
+        // for (int i = 0; i < rankedPageBatches.size(); i++) {
+        //     System.out.println("Batch " + (i + 1) + ":");
+        //     rankedPageBatches.get(i).forEach((key, value) -> System.out.println(key + ": " + value));
+        //     System.out.println();
+        // }
+        getBatchSnippets(query);
     }
 
     /**

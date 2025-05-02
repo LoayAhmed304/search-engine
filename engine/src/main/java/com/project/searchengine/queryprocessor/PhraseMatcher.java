@@ -136,6 +136,15 @@ public class PhraseMatcher {
         return minToken;
     }
 
+    /**
+     * Filters pages for phrase matching by going through the  token with the
+     * fewest pages to speed things up
+     *
+     * @param queryPages  A map where the key is the token, and the value is a list
+     *                    of pages containing that token
+     * @param queryResult query result data
+     * @return The new filtered query pages map to pass to ranker
+     */
     public Map<String, List<PageReference>> filterPhraseMatchPages(Map<String, List<PageReference>> queryPages,
             QueryResult queryResult) {
         // get token which has min number of pages first

@@ -62,7 +62,6 @@ public class SnippetGenerator {
                 highlightPositions.add(matchPosition);
 
                 // add them to highlight positions
-                // highlight the part after the token
                 for (int i = start; i <= end; i++) {
                     highlightPositions.add(i);
                 }
@@ -102,43 +101,42 @@ public class SnippetGenerator {
     }
 
     /**
-     * Generates snippets for the given pages based on a search token
+     * Retrieve the snippet for the given page based on a search token
      *
      * @param token       A stemmed token from the search query
-     * @param pages       A list of PageReference objects
-     * @param queryResult The result container to help generate the snippet
+     * @param page        page reference to get snippet for
+     * @param queryResult query result data 
      * @return A map of page ID to its snippet
      */
     public Map<String, String> getPagesSnippets(
             String token,
-            List<PageReference> pages,
+            PageReference page,
             QueryResult queryResult) {
 
         Map<String, String> pageSnippet = new HashMap<>();
 
-        for (PageReference page : pages) {
-            List<Integer> positions = page.getWordPositions();
-            String bodyContent = pageReferenceService.getPageBodyContent(page);
-            String[] bodyTokens = tokenizer.tokenize(bodyContent.toLowerCase());
-            String pageId = page.getPageId();
+        List<Integer> positions = page.getWordPositions();
+        String bodyContent = pageReferenceService.getPageBodyContent(page);
+        String[] bodyTokens = tokenizer.tokenize(bodyContent.toLowerCase());
+        String pageId = page.getPageId();
 
-            // get one snippet only for each page
-            for (Integer pos : positions) {
-                if (pos < 0 || pos >= bodyTokens.length) {
-                    continue;
-                }
-
-                // exclude header positions for now
-                String stemmedToken = stemmer.stem(bodyTokens[pos]);
-                if (!stemmedToken.equals(token)) {
-                    continue;
-                }
-
-                String snippet = generateSnippet(token, bodyTokens, pos, queryResult);
-                pageSnippet.put(pageId, snippet);
-                break;
+        // get one snippet only for each page
+        for (Integer pos : positions) {
+            if (pos < 0 || pos >= bodyTokens.length) {
+                continue;
             }
+
+            // exclude header positions for now
+            String stemmedToken = stemmer.stem(bodyTokens[pos]);
+            if (!stemmedToken.equals(token)) {
+                continue;
+            }
+
+            String snippet = generateSnippet(token, bodyTokens, pos, queryResult);
+            pageSnippet.put(pageId, snippet);
+            break;
         }
+
         return pageSnippet;
     }
 }
