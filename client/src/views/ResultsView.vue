@@ -1,7 +1,8 @@
 <template>
   <TheNavBar></TheNavBar>
   <div class="results-wrapper">
-    <div class="results">
+    <BaseSpinner v-if="isLoading" text="Exploring results..." />
+    <div v-else class="results">
       <SearchResult
         v-for="(result, index) in paginatedResults"
         :key="index"
@@ -9,6 +10,9 @@
         :url="result.url"
         :snippet="result.snippet"
       />
+      <p v-if="paginatedResults.length === 0 && !isLoading" class="no-results">
+        No results found for "{{ route.query.q }}"
+      </p>
     </div>
   </div>
 
@@ -45,12 +49,14 @@ import { useRoute } from 'vue-router'
 import SearchBar from '@/components/ui/SearchBar.vue'
 import SearchResult from '@/components/ui/SearchResult.vue'
 import TheNavBar from '@/components/layout/TheNavBar.vue'
+import BaseSpinner from '@/components/ui/BaseSpinner.vue'
 import { search } from '@/services/searchServices.js'
 
 const route = useRoute()
 const currentPage = ref(0)
 const maxResultsPerPage = 20
 const results = ref([])
+const isLoading = ref(true)
 
 const nextPage = () => currentPage.value++;
 const prevPage = () => currentPage.value--;
@@ -60,6 +66,8 @@ const mockResults = ref([])
 onMounted(() => {
   // Get search query from URL
   const searchQuery = route.query.q || ''
+  
+  isLoading.value = true
   
   // Fetch results from the API using the actual query
   search(searchQuery, 0)
@@ -71,6 +79,9 @@ onMounted(() => {
     })
     .catch((error) => {
       console.error('Error fetching search results:', error)
+    })
+    .finally(() => {
+      isLoading.value = false
     })
 })
 
@@ -147,5 +158,12 @@ const setPage = (page) => {
 .pagination__page--active {
   font-weight: bold;
   color: var(--accent-color); 
+}
+
+.no-results {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+  font-style: italic;
 }
 </style>
