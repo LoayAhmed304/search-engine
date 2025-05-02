@@ -25,7 +25,8 @@ public class SnippetGenerator {
     @Autowired
     private PageRepository pageRepository;
 
-    private String generateSnippet(String[] bodyTokens, int matchPosition, int snippetSize) {
+    private String generateSnippet(String[] bodyTokens, int matchPosition, int snippetSize, 
+                                  boolean isPhraseMatch, List<String> queryWords) {
         int halfSnippet = snippetSize >>> 2;
 
         int startIndex = Math.max(0, matchPosition - halfSnippet);
@@ -34,7 +35,51 @@ public class SnippetGenerator {
         StringBuilder snippet = new StringBuilder();
 
         String openningPunctuation = "[\\(\\[\\{]";
-        String closingPunctuation = "[.,!?;:’\"'/)\\]\\\\]";
+        String closingPunctuation = "[.,!?;:'\"'/)\\]\\\\]";
+        
+        // Calculate the range of tokens to highlight if it's a phrase match
+        Set<Integer> highlightPositions = new HashSet<>();
+        highlightPositions.add(matchPosition); // Always highlight the main match position
+        
+        if (isPhraseMatch && queryWords != null && !queryWords.isEmpty()) {
+            // For phrase matching, we need to highlight multiple consecutive words
+            int phraseLength = queryWords.size();
+            // Check if we have a forward phrase match
+            if (matchPosition + phraseLength <= bodyTokens.length) {
+                boolean isForwardMatch = true;
+                for (int i = 0; i < phraseLength; i++) {
+                    String stemmedToken = stemmer.stem(bodyTokens[matchPosition + i].toLowerCase());
+                    String stemmedQuery = stemmer.stem(queryWords.get(i).toLowerCase());
+                    if (!stemmedToken.equals(stemmedQuery)) {
+                        isForwardMatch = false;
+                        break;
+                    }
+                }
+                if (isForwardMatch) {
+                    for (int i = 0; i < phraseLength; i++) {
+                        highlightPositions.add(matchPosition + i);
+                    }
+                }
+            }
+            
+            // Check if we have a backward phrase match (if forward didn't match)
+            if (highlightPositions.size() <= 1 && matchPosition - phraseLength + 1 >= 0) {
+                boolean isBackwardMatch = true;
+                for (int i = 0; i < phraseLength; i++) {
+                    String stemmedToken = stemmer.stem(bodyTokens[matchPosition - phraseLength + 1 + i].toLowerCase());
+                    String stemmedQuery = stemmer.stem(queryWords.get(i).toLowerCase());
+                    if (!stemmedToken.equals(stemmedQuery)) {
+                        isBackwardMatch = false;
+                        break;
+                    }
+                }
+                if (isBackwardMatch) {
+                    for (int i = 0; i < phraseLength; i++) {
+                        highlightPositions.add(matchPosition - phraseLength + 1 + i);
+                    }
+                }
+            }
+        }
 
         for (int i = startIndex; i < endIndex; i++) {
             String token = bodyTokens[i];
@@ -43,10 +88,18 @@ public class SnippetGenerator {
             boolean isOpeningPunctuation = token.matches(openningPunctuation);
             boolean isClosingNextPunctuation = (nextToken != null) && nextToken.matches(closingPunctuation);
 
-            if (isOpeningPunctuation || isClosingNextPunctuation) {
-                snippet.append(token);
+            // Check if current token should be highlighted
+            boolean shouldHighlight = highlightPositions.contains(i);
+            
+            if (shouldHighlight) {
+                snippet.append("<strong>").append(token).append("</strong>");
             } else {
-                snippet.append(token).append(" ");
+                snippet.append(token);
+            }
+            
+            // Add spacing as needed
+            if (!isOpeningPunctuation && !isClosingNextPunctuation) {
+                snippet.append(" ");
             }
         }
 
@@ -107,7 +160,7 @@ public class SnippetGenerator {
                 }
 
                 if (!isPhraseMatch || isPhraseMatch && isMatchFound) {
-                    String snippet = generateSnippet(bodyTokens, pos, snippetSize);
+                    String snippet = generateSnippet(bodyTokens, pos, snippetSize, isPhraseMatch, originalWords);
                     pageSnippet.put(page, snippet);
                     break;
                 }

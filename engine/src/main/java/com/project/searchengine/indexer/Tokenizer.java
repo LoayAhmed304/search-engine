@@ -1,6 +1,5 @@
 package com.project.searchengine.indexer;
 
-import com.project.searchengine.ranker.RankCalculator;
 import com.project.searchengine.server.model.InvertedIndex;
 import com.project.searchengine.server.model.PageReference;
 import java.util.*;
