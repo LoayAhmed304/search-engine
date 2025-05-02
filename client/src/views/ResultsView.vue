@@ -3,6 +3,10 @@
   <div class="results-wrapper">
     <BaseSpinner v-if="isLoading" text="Exploring results..." />
     <div v-else class="results">
+      <div v-if="fetchTime !== null" class="fetch-time-counter">
+        Exploring took: {{ fetchTime.toFixed(2) }} seconds
+      </div>
+      
       <SearchResult
         v-for="(result, index) in paginatedResults"
         :key="index"
@@ -57,6 +61,8 @@ const currentPage = ref(0)
 const maxResultsPerPage = 20
 const results = ref([])
 const isLoading = ref(true)
+const fetchTime = ref(null)
+const fetchStartTime = ref(null)
 
 const nextPage = () => currentPage.value++;
 const prevPage = () => currentPage.value--;
@@ -68,6 +74,7 @@ onMounted(() => {
   const searchQuery = route.query.q || ''
   
   isLoading.value = true
+  fetchStartTime.value = performance.now() // Start the timer
   
   // Fetch results from the API using the actual query
   search(searchQuery, 0)
@@ -75,7 +82,13 @@ onMounted(() => {
       console.log(data)
       results.value = data
       mockResults.value = [...data]
+      
+      // Calculate fetch time in seconds
+      const endTime = performance.now()
+      fetchTime.value = (endTime - fetchStartTime.value) / 1000
+      
       console.log('mockResults', mockResults.value)
+      console.log('Fetch time:', fetchTime.value, 'seconds')
     })
     .catch((error) => {
       console.error('Error fetching search results:', error)
@@ -115,7 +128,9 @@ const setPage = (page) => {
   display: flex;
   flex-direction: column;
   max-width: 1000px;
+  width: 100%;
   overflow-x: hidden;
+  align-items: flex-start; /* Add this line to align children to the left */
 }
 
 .pagination {
@@ -165,5 +180,20 @@ const setPage = (page) => {
   padding: 2rem;
   color: #666;
   font-style: italic;
+  align-self: center; 
+  width: 100%; 
+}
+
+.fetch-time-counter {
+  background-color: #f8f9fa;
+  padding: 8px 16px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  text-align: left;
+  color: #555;
+  font-size: 0.9rem;
+  border-left: 3px solid var(--accent-color);
+  align-self: flex-start; 
+  width: 100%; 
 }
 </style>
