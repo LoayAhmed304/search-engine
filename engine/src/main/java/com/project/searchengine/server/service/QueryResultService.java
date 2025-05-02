@@ -3,7 +3,6 @@ package com.project.searchengine.server.service;
 import com.project.searchengine.queryprocessor.QueryProcessor;
 import com.project.searchengine.server.dto.QueryResult;
 import com.project.searchengine.server.model.Page;
-import com.project.searchengine.server.model.PageReference;
 import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

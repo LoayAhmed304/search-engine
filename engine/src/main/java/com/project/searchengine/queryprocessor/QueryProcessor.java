@@ -8,10 +8,8 @@ import org.springframework.stereotype.Component;
 
 import com.project.searchengine.ranker.Ranker;
 import com.project.searchengine.server.model.PageReference;
-import com.project.searchengine.server.repository.PageRepository;
 import com.project.searchengine.server.service.InvertedIndexService;
 
-import opennlp.tools.tokenize.SimpleTokenizer;
 
 @Component
 public class QueryProcessor {
@@ -35,8 +33,8 @@ public class QueryProcessor {
     private final int batchSize = 2;
     private final int threadsNum = 10;
 
-    Map<String, String[]> pageTokensCache = new HashMap<>(); // map of pages ids with its body tokens
     private Map<String, String> allPagesSnippets = new HashMap<>(); // map of page id with its snippet
+    private Integer resultPagesNumber = 0;
 
     /**
      * Retrieves the result pages for each token in the processed query
@@ -51,8 +49,18 @@ public class QueryProcessor {
         for (String token : tokenizedQuery) {
             List<PageReference> tokenPages = invertedIndexService.getTokenPages(token);
             queryPages.put(token, tokenPages);
+            resultPagesNumber += tokenPages.size();
         }
         return queryPages;
+    }
+
+    /**
+     * Retrieves the number of result pages for the processed query
+     *
+     * @return The number of result pages.
+     */
+    public Integer getResultPagesNumber() {
+        return resultPagesNumber;
     }
 
     /**
