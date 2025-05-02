@@ -1,11 +1,25 @@
 package com.project.searchengine.queryprocessor;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import com.project.searchengine.server.model.PageReference;
+import com.project.searchengine.server.service.PageReferenceService;
+
+import opennlp.tools.tokenize.SimpleTokenizer;
 
 @Component
 public class PhraseMatcher {
+
+    @Autowired
+    private PageReferenceService pageReferenceService;
+    private final SimpleTokenizer tokenizer = SimpleTokenizer.INSTANCE;
+
     /**
      * @param query
      * @return whether it is a phrase matching query or not
@@ -98,5 +112,60 @@ public class PhraseMatcher {
         }
 
         return isMatchFound;
+    }
+
+    /**
+     * Finds the token with the minimum number of associated pages
+     *
+     * @param queryPages A map where the key is the token, and the value is a list
+     *                   of pages containing that token
+     * @return The token with the fewest associated pages
+     */
+    private String getMinPagesToken(Map<String, List<PageReference>> queryPages) {
+        String minToken = "";
+        int minPagesNumber = Integer.MAX_VALUE;
+
+        for (String token : queryPages.keySet()) {
+            List<PageReference> pages = queryPages.get(token);
+            if (pages.size() < minPagesNumber) {
+                minToken = token;
+                minPagesNumber = pages.size();
+            }
+        }
+
+        return minToken;
+    }
+
+    public Map<String, List<PageReference>> filterPhraseMatchPages(Map<String, List<PageReference>> queryPages,
+            QueryResult queryResult) {
+        // get token which has min number of pages first
+        String minPagesToken = getMinPagesToken(queryPages);
+        List<PageReference> minPages = queryPages.get(minPagesToken);
+
+        // filter phrase searching based on it
+        Map<String, List<PageReference>> filteredQueryPages = new HashMap<>();
+        List<PageReference> filteredPagesTokn = new ArrayList<>();
+        List<String> originalWords = queryResult.getOriginalWords();
+
+        for (PageReference page : minPages) {
+            List<Integer> positions = page.getWordPositions();
+
+            String bodyContent = pageReferenceService.getPageBodyContent(page);
+            String[] bodyTokens = tokenizer.tokenize(bodyContent.toLowerCase());
+
+            for (Integer pos : positions) {
+                boolean isMatchFound = isPhraseMatchFound(bodyTokens, originalWords, minPagesToken, pos);
+
+                // if one match is found, add the page to the filtered list
+                if (isMatchFound) {
+                    filteredPagesTokn.add(page);
+                    // pageTokensCache.put(page.getPageId(), bodyTokens);
+                    break;
+                }
+            }
+        }
+
+        filteredQueryPages.put(minPagesToken, filteredPagesTokn);
+        return filteredQueryPages;
     }
 }
