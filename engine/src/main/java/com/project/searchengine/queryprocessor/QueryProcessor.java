@@ -7,11 +7,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.project.searchengine.server.model.PageReference;
-import com.project.searchengine.server.service.QueryService;
+import com.project.searchengine.server.service.InvertedIndexService;
 
 @Component
 public class QueryProcessor {
-    private final QueryService queryService;
+
+    @Autowired
+    private InvertedIndexService invertedIndexService;
 
     @Autowired
     private QueryTokenizer queryTokenizer;
@@ -24,10 +26,7 @@ public class QueryProcessor {
 
     private final int batchSize = 2;
     private final int threadsNum = 20;
-
-    public QueryProcessor(QueryService queryService) {
-        this.queryService = queryService;
-    }
+    private Map<PageReference, String> allPagesSnippets = new HashMap<>();
 
     /**
      * Retrieves the result pages for each token in the processed query
@@ -40,7 +39,7 @@ public class QueryProcessor {
         Map<String, List<PageReference>> queryPages = new HashMap<>();
 
         for (String token : tokenizedQuery) {
-            List<PageReference> tokenPages = queryService.getTokenPages(token);
+            List<PageReference> tokenPages = invertedIndexService.getTokenPages(token);
             queryPages.put(token, tokenPages);
         }
         return queryPages;
@@ -113,12 +112,10 @@ public class QueryProcessor {
             futures.add(future);
         }
 
-        Map<PageReference, String> allSnippets = new HashMap<>();
-
         for (Future<Map<PageReference, String>> future : futures) {
             try {
                 Map<PageReference, String> batchSnippets = future.get();
-                allSnippets.putAll(batchSnippets);
+                allPagesSnippets.putAll(batchSnippets);
             } catch (Exception e) {
                 System.err.println("Error in processing token page: " + e.getMessage());
             }
@@ -135,7 +132,7 @@ public class QueryProcessor {
         }
 
         // displaySnippets(allSnippets);
-        return allSnippets;
+        return allPagesSnippets;
     }
 
     /**
@@ -177,5 +174,17 @@ public class QueryProcessor {
                 break;
             }
         }
+    }
+
+    /**
+     * Returns all the snippets generated for the pages.
+     *
+     * @return A map where the key is a page reference, and the value is the snippet
+     *         for that page.
+     */
+    public Map<PageReference, String> getAllPagesSnippets(String query) {
+        allPagesSnippets.clear(); 
+        process(query);
+        return allPagesSnippets;
     }
 }

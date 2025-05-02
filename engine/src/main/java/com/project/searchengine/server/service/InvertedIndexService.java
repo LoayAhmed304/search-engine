@@ -2,7 +2,6 @@ package com.project.searchengine.server.service;
 
 import com.mongodb.bulk.BulkWriteResult;
 import com.project.searchengine.server.model.*;
-import com.project.searchengine.server.model.InvertedIndex;
 import com.project.searchengine.server.repository.InvertedIndexRepository;
 import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -82,6 +81,21 @@ public class InvertedIndexService {
                 System.err.println("Error saving tokens: " + e.getMessage());
             }
             indexBuffer.clear();
+        }
+    }
+
+    /**
+     * Retrieves the pages associated with a given token.
+     *
+     * @param token The token to search for.
+     * @return A list of PageReference objects associated with the token.
+     */
+    public List<PageReference> getTokenPages(String token) {
+        InvertedIndex invertedIndex = invertedIndexRepository.findByWord(token);
+        if (invertedIndex != null) {
+            return invertedIndex.getPages();
+        } else {
+            return Collections.emptyList();
         }
     }
 }
