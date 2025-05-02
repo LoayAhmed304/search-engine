@@ -96,6 +96,10 @@ onMounted(() => {
 
 const submitSearchQuery = () => {
   console.log('search query entered: ' + searchQuery.value)
+
+  if (searchQuery.value.length === 0)
+    return;
+  
   router.push({ path: '/search', query: { q: searchQuery.value } })
 
   showSuggestions.value = false

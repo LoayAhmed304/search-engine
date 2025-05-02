@@ -40,12 +40,14 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 
 import SearchBar from '@/components/ui/SearchBar.vue'
 import SearchResult from '@/components/ui/SearchResult.vue'
 import TheNavBar from '@/components/layout/TheNavBar.vue'
 import { search } from '@/services/searchServices.js'
 
+const route = useRoute()
 const currentPage = ref(0)
 const maxResultsPerPage = 20
 const results = ref([])
@@ -56,8 +58,11 @@ const prevPage = () => currentPage.value--;
 const mockResults = ref([])
 
 onMounted(() => {
-  // Fetch results from the API or perform any other setup
-  search('programming', 0)
+  // Get search query from URL
+  const searchQuery = route.query.q || ''
+  
+  // Fetch results from the API using the actual query
+  search(searchQuery, 0)
     .then((data) => {
       console.log(data)
       results.value = data
