@@ -47,15 +47,20 @@
 
 <script setup>
 import { ref, watch, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 
 import BaseButton from './BaseButton.vue'
 
-defineProps({
+const props = defineProps({
   isIconShown: Boolean,
+  defaultQuery: {
+    type: String,
+    default: ''
+  }
 })
 
 const router = useRouter()
+const route = useRoute()
 
 const searchQuery = ref('')
 const suggestions = ref([])
@@ -76,9 +81,17 @@ const changeTheme = (theme) => {
 }
 
 onMounted(() => {
+  // Set theme
   const savedTheme = localStorage.getItem('theme')
   if (savedTheme) selectedTheme.value = savedTheme
   changeTheme(selectedTheme.value)
+  
+  // Set initial search query from props or URL
+  if (props.defaultQuery) {
+    searchQuery.value = props.defaultQuery
+  } else if (route.query.q) {
+    searchQuery.value = route.query.q
+  }
 })
 
 const submitSearchQuery = () => {
