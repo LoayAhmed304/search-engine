@@ -18,14 +18,17 @@ public class Ranker {
     }
 
     /**
-     * The main function, which handles the ranking for all the given results
+     * * This function takes a map of token to page references
+     * and returns an ordered map of page references to their corresponding token (the first matched token)
      *
-     * @return ranked list of the results pages IDs [String, ...]
+     * @param queryResults a map of token to page references
+     * @return a map of page references to their corresponding token (the first matched token)
      */
-    public List<String> rank(Map<String, List<PageReference>> queryResults) {
+    public Map<PageReference, String> rank(Map<String, List<PageReference>> queryResults) {
         Map<String, Double> scores = computeScores(queryResults);
+        List<String> sortedPageIds = sortedPages(scores); // get the sorted pages ids according to their values in scores Map
 
-        return sortedPages(scores); // return sorted pages ids (strings) according to their values in scores Map
+        return getOrderedPageReferences(queryResults, sortedPageIds);
     }
 
     /**
@@ -63,7 +66,21 @@ public class Ranker {
 
             double tf = pr.getTf();
             double score = RankCalculator.calculateScore(tf, idf, pageRank);
+            Map<String, Integer> fieldWordCount = pr.getFieldWordCount();
+            double multiplier = 1.0;
 
+            multiplier += 1.0 * Math.log(1.0 + fieldWordCount.getOrDefault("title", 0));
+            multiplier += 0.5 * Math.log(1.0 + fieldWordCount.getOrDefault("h1", 0));
+            multiplier += 0.25 * Math.log(1.0 + fieldWordCount.getOrDefault("h2", 0));
+
+            // penalize pages without h1
+            if (fieldWordCount.getOrDefault("h1", 0).equals(0)) {
+                multiplier *= 0.6;
+            }
+
+            // cap the multiplier at 10x boost
+            multiplier = Math.min(multiplier, 10.0);
+            score *= multiplier;
             scores.merge(pageId, score, Double::sum);
         }
     }
@@ -89,5 +106,41 @@ public class Ranker {
         }
 
         return pageReferenceService.getPagesRanks(new ArrayList<>(pageIds));
+    }
+
+    /**
+     * * This function takes a map of token to page references and a list of ordered page IDs,
+     * @param tokenToPagesMap a map of token to page references
+     * @param orderedPageIds  a list of ordered page IDs
+     * @return a map of page references to their corresponding token (the first matched token),
+     *         where the page references are ordered according to the orderedPageIds list.
+     */
+
+    public static Map<PageReference, String> getOrderedPageReferences(
+        Map<String, List<PageReference>> tokenToPagesMap,
+        List<String> orderedPageIds
+    ) {
+        Map<PageReference, String> result = new LinkedHashMap<>();
+
+        for (String pageId : orderedPageIds) {
+            boolean found = false;
+            for (Map.Entry<String, List<PageReference>> entry : tokenToPagesMap.entrySet()) {
+                String token = entry.getKey();
+                List<PageReference> pageRefs = entry.getValue();
+
+                for (PageReference pageRef : pageRefs) {
+                    if (pageRef.getPageId().equals(pageId)) {
+                        result.put(pageRef, token);
+                        found = true;
+                        break;
+                    }
+                }
+                if (found) {
+                    break;
+                }
+            }
+        }
+
+        return result;
     }
 }
