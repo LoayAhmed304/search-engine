@@ -15,6 +15,8 @@ public class Page {
     private int pageTokenCount;
     private double rank;
 
+    public Page() {}
+
     public Page(String id, String url, String title, String content, int pageTokenCount) {
         this.id = id;
         this.url = url;
