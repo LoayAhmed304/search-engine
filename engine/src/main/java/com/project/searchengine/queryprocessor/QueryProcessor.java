@@ -8,6 +8,7 @@ import org.jsoup.nodes.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.project.searchengine.ranker.Ranker;
 import com.project.searchengine.server.model.Page;
 import com.project.searchengine.server.model.PageReference;
 import com.project.searchengine.server.repository.PageRepository;
@@ -32,6 +33,9 @@ public class QueryProcessor {
 
     @Autowired
     private PageRepository pageRepository;
+
+    // @Autowired
+    // private Ranker ranker;
 
     private final SimpleTokenizer tokenizer = SimpleTokenizer.INSTANCE;
 

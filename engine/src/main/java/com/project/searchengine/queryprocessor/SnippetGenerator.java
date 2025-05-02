@@ -12,19 +12,24 @@ import opennlp.tools.tokenize.SimpleTokenizer;
 
 @Component
 public class SnippetGenerator {
-    private static Integer snippetSize = 100;
+    private static Integer halfSnippetSize = 50;
     private final SimpleTokenizer tokenizer = SimpleTokenizer.INSTANCE;
     private final PorterStemmer stemmer = new PorterStemmer();
 
     @Autowired
     private PageReferenceService pageReferenceService;
 
-    private String generateSnippet(String[] bodyTokens, int matchPosition, int snippetSize,
-            boolean isPhraseMatch, List<String> queryWords) {
-        int halfSnippet = snippetSize >>> 2;
+    private String generateSnippet(String[] bodyTokens,
+            int matchPosition,
+            QueryResult queryResult) {
 
-        int startIndex = Math.max(0, matchPosition - halfSnippet);
-        int endIndex = Math.min(bodyTokens.length, matchPosition + halfSnippet);
+        boolean isPhraseMatch = queryResult.getIsPhraseMatch();
+        List<String> queryWords = queryResult.getOriginalWords();
+        List<String> tokenizedQuery = queryResult.getTokenizedQuery();
+
+        // Calculate the range of tokens to include in the snippet
+        int startIndex = Math.max(0, matchPosition - halfSnippetSize);
+        int endIndex = Math.min(bodyTokens.length, matchPosition + halfSnippetSize);
 
         StringBuilder snippet = new StringBuilder();
 
@@ -77,6 +82,8 @@ public class SnippetGenerator {
 
         for (int i = startIndex; i < endIndex; i++) {
             String token = bodyTokens[i];
+            String stemmedToken = stemmer.stem(token.toLowerCase());
+
             String nextToken = (i + 1 < bodyTokens.length) ? bodyTokens[i + 1] : null;
 
             boolean isOpeningPunctuation = token.matches(openningPunctuation);
@@ -85,7 +92,7 @@ public class SnippetGenerator {
             // Check if current token should be highlighted
             boolean shouldHighlight = highlightPositions.contains(i);
 
-            if (shouldHighlight) {
+            if (shouldHighlight || tokenizedQuery.contains(stemmedToken)) {
                 snippet.append("<strong>").append(token).append("</strong>");
             } else {
                 snippet.append(token);
@@ -111,9 +118,6 @@ public class SnippetGenerator {
 
         Map<PageReference, String> pageSnippet = new HashMap<>();
 
-        boolean isPhraseMatch = queryResult.getIsPhraseMatch();
-        List<String> originalWords = queryResult.getOriginalWords();
-
         for (PageReference page : pages) {
             List<Integer> positions = page.getWordPositions();
             String bodyContent = pageReferenceService.getPageBodyContent(page);
@@ -131,7 +135,7 @@ public class SnippetGenerator {
                     continue;
                 }
 
-                String snippet = generateSnippet(bodyTokens, pos, snippetSize, isPhraseMatch, originalWords);
+                String snippet = generateSnippet(bodyTokens, pos, queryResult);
                 pageSnippet.put(page, snippet);
                 break;
             }
