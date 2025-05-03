@@ -50,14 +50,14 @@ public class Ranker {
     /**
      * Processes a single token's score
      *
-     * @param token: the token (word) desired to process
-     * @param scores: Map object by reference, to update the total score of every page (<pageId, score>)
+     * @param token:  the token (word) desired to process
+     * @param scores: Map object by reference, to update the total score of every
+     *                page (<pageId, score>)
      */
     void processToken(
-        List<PageReference> prs,
-        Map<String, Double> scores,
-        Map<String, Double> pagesRanks
-    ) {
+            List<PageReference> prs,
+            Map<String, Double> scores,
+            Map<String, Double> pagesRanks) {
         double idf = RankCalculator.getIDF(totalDocuments, prs.size());
         for (PageReference pr : prs) {
             String pageId = pr.getPageId();
@@ -86,7 +86,8 @@ public class Ranker {
     }
 
     /**
-     * Creates the sorted pages IDs according to their score in the scores Map <page ID, score>
+     * Creates the sorted pages IDs according to their score in the scores Map <page
+     * ID, score>
      *
      * @param scores: Map of score corresponding to each page
      * @return sorted array of page IDs ([String, ...])

@@ -3,7 +3,6 @@ package com.project.searchengine.server.service;
 import com.project.searchengine.queryprocessor.QueryProcessor;
 import com.project.searchengine.server.dto.QueryResult;
 import com.project.searchengine.server.model.Page;
-import com.project.searchengine.server.model.PageReference;
 import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -27,12 +26,12 @@ public class QueryResultService {
         List<QueryResult> results = new ArrayList<>();
 
         // Get <pageReference, snippet> pairs from query processor
-        Map<PageReference, String> snippets = queryProcessor.getAllPagesSnippets(query);
+        Map<String, String> snippets = queryProcessor.getAllPagesSnippets(query);
 
         // Transform to QueryResult objects
-        for (Map.Entry<PageReference, String> entry : snippets.entrySet()) {
-            PageReference pageRef = entry.getKey();
-            Page page = pageService.getPage(pageRef.getPageId());
+        for (Map.Entry<String, String> entry : snippets.entrySet()) {
+            String pageId = entry.getKey();
+            Page page = pageService.getPage(pageId);
             String snippet = entry.getValue();
 
             results.add(new QueryResult(page.getUrl(), page.getTitle(), snippet));

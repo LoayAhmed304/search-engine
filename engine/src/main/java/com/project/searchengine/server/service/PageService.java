@@ -4,6 +4,7 @@ import com.mongodb.bulk.*;
 import com.project.searchengine.server.model.Page;
 import com.project.searchengine.server.repository.PageRepository;
 import java.util.*;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.*;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -57,11 +58,14 @@ public class PageService {
 
     /**
      * Bulk update the ranks of pages in the database.
-     *  This function uses MongoDB's bulk operations for efficiency.
-     * @param ranks: A map where the key is the page URL and the value is the rank to be updated/set.
+     * This function uses MongoDB's bulk operations for efficiency.
+     * 
+     * @param ranks: A map where the key is the page URL and the value is the rank
+     *               to be updated/set.
      */
     public void setRanks(Map<String, Double> ranks) {
-        if (ranks == null || ranks.isEmpty()) return;
+        if (ranks == null || ranks.isEmpty())
+            return;
 
         BulkOperations bulkOps = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED, "pages");
 
@@ -73,12 +77,11 @@ public class PageService {
 
         BulkWriteResult result = bulkOps.execute();
         System.out.println(
-            "PageRank bulk update completed: " +
-            result.getModifiedCount() +
-            " modified, " +
-            result.getUpserts().size() +
-            " upserted"
-        );
+                "PageRank bulk update completed: " +
+                        result.getModifiedCount() +
+                        " modified, " +
+                        result.getUpserts().size() +
+                        " upserted");
     }
 
     /**
@@ -88,9 +91,8 @@ public class PageService {
      */
     public void savePagesInBulk(List<Page> pages) {
         BulkOperations bulkOps = mongoTemplate.bulkOps(
-            BulkOperations.BulkMode.UNORDERED,
-            Page.class
-        );
+                BulkOperations.BulkMode.UNORDERED,
+                Page.class);
 
         // Insert pages
         for (Page page : pages) {

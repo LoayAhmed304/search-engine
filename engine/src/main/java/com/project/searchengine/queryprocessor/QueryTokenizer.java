@@ -41,7 +41,7 @@ public class QueryTokenizer {
      * @param query: the search query itself
      * @return List of cleaned tokens ready for search
      */
-    public QueryTokenizationResult tokenizeQuery(String query) {
+    public QueryResult tokenizeQuery(String query) {
         List<String> tokenizedQuery = new ArrayList<>();
         Map<String, String> tokenizedToOriginal = new HashMap<>();
         
@@ -74,6 +74,6 @@ public class QueryTokenizer {
             }
         }
 
-        return new QueryTokenizationResult(tokenizedQuery, tokenizedToOriginal, originalWords, isPhraseMatch);
+        return new QueryResult(tokenizedQuery, tokenizedToOriginal, originalWords, isPhraseMatch);
     }
 }

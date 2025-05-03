@@ -3,13 +3,13 @@ package com.project.searchengine.queryprocessor;
 import java.util.List;
 import java.util.Map;
 
-public class QueryTokenizationResult {
+public class QueryResult {
     private List<String> tokenizedQuery;
     private Map<String, String> tokenizedToOriginal;
     private List<String> originalWords;
     private boolean isPhraseMatch;
 
-    public QueryTokenizationResult(List<String> processedTokens,
+    public QueryResult(List<String> processedTokens,
             Map<String, String> tokenizedToOriginalWord,
             List<String> originalWords,
             boolean isPhraseMatch) {

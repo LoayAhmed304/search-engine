@@ -1,7 +1,7 @@
 package com.project.searchengine.runner;
 
 import com.project.searchengine.queryprocessor.QueryProcessor;
-import com.project.searchengine.queryprocessor.QueryTokenizationResult;
+import com.project.searchengine.queryprocessor.QueryResult;
 import com.project.searchengine.queryprocessor.QueryTokenizer;
 import com.project.searchengine.ranker.Ranker;
 import com.project.searchengine.server.model.Page;
@@ -37,7 +37,7 @@ public class RankerRunner implements CommandLineRunner {
             }
             Long totalStartTime = System.currentTimeMillis();
             // 1) Tokenize query
-            QueryTokenizationResult tokenizationResult = queryTokenizer.tokenizeQuery(query);
+            QueryResult tokenizationResult = queryTokenizer.tokenizeQuery(query);
             List<String> tokenizedQuery = tokenizationResult.getTokenizedQuery();
             System.out.println("Tokenized query: " + tokenizedQuery);
 
