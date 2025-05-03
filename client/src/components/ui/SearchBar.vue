@@ -2,7 +2,7 @@
   <div class="container">
     <div class="search-bar">
       <div class="search-bar__form-wrapper">
-        <img v-if="isIconShown" :src="iconSource" alt="icon" class="search-bar__dora-icon" />
+        <img v-if="isIconShown" :src="iconSource" alt="icon" class="search-bar__dora-icon" @click="goHome()" />
         <form @submit.prevent="submitSearchQuery" class="search-bar__form">
           <div class="search-bar__input-group">
             <font-awesome-icon
@@ -97,6 +97,10 @@ onMounted(() => {
 
   fetchSuggestions();
 })
+
+const goHome = () => {
+  router.push({ path: '/' })
+}
 
 const submitSearchQuery = () => {
   console.log('search query entered: ' + searchQuery.value)
@@ -285,6 +289,13 @@ base-button {
   width: 60px;
   height: auto;
   object-fit: contain;
+  cursor: pointer;
+}
+
+.search-bar__dora-icon:hover {
+  cursor: pointer;
+  transform: scale(1.5);
+  transition: transform 0.2s;
 }
 
 @media (max-width: 650px) {
