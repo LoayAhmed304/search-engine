@@ -35,7 +35,7 @@
             'search-bar__suggestion': true,
             'search-bar__suggestion--active': index === highlightedQueryIndex,
           }"
-          @click="highlightedQueryIndex = index"
+          @click="selectSuggestion(index)"
         >
           <font-awesome-icon icon="fa-solid fa-magnifying-glass" class="search-bar__search-icon" />
           <span class="search-bar__suggestion-text">{{ suggestion }}</span>
@@ -64,7 +64,8 @@ const router = useRouter()
 const route = useRoute()
 
 const searchQuery = ref('')
-const suggestions = ref([])
+const allSuggestions = ref([]) 
+const suggestions = ref([]) // Store filtered suggestions based on user input
 const showSuggestions = ref(false)
 const highlightedQueryIndex = ref(-1)
 
@@ -112,14 +113,12 @@ const submitSearchQuery = () => {
 const fetchSuggestions = () => {
   getSearchHistory()
     .then((data) => {
-      console.log('Fetched search history:', data)
-      // return data
+      allSuggestions.value = data;
+      console.log('Fetched search history:', allSuggestions.value);
     })
     .catch((error) => {
-      console.error('Error fetching search history:', error)
-      return []
+      console.error('Error fetching search history:', error);
     })
-  return ['temp 1', 'temp 2']
 }
 
 const handleKeyNavigation = (event) => {
@@ -131,30 +130,46 @@ const handleKeyNavigation = (event) => {
     highlightedQueryIndex.value++
   } else if (event.key === 'ArrowUp' && highlightedQueryIndex.value > -1) {
     highlightedQueryIndex.value--
+  } else if (event.key === 'Enter' && highlightedQueryIndex.value >= 0) {
+    // Select the highlighted suggestion on Enter
+    searchQuery.value = suggestions.value[highlightedQueryIndex.value]
+    submitSearchQuery()
+    return
   } else {
     return
   }
-  const selectedQuery = suggestions.value[highlightedQueryIndex.value]
-
-  if (selectedQuery) {
-    searchQuery.value = selectedQuery
+  
+  // Update search query to the highlighted suggestion
+  if (highlightedQueryIndex.value >= 0) {
+    const selectedQuery = suggestions.value[highlightedQueryIndex.value]
+    if (selectedQuery) {
+      searchQuery.value = selectedQuery
+    }
   }
 }
 
-const onQueryChange = async () => {
-  const query = searchQuery.value.trim()
-
+const onQueryChange = () => {
+  const query = searchQuery.value.trim().toLowerCase()
+  highlightedQueryIndex.value = -1 // Reset highlight when query changes
+  
   if (query.length === 0) {
     showSuggestions.value = false
     suggestions.value = []
     return
   }
 
-  suggestions.value = await fetchSuggestions(query)
+  // Filter suggestions based on current input
+  suggestions.value = allSuggestions.value.filter(suggestion => 
+    suggestion.toLowerCase().includes(query)
+  ).slice(0, 10)
+  
+  showSuggestions.value = suggestions.value.length > 0
+}
 
-  if (suggestions.value.length > 0) {
-    showSuggestions.value = true
-  }
+const selectSuggestion = (index) => {
+  searchQuery.value = suggestions.value[index]
+  submitSearchQuery()
+  showSuggestions.value = false
 }
 
 const voiceSearchQuery = () => {

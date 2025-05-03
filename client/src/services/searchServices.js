@@ -25,30 +25,25 @@ export const getSearchHistory = async () => {
         const response = await axios.get(`${API_URL}/history`);
         
         // Process the data to remove quotes from queries
-        // TODO: Change after bonus is implemented (operations on phrase searching)
         const cleanedData = response.data.map(item => {
-            const cleanedItem = {...item};
+            let query = item.query;
             
-            if (typeof cleanedItem.query === 'string') {
-                const query = cleanedItem.query;
+            // Remove quotes if they exist at beginning and end
+            if (typeof query === 'string') {
                 if ((query.startsWith('"') && query.endsWith('"')) || 
                     (query.startsWith("'") && query.endsWith("'"))) {
-                    cleanedItem.query = query.slice(1, -1);
+                    query = query.slice(1, -1);
                 }
             }
             
-            return cleanedItem;
+            return query.toLowerCase();
         });
         
-        const uniqueMap = new Map();
-        cleanedData.forEach(item => {
-            uniqueMap.set(item.query.toLowerCase(), item);
-        });
+        // Remove duplicates using Set
+        const uniqueQueries = [...new Set(cleanedData)];
         
-        const uniqueData = Array.from(uniqueMap.values());
-        
-        console.log("Search history response (unique):", uniqueData);
-        return uniqueData;
+        console.log("Search history response (unique strings):", uniqueQueries);
+        return uniqueQueries;
     } catch (error) {
         console.error("Error fetching search history:", error);
         throw error;
