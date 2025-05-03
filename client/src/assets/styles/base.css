@@ -60,3 +60,7 @@ body {
   align-items: center;
   justify-content: start;
 }
+
+strong {
+  font-weight: 600;
+}

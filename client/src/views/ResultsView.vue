@@ -1,14 +1,22 @@
 <template>
   <TheNavBar></TheNavBar>
   <div class="results-wrapper">
-    <div class="results">
+    <BaseSpinner v-if="isLoading" text="Exploring results..." />
+    <div v-else class="results">
+      <div v-if="fetchTime !== null" class="fetch-time-counter">
+        Exploring took: {{ fetchTime.toFixed(2) }} seconds
+      </div>
+      
       <SearchResult
         v-for="(result, index) in paginatedResults"
         :key="index"
         :title="result.title"
         :url="result.url"
-        :content="result.content"
+        :snippet="result.snippet"
       />
+      <p v-if="paginatedResults.length === 0 && !isLoading" class="no-results">
+        No results found for "{{ route.query.q }}"
+      </p>
     </div>
   </div>
 
@@ -38,128 +46,76 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
+import { onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 
 import SearchBar from '@/components/ui/SearchBar.vue'
 import SearchResult from '@/components/ui/SearchResult.vue'
 import TheNavBar from '@/components/layout/TheNavBar.vue'
+import BaseSpinner from '@/components/ui/BaseSpinner.vue'
+import { search } from '@/services/searchServices.js'
 
+const route = useRoute()
 const currentPage = ref(0)
-const maxResultsPerPage = 7
+const maxResultsPerPage = 20
+const results = ref([])
+const isLoading = ref(true)
+const fetchTime = ref(null)
+const fetchStartTime = ref(null)
 
-const nextPage = () => currentPage.value++
-const prevPage = () => currentPage.value--
+const nextPage = () => currentPage.value++;
+const prevPage = () => currentPage.value--;
 
-// to be removed later 
-const mockResults = [
-  {
-    title: 'Discovering Exoplanets',
-    url: 'https://nasa.gov/exoplanets',
-    content:
-      'Explore distant worlds beyond our solar system and learn how scientists find exoplanets using telescopes and light curves.',
-  },
-  {
-    title: 'What Makes a Planet Habitable?',
-    url: 'https://space.org/habitability',
-    content:
-      'Understand the key elements like water, atmosphere, and temperature range that contribute to a planet’s ability to support life.',
-  },
-  {
-    title: 'Telescope Technologies',
-    url: 'https://jwst.nasa.gov/tech',
-    content:
-      'An in-depth look at how space telescopes like the James Webb Space Telescope are revolutionizing our view of the universe.',
-  },
-  {
-    title: 'Wiki',
-    url: '',
-    content:
-      'Pierre Boulez (26 March 1925 – 5 January 2016) was a French composer and conductor. He was one of the dominant figures of post-war contemporary classical music.As a composer, he played a leading role in the development of integral serialism in the 1950s, and the electronic transformation of instrumental music in real time from the 1970s. Boulez conducted many of...',
-  },
-  {
-    title: 'Discovering Exoplanets',
-    url: 'https://nasa.gov/exoplanets',
-    content:
-      'Explore distant worlds beyond our solar system and learn how scientists find exoplanets using telescopes and light curves.',
-  },
-  {
-    title: 'What Makes a Planet Habitable?',
-    url: 'https://space.org/habitability',
-    content:
-      'Understand the key elements like water, atmosphere, and temperature range that contribute to a planet’s ability to support life.',
-  },
-  {
-    title: 'Telescope Technologies',
-    url: 'https://jwst.nasa.gov/tech',
-    content:
-      'An in-depth look at how space telescopes like the James Webb Space Telescope are revolutionizing our view of the universe.',
-  },
-  {
-    title: 'Wiki',
-    url: '',
-    content:
-      'Pierre Boulez (26 March 1925 – 5 January 2016) was a French composer and conductor. He was one of the dominant figures of post-war contemporary classical music.As a composer, he played a leading role in the development of integral serialism in the 1950s, and the electronic transformation of instrumental music in real time from the 1970s. Boulez conducted many of...',
-  },
-  {
-    title: 'Discovering Exoplanets',
-    url: 'https://nasa.gov/exoplanets',
-    content:
-      'Explore distant worlds beyond our solar system and learn how scientists find exoplanets using telescopes and light curves.',
-  },
-  {
-    title: 'What Makes a Planet Habitable?',
-    url: 'https://space.org/habitability',
-    content:
-      'Understand the key elements like water, atmosphere, and temperature range that contribute to a planet’s ability to support life.',
-  },
-  {
-    title: 'Telescope Technologies',
-    url: 'https://jwst.nasa.gov/tech',
-    content:
-      'An in-depth look at how space telescopes like the James Webb Space Telescope are revolutionizing our view of the universe.',
-  },
-  {
-    title: 'Wiki',
-    url: '',
-    content:
-      'Pierre Boulez (26 March 1925 – 5 January 2016) was a French composer and conductor. He was one of the dominant figures of post-war contemporary classical music.As a composer, he played a leading role in the development of integral serialism in the 1950s, and the electronic transformation of instrumental music in real time from the 1970s. Boulez conducted many of...',
-  },
-  {
-    title: 'Discovering Exoplanets',
-    url: 'https://nasa.gov/exoplanets',
-    content:
-      'Explore distant worlds beyond our solar system and learn how scientists find exoplanets using telescopes and light curves.',
-  },
-  {
-    title: 'What Makes a Planet Habitable?',
-    url: 'https://space.org/habitability',
-    content:
-      'Understand the key elements like water, atmosphere, and temperature range that contribute to a planet’s ability to support life.',
-  },
-  {
-    title: 'Telescope Technologies',
-    url: 'https://jwst.nasa.gov/tech',
-    content:
-      'An in-depth look at how space telescopes like the James Webb Space Telescope are revolutionizing our view of the universe.',
-  },
-  {
-    title: 'Wiki',
-    url: '',
-    content:
-      'Pierre Boulez (26 March 1925 – 5 January 2016) was a French composer and conductor. He was one of the dominant figures of post-war contemporary classical music.As a composer, he played a leading role in the development of integral serialism in the 1950s, and the electronic transformation of instrumental music in real time from the 1970s. Boulez conducted many of...',
-  },
-]
+const mockResults = ref([])
+
+const performSearch = (searchQuery) => {
+  isLoading.value = true
+  currentPage.value = 0 // Reset to first page
+  fetchStartTime.value = performance.now()
+  
+  search(searchQuery, 0)
+    .then((data) => {
+      console.log(data)
+      results.value = data
+      mockResults.value = [...data]
+      
+      // Calculate fetch time in seconds
+      const endTime = performance.now()
+      fetchTime.value = (endTime - fetchStartTime.value) / 1000
+      
+      console.log('mockResults', mockResults.value)
+      console.log('Fetch time:', fetchTime.value, 'seconds')
+    })
+    .catch((error) => {
+      console.error('Error fetching search results:', error)
+    })
+    .finally(() => {
+      isLoading.value = false
+    })
+}
+
+watch(() => route.query.q, (newQuery) => {
+  if (newQuery !== undefined) {
+    performSearch(newQuery || '')
+  }
+})
+
+onMounted(() => {
+  const searchQuery = route.query.q || ''
+  performSearch(searchQuery)
+})
 
 const paginatedResults = computed(() =>
-  mockResults.slice(
+  mockResults.value.slice(
     currentPage.value * maxResultsPerPage,
     (currentPage.value + 1) * maxResultsPerPage,
   ),
 )
 
-const totalPages = computed(() => Math.ceil(mockResults.length / maxResultsPerPage))
+const totalPages = computed(() => Math.ceil(mockResults.value.length / maxResultsPerPage))
 
-const setCurrentPage = (page) => {
+const setPage = (page) => {
   currentPage.value = page
 }
 </script>
@@ -180,7 +136,9 @@ const setCurrentPage = (page) => {
   display: flex;
   flex-direction: column;
   max-width: 1000px;
+  width: 100%;
   overflow-x: hidden;
+  align-items: flex-start; 
 }
 
 .pagination {
@@ -223,5 +181,27 @@ const setCurrentPage = (page) => {
 .pagination__page--active {
   font-weight: bold;
   color: var(--accent-color); 
+}
+
+.no-results {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+  font-style: italic;
+  align-self: center; 
+  width: 100%; 
+}
+
+.fetch-time-counter {
+  background-color: #f8f9fa;
+  padding: 8px 16px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  text-align: left;
+  color: #555;
+  font-size: 0.9rem;
+  border-left: 3px solid var(--accent-color);
+  align-self: flex-start; 
+  width: 100%; 
 }
 </style>

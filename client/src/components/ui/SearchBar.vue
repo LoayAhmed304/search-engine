@@ -35,7 +35,7 @@
             'search-bar__suggestion': true,
             'search-bar__suggestion--active': index === highlightedQueryIndex,
           }"
-          @click="highlightedQueryIndex = index"
+          @click="selectSuggestion(index)"
         >
           <font-awesome-icon icon="fa-solid fa-magnifying-glass" class="search-bar__search-icon" />
           <span class="search-bar__suggestion-text">{{ suggestion }}</span>
@@ -47,18 +47,25 @@
 
 <script setup>
 import { ref, watch, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
+import { getSearchHistory } from '@/services/searchServices'
 
 import BaseButton from './BaseButton.vue'
 
-defineProps({
+const props = defineProps({
   isIconShown: Boolean,
+  defaultQuery: {
+    type: String,
+    default: ''
+  }
 })
 
 const router = useRouter()
+const route = useRoute()
 
 const searchQuery = ref('')
-const suggestions = ref([])
+const allSuggestions = ref([]) 
+const suggestions = ref([]) // Store filtered suggestions based on user input
 const showSuggestions = ref(false)
 const highlightedQueryIndex = ref(-1)
 
@@ -76,21 +83,42 @@ const changeTheme = (theme) => {
 }
 
 onMounted(() => {
+  // Set theme
   const savedTheme = localStorage.getItem('theme')
   if (savedTheme) selectedTheme.value = savedTheme
   changeTheme(selectedTheme.value)
+  
+  // Set initial search query from props or URL
+  if (props.defaultQuery) {
+    searchQuery.value = props.defaultQuery
+  } else if (route.query.q) {
+    searchQuery.value = route.query.q
+  }
+
+  fetchSuggestions();
 })
 
 const submitSearchQuery = () => {
   console.log('search query entered: ' + searchQuery.value)
+
+  if (searchQuery.value.length === 0)
+    return;
+
   router.push({ path: '/search', query: { q: searchQuery.value } })
 
   showSuggestions.value = false
   suggestions.value = []
 }
 
-const fetchSuggestions = async (query) => {
-  return ['temp 1', 'temp 2']
+const fetchSuggestions = () => {
+  getSearchHistory()
+    .then((data) => {
+      allSuggestions.value = data;
+      console.log('Fetched search history:', allSuggestions.value);
+    })
+    .catch((error) => {
+      console.error('Error fetching search history:', error);
+    })
 }
 
 const handleKeyNavigation = (event) => {
@@ -102,30 +130,46 @@ const handleKeyNavigation = (event) => {
     highlightedQueryIndex.value++
   } else if (event.key === 'ArrowUp' && highlightedQueryIndex.value > -1) {
     highlightedQueryIndex.value--
+  } else if (event.key === 'Enter' && highlightedQueryIndex.value >= 0) {
+    // Select the highlighted suggestion on Enter
+    searchQuery.value = suggestions.value[highlightedQueryIndex.value]
+    submitSearchQuery()
+    return
   } else {
     return
   }
-  const selectedQuery = suggestions.value[highlightedQueryIndex.value]
-
-  if (selectedQuery) {
-    searchQuery.value = selectedQuery
+  
+  // Update search query to the highlighted suggestion
+  if (highlightedQueryIndex.value >= 0) {
+    const selectedQuery = suggestions.value[highlightedQueryIndex.value]
+    if (selectedQuery) {
+      searchQuery.value = selectedQuery
+    }
   }
 }
 
-const onQueryChange = async () => {
-  const query = searchQuery.value.trim()
-
+const onQueryChange = () => {
+  const query = searchQuery.value.trim().toLowerCase()
+  highlightedQueryIndex.value = -1 // Reset highlight when query changes
+  
   if (query.length === 0) {
     showSuggestions.value = false
     suggestions.value = []
     return
   }
 
-  suggestions.value = await fetchSuggestions(query)
+  // Filter suggestions based on current input
+  suggestions.value = allSuggestions.value.filter(suggestion => 
+    suggestion.toLowerCase().includes(query)
+  ).slice(0, 10)
+  
+  showSuggestions.value = suggestions.value.length > 0
+}
 
-  if (suggestions.value.length > 0) {
-    showSuggestions.value = true
-  }
+const selectSuggestion = (index) => {
+  searchQuery.value = suggestions.value[index]
+  submitSearchQuery()
+  showSuggestions.value = false
 }
 
 const voiceSearchQuery = () => {
