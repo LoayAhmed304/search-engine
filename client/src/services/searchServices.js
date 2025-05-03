@@ -13,7 +13,7 @@ export const search = async (searchQuery, pageNumber) => {
         },
         });
 
-        return response.data.slice(0, Math.min(20, response.data.length)); 
+        return response.data; 
     } catch (error) {
         console.error("Error fetching search results:", error);
         throw error;

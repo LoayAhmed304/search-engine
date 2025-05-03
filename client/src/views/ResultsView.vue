@@ -59,6 +59,7 @@ import { search } from '@/services/searchServices.js'
 const route = useRoute()
 const currentPage = ref(0)
 const maxResultsPerPage = 20
+const totalPagesNumber = ref(0)
 const results = ref([])
 const isLoading = ref(true)
 const fetchTime = ref(null)
@@ -77,8 +78,9 @@ const performSearch = (searchQuery) => {
   search(searchQuery, 0)
     .then((data) => {
       console.log(data)
-      results.value = data
-      mockResults.value = [...data]
+      results.value = data.results;
+      totalPagesNumber.value = data.totalPages;
+      mockResults.value = [...data.results];
       
       // Calculate fetch time in seconds
       const endTime = performance.now()
@@ -86,6 +88,7 @@ const performSearch = (searchQuery) => {
       
       console.log('mockResults', mockResults.value)
       console.log('Fetch time:', fetchTime.value, 'seconds')
+      console.log('Total pages:', totalPagesNumber.value)
     })
     .catch((error) => {
       console.error('Error fetching search results:', error)
