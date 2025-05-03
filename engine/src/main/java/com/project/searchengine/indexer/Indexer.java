@@ -66,51 +66,16 @@ public class Indexer {
         List<Page> savedPages = new ArrayList<>();
 
         for (UrlDocument urlDocument : urlDocuments) {
-            // Get the document from the database
-            String url = urlDocument.getNormalizedUrl();
-            String document = CompressionUtil.decompress(urlDocument.getDocument());
-
-            // Check null documents
-            if (document == null) {
-                System.out.println("Skipping null document for URL:" + url);
-                urlDocument.setIndexed(true);
-                updatedUrlDocuments.add(urlDocument);
-                continue;
-            }
-
-            // Convert the document to a Jsoup Document object
-            Document jsoupDocument = Jsoup.parse(document);
-
-            // Call the index method with the URL and the Jsoup Document object
-            indexDocument(url, jsoupDocument);
-
-            // Set the page token count in the page object
-            // Check if the page already exists in the database
-            String pageId = HashManager.hash(url);
-            int pageTokenCount;
-            if (!pageService.existsById(pageId)) {
-                pageTokenCount = tokenizer.getPageTokenCount(pageId);
-                savedPages.add(
-                    new Page(pageId, url, jsoupDocument.title(), document, pageTokenCount)
-                );
-            } else {
-                System.out.println("Page already exists for URL: " + url + ", skipping save.");
-                urlDocument.setIndexed(true);
-                updatedUrlDocuments.add(urlDocument);
-                continue;
-            }
-
-            // Add the document to the updatedUrlDocuments list
-            urlDocument.setIndexed(true);
-            updatedUrlDocuments.add(urlDocument);
+            // Index each document in the batch
+            indexDocument(urlDocument, updatedUrlDocuments, savedPages);
         }
 
-        // 7- Compute the term frequency (TF) for the tokens
+        // Compute the term frequency (TF) for the tokens
         Map<String, InvertedIndex> indexBuffer = tokenizer.getIndexBuffer();
         Map<String, Integer> pagesTokensCount = tokenizer.getPagesTokensCount();
         RankCalculator.calculateTf(indexBuffer, pagesTokensCount);
 
-        // 8- Save the tokens, updated URL documents and pages to the database
+        // Save the tokens, updated URL documents and pages to the database
         saveToDatabase(updatedUrlDocuments, savedPages, indexBuffer);
 
         // Reset tokenizer for the next batch
@@ -128,13 +93,65 @@ public class Indexer {
         );
     }
 
+    public void indexDocument(
+        UrlDocument urlDocument,
+        List<UrlDocument> updatedUrlDocuments,
+        List<Page> savedPages
+    ) {
+        long start = System.nanoTime();
+        // Get the document from the database
+        String url = urlDocument.getNormalizedUrl();
+        String document = CompressionUtil.decompress(urlDocument.getDocument());
+
+        // Check null documents
+        if (document == null) {
+            System.out.println("Skipping null document for URL:" + url);
+            urlDocument.setIndexed(true);
+            updatedUrlDocuments.add(urlDocument);
+            return;
+        }
+
+        // Convert the document to a Jsoup Document object
+        Document jsoupDocument = Jsoup.parse(document);
+
+        // Call the index method with the URL and the Jsoup Document object
+        index(url, jsoupDocument);
+
+        // Set the page token count in the page object
+        // Check if the page already exists in the database
+        String pageId = HashManager.hash(url);
+        int pageTokenCount;
+        if (!pageService.existsById(pageId)) {
+            pageTokenCount = tokenizer.getPageTokenCount(pageId);
+            savedPages.add(new Page(pageId, url, jsoupDocument.title(), document, pageTokenCount));
+        } else {
+            System.out.println("Page already exists for URL: " + url + ", skipping save.");
+            urlDocument.setIndexed(true);
+            updatedUrlDocuments.add(urlDocument);
+            return;
+        }
+
+        // Add the document to the updatedUrlDocuments list
+        urlDocument.setIndexed(true);
+        updatedUrlDocuments.add(urlDocument);
+        long duration = (System.nanoTime() - start) / 1_000_000;
+        System.out.println(
+            "Indexing document took: " +
+            duration +
+            " ms, processed URL: " +
+            url +
+            ", pageId: " +
+            pageId
+        );
+    }
+
     /**
      * Processes a single document by extracting its content and headers, and tokenizing them.
      *
      * @param url The URL of the document.
      * @param document The Jsoup Document object.
      */
-    public void indexDocument(String url, Document document) {
+    public void index(String url, Document document) {
         // Extract raw text
         String id = HashManager.hash(url);
         String content = document.body().text();

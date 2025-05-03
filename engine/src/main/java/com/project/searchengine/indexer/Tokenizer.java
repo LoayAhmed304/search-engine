@@ -114,9 +114,17 @@ public class Tokenizer {
         pageReference.getWordPositions().add(position);
     }
 
+    /**
+     * Update the field count for the given word and page id
+     *
+     * @param word The word to update.
+     * @param pageId The page id.
+     * @param fieldType The field type (title, h1, h2).
+     */
     public void updateFieldCount(String word, String pageId, String fieldType) {
         // Get the inverted index from the buffer
         InvertedIndex invertedIndex = indexBuffer.get(word);
+
         if (invertedIndex != null) {
             // Get the page reference
             PageReference pageReference = invertedIndex
@@ -154,6 +162,13 @@ public class Tokenizer {
         return cleanedToken;
     }
 
+    /**
+     * Reset the tokenizer for a new batch of documents.
+     *
+     * This method clears the index buffer and the pages tokens count.
+     *
+     *
+     */
     public void resetForNewBatch() {
         indexBuffer.clear();
         pagesTokensCount.clear();
