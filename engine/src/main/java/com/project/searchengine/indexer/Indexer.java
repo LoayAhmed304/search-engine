@@ -26,7 +26,7 @@ public class Indexer {
     @Autowired
     private UrlsFrontierService urlsFrontierService;
 
-    public static int BATCH_SIZE = 150;
+    public static int BATCH_SIZE = 50;
     public static int currentBatch = 1;
 
     /**
@@ -87,7 +87,7 @@ public class Indexer {
             // Set the page token count in the page object
             // Check if the page already exists in the database
             String pageId = HashManager.hash(url);
-            int pageTokenCount = 0;
+            int pageTokenCount;
             if (!pageService.existsById(pageId)) {
                 pageTokenCount = tokenizer.getPageTokenCount(pageId);
                 savedPages.add(
@@ -114,7 +114,7 @@ public class Indexer {
         saveToDatabase(updatedUrlDocuments, savedPages, indexBuffer);
 
         // Reset tokenizer for the next batch
-        //    tokenizer.resetForNewBatch();
+        tokenizer.resetForNewBatch();
 
         long duration = (System.nanoTime() - start) / 1_000_000;
         System.out.println(
@@ -138,9 +138,9 @@ public class Indexer {
         // Extract raw text
         String id = HashManager.hash(url);
         String content = document.body().text();
-        Elements fieldTags = document.select("h1, h2, h3, h4, h5, h6, title");
+        Elements fieldTags = document.select("h1, h2, title");
 
-        tokenizer.tokenizeContent(content, id, "body");
+        tokenizer.tokenizeContent(content, id);
         tokenizer.tokenizeHeaders(fieldTags, id);
     }
 
@@ -155,13 +155,32 @@ public class Indexer {
         List<Page> savedPages,
         Map<String, InvertedIndex> indexBuffer
     ) {
+        long start = System.nanoTime();
         // Save the pages in bulk
         pageService.savePagesInBulk(savedPages);
+        long duration = (System.nanoTime() - start) / 1_000_000;
+        System.out.println(
+            "Saving pages took: " + duration + " ms, saved " + savedPages.size() + " pages"
+        );
 
         // Save the inverted index in bulk
+        start = System.nanoTime();
         invertedIndexService.saveTokensInBulk(tokenizer.getIndexBuffer());
+        duration = (System.nanoTime() - start) / 1_000_000;
+        System.out.println(
+            "Saving tokens took: " + duration + " ms, saved " + indexBuffer.size() + " tokens"
+        );
 
         // Save the updated URL documents in bulk
+        start = System.nanoTime();
         urlsFrontierService.updateUrlDocumentsInBulk(updatedUrlDocuments);
+        duration = (System.nanoTime() - start) / 1_000_000;
+        System.out.println(
+            "Saving URL documents took: " +
+            duration +
+            " ms, updated " +
+            updatedUrlDocuments.size() +
+            " documents"
+        );
     }
 }
