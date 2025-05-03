@@ -174,6 +174,8 @@ public class QueryProcessor {
      * @param query The search query to process.
      */
     public void process(String query, int pageNumber) {
+        // Reset result pages number before processing a new query
+        resultPagesNumber = 0;
 
         QueryResult queryResult = queryTokenizer.tokenizeQuery(query);
         List<String> tokenizedQuery = queryResult.getTokenizedQuery();
@@ -197,11 +199,6 @@ public class QueryProcessor {
         Map<PageReference, String> rankedPages = ranker.rank(queryPages);
         this.rankedPageBatches = splitMap(rankedPages, pageSize);
 
-        // for (int i = 0; i < rankedPageBatches.size(); i++) {
-        //     System.out.println("Batch " + (i + 1) + ":");
-        //     rankedPageBatches.get(i).forEach((key, value) -> System.out.println(key + ": " + value));
-        //     System.out.println();
-        // }
         getBatchSnippets(query, pageNumber);
     }
 
@@ -215,5 +212,15 @@ public class QueryProcessor {
         allPagesSnippets.clear();
         process(query, pageNumber);
         return allPagesSnippets;
+    }
+
+    /**
+     * Returns the total number of result pages based on the last processed query.
+     * This represents the actual number of page batches after ranking and filtering.
+     *
+     * @return The total number of page batches available.
+     */
+    public int getTotalPages() {
+        return resultPagesNumber;
     }
 }

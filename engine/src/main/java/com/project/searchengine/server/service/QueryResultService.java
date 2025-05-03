@@ -16,6 +16,8 @@ public class QueryResultService {
     @Autowired
     private PageService pageService;
 
+    private Map<String, Integer> queryTotalPagesCache = new HashMap<>();
+
     /**
      * Returns a list of QueryResult objects based on the given query.
      *
@@ -28,6 +30,9 @@ public class QueryResultService {
         // Get <pageReference, snippet> pairs from query processor
         Map<String, String> snippets = queryProcessor.getAllPagesSnippets(query, pageNumber);
 
+        // Cache the total pages count for this query
+        queryTotalPagesCache.put(query, queryProcessor.getTotalPages());
+
         // Transform to QueryResult objects
         for (Map.Entry<String, String> entry : snippets.entrySet()) {
             String pageId = entry.getKey();
@@ -38,5 +43,19 @@ public class QueryResultService {
         }
 
         return results;
+    }
+
+    public int getTotalPages(String query) {
+        // If we've already processed this query, return the cached count
+        if (queryTotalPagesCache.containsKey(query)) {
+            return queryTotalPagesCache.get(query);
+        }
+
+        // If not in cache (shouldn't happen if controller calls getQueryResults first)
+        // Process the query at page 0 to get total pages
+        queryProcessor.getAllPagesSnippets(query, 0);
+        int totalPages = queryProcessor.getTotalPages();
+        queryTotalPagesCache.put(query, totalPages);
+        return totalPages;
     }
 }

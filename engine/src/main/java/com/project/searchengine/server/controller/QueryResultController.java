@@ -1,6 +1,7 @@
 package com.project.searchengine.server.controller;
 
 import com.project.searchengine.server.dto.QueryResult;
+import com.project.searchengine.server.dto.SearchResponse;
 import com.project.searchengine.server.model.*;
 import com.project.searchengine.server.service.*;
 
@@ -27,14 +28,19 @@ public class QueryResultController {
      * @return A ResponseEntity containing a list of QueryResult objects.
      */
     @GetMapping("/search")
-    public ResponseEntity<List<QueryResult>> getQuery(@RequestParam String query, @RequestParam(defaultValue = "0") int pageNumber) {
+    public ResponseEntity<SearchResponse> getQuery(@RequestParam String query, @RequestParam(defaultValue = "0") int pageNumber) {
         List<QueryResult> results = queryResultService.getQueryResults(query, pageNumber);
+        
+        // Get the total number of pages (now this uses the cached value from previous call)
+        int totalPages = queryResultService.getTotalPages(query);
         
         // Save the query to the database
         SearchQuery searchQuery = new SearchQuery(query);
         searchQueryService.saveSearchQuery(searchQuery);
 
-        return ResponseEntity.ok(results);
+        // Return both the results and pagination information
+        SearchResponse response = new SearchResponse(results, totalPages, pageNumber);
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -48,4 +54,5 @@ public class QueryResultController {
         List<SearchQuery> suggestions = searchQueryService.suggestions();
         return ResponseEntity.ok(suggestions);
     }
+
 }
