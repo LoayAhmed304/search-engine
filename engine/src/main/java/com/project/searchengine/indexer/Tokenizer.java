@@ -2,6 +2,7 @@ package com.project.searchengine.indexer;
 
 import com.project.searchengine.server.model.InvertedIndex;
 import com.project.searchengine.server.model.PageReference;
+import java.io.InputStream;
 import java.util.*;
 import opennlp.tools.stemmer.PorterStemmer;
 import opennlp.tools.tokenize.*;
@@ -20,11 +21,14 @@ public class Tokenizer {
 
     SimpleTokenizer tokenizer = SimpleTokenizer.INSTANCE;
 
+    // TokenizerME tokenizer;
+
     @Autowired
     private final StopWordFilter stopWordFilter;
 
     public Tokenizer(StopWordFilter stopWordFilter) {
         this.stopWordFilter = stopWordFilter;
+        //  loadTokenizerModel(getClass().getResourceAsStream("/models/en-token.bin"));
     }
 
     /**
@@ -149,16 +153,15 @@ public class Tokenizer {
      * @return The cleaned token.
      */
     private String cleanToken(String token) {
+        token = stemmer.stem(token);
+        String cleanedToken = token.replaceAll("[^a-z]", "");
+
         // Skip stop words
-        if (stopWordFilter.isStopWord(token)) {
+        if (stopWordFilter.isStopWord(cleanedToken) || cleanedToken.length() < 2) {
             return "";
         }
 
         // Apply stemming to regural words
-        token = stemmer.stem(token);
-
-        String cleanedToken = token.replaceAll("[^a-z]", "");
-
         return cleanedToken;
     }
 
@@ -179,19 +182,18 @@ public class Tokenizer {
      * Load the tokenizer model from the specified input stream.
      *
      * @param modelInputStream The input stream containing the tokenizer model.
-     
-    void loadTokenizerModel(InputStream modelInputStream) {
-        try (InputStream modelIn = getClass().getResourceAsStream("/models/en-token.bin")) {
-            if (modelIn == null) {
-                throw new IllegalArgumentException("Model file not found");
-            }
-            TokenizerModel model = new TokenizerModel(modelIn);
-            tokenizer = new TokenizerME(model);
-        } catch (Exception e) {
-            throw new RuntimeException("Error loading tokenizer model", e);
-        }
-    }
-    */
+     */
+    // void loadTokenizerModel(InputStream modelInputStream) {
+    //     try (InputStream modelIn = getClass().getResourceAsStream("/models/en-token.bin")) {
+    //         if (modelIn == null) {
+    //             throw new IllegalArgumentException("Model file not found");
+    //         }
+    //         TokenizerModel model = new TokenizerModel(modelIn);
+    //         tokenizer = new TokenizerME(model);
+    //     } catch (Exception e) {
+    //         throw new RuntimeException("Error loading tokenizer model", e);
+    //     }
+    // }
 
     /**
      * Return index buffer of all tokens of the current document
