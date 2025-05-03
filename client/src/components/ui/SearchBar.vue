@@ -114,7 +114,7 @@ const fetchSuggestions = () => {
   getSearchHistory()
     .then((data) => {
       allSuggestions.value = data;
-      console.log('Fetched search history:', allSuggestions.value);
+      // console.log('Fetched search history:', allSuggestions.value);
     })
     .catch((error) => {
       console.error('Error fetching search history:', error);
