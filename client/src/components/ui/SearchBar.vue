@@ -43,12 +43,15 @@
       </ul>
     </div>
   </div>
+  <div v-html="snippet"></div>
+
 </template>
 
 <script setup>
 import { ref, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { getSearchHistory } from '@/services/searchServices'
+import 'nprogress/nprogress.css'
 
 import BaseButton from './BaseButton.vue'
 
@@ -81,6 +84,8 @@ const changeTheme = (theme) => {
   iconSource.value = `/images/${selectedTheme.value}.png`
   console.log('Applied theme: ', selectedTheme.value, 'icon source', iconSource)
 }
+
+const snippet = ref('')
 
 onMounted(() => {
   // Set theme
@@ -311,5 +316,43 @@ base-button {
   .search-bar__input {
     font-size: 0.9rem;
   }
+}
+
+.search-result {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.pagination__page {
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: all 0.2s ease;
+}
+
+.pagination__page:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.pagination__page--active {
+  background-color: var(--accent-color);
+  color: white !important;
+}
+
+.search-result {
+  padding: 16px;
+  margin-bottom: 16px;
+  border-radius: 8px;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.search-result:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 </style>

@@ -15,8 +15,9 @@ import { faPalette } from '@fortawesome/free-solid-svg-icons'
 import { faMicrophone } from '@fortawesome/free-solid-svg-icons'
 import { faChevronLeft } from '@fortawesome/free-solid-svg-icons'
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons'
+import { faArrowUp } from '@fortawesome/free-solid-svg-icons'
 
-library.add(faMagnifyingGlass, faPalette, faMicrophone, faChevronLeft, faChevronRight);
+library.add(faMagnifyingGlass, faPalette, faMicrophone, faChevronLeft, faChevronRight, faArrowUp);
 
 const app = createApp(App);
 

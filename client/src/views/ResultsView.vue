@@ -45,12 +45,20 @@
       class="pagination__arrow pagination__arrow--right"
       @click="nextPage"
     />
+    <button 
+      v-show="showBackToTop"
+      class="back-to-top" 
+      @click="scrollToTop"
+    >
+      <font-awesome-icon icon="fa-solid fa-arrow-up" class="back-to-top__icon" />
+      <p>New Adventure?</p>
+    </button>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { onMounted } from 'vue'
+import { onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
 
 import SearchBar from '@/components/ui/SearchBar.vue'
@@ -58,6 +66,8 @@ import SearchResult from '@/components/ui/SearchResult.vue'
 import TheNavBar from '@/components/layout/TheNavBar.vue'
 import BaseSpinner from '@/components/ui/BaseSpinner.vue'
 import { search } from '@/services/searchServices.js'
+import NProgress from 'nprogress'
+import 'nprogress/nprogress.css'
 
 const route = useRoute()
 const currentPage = ref(0)
@@ -67,6 +77,12 @@ const results = ref([])
 const isLoading = ref(true)
 const fetchTime = ref(null)
 const fetchStartTime = ref(null)
+
+const showBackToTop = ref(false)
+
+const scrollToTop = () => {
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
 
 // Cache object to store results for each page
 const resultsCache = ref({})
@@ -142,6 +158,8 @@ const performSearch = (searchQuery) => {
   fetchStartTime.value = performance.now()
   resultsCache.value = {} // Clear cache when performing new search
   
+  NProgress.start() // Start progress bar
+  
   search(searchQuery, 0)
     .then((data) => {
       console.log(data)
@@ -161,6 +179,7 @@ const performSearch = (searchQuery) => {
     })
     .finally(() => {
       isLoading.value = false
+      NProgress.done() // Complete progress bar
     })
 }
 
@@ -173,7 +192,32 @@ watch(() => route.query.q, (newQuery) => {
 onMounted(() => {
   const searchQuery = route.query.q || ''
   performSearch(searchQuery)
+  
+  // Add keyboard navigation for pagination
+  window.addEventListener('keydown', handleKeydown);
+  
+  // Add scroll listener for back-to-top button
+  window.addEventListener('scroll', handleScroll);
 })
+
+// Don't forget to remove the listener when component unmounts
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleKeydown);
+  window.removeEventListener('scroll', handleScroll);
+});
+
+// Define the handler separately for clean removal
+const handleKeydown = (e) => {
+  if (e.altKey && e.key === 'ArrowRight') {
+    nextPage();
+  } else if (e.altKey && e.key === 'ArrowLeft') {
+    prevPage();
+  }
+};
+
+const handleScroll = () => {
+  showBackToTop.value = window.scrollY > 300;
+};
 
 const setPage = (page) => {
   console.log("Setting page to:", page);
@@ -283,5 +327,46 @@ const totalPages = computed(() => totalPagesNumber.value || 1)
   justify-content: center;
   width: 100%;
   padding: 2rem 0;
+}
+
+.back-to-top {
+  position: fixed;
+  bottom: 70px;
+  right: 100px;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background-color: var(--accent-color);
+  color: white;
+  border: none;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column; 
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  z-index: 100;
+  opacity: 0.8;
+  padding: 10px; 
+}
+
+.back-to-top:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+  opacity: 1;
+}
+
+.back-to-top__icon {
+  font-size: 1.8rem; 
+  margin-bottom: 3px;
+}
+
+.back-to-top p {
+  margin: 5px 0 0 0; 
+  font-size: 0.8rem;
+  text-align: center; 
+  line-height: 1; 
+  margin-bottom: 3px;
 }
 </style>
