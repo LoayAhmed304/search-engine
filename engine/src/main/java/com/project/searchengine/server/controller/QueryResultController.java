@@ -27,8 +27,9 @@ public class QueryResultController {
      * @return A ResponseEntity containing a list of QueryResult objects.
      */
     @GetMapping("/search")
-    public ResponseEntity<List<QueryResult>> getQuery(@RequestParam String query, @RequestParam(defaultValue = "0") int page) {
-        List<QueryResult> results = queryResultService.getQueryResults(query);
+    public ResponseEntity<List<QueryResult>> getQuery(@RequestParam String query, @RequestParam(defaultValue = "0") int pageNumber) {
+        List<QueryResult> results = queryResultService.getQueryResults(query, pageNumber);
+        
         // Save the query to the database
         SearchQuery searchQuery = new SearchQuery(query);
         searchQueryService.saveSearchQuery(searchQuery);

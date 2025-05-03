@@ -30,7 +30,6 @@ public class QueryProcessor {
 
     private final int threadsNum = 20;
 
-    private int pageNumber = 0; // zero indexed
     private int pageSize = 20;
 
     private Integer resultPagesNumber = 0;
@@ -73,7 +72,14 @@ public class QueryProcessor {
      * @return A map where the key is a page reference, and the value is the snippet
      *         for that page.
      */
-    private Map<String, String> getBatchSnippets(String query) {
+    private Map<String, String> getBatchSnippets(String query, int pageNumber) {
+        
+        // check if the page number is valid
+        if(rankedPageBatches == null || rankedPageBatches.isEmpty()) {
+            System.out.println("No pages found for the query: " + query);
+            return allPagesSnippets;
+        }
+        
         // based on page number get map
         Map<PageReference, String> rankedPages = rankedPageBatches.get(pageNumber);
 
@@ -167,7 +173,7 @@ public class QueryProcessor {
      *
      * @param query The search query to process.
      */
-    public void process(String query) {
+    public void process(String query, int pageNumber) {
 
         QueryResult queryResult = queryTokenizer.tokenizeQuery(query);
         List<String> tokenizedQuery = queryResult.getTokenizedQuery();
@@ -196,7 +202,7 @@ public class QueryProcessor {
         //     rankedPageBatches.get(i).forEach((key, value) -> System.out.println(key + ": " + value));
         //     System.out.println();
         // }
-        getBatchSnippets(query);
+        getBatchSnippets(query, pageNumber);
     }
 
     /**
@@ -205,9 +211,9 @@ public class QueryProcessor {
      * @return A map where the key is a page reference, and the value is the snippet
      *         for that page.
      */
-    public Map<String, String> getAllPagesSnippets(String query) {
+    public Map<String, String> getAllPagesSnippets(String query, int pageNumber) {
         allPagesSnippets.clear();
-        process(query);
+        process(query, pageNumber);
         return allPagesSnippets;
     }
 }

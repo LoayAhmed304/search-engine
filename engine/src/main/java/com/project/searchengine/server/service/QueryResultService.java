@@ -22,11 +22,11 @@ public class QueryResultService {
      * @param query The search query to process.
      * @return A list of QueryResult objects containing the URL, title, and snippet for each page.
      */
-    public List<QueryResult> getQueryResults(String query) {
+    public List<QueryResult> getQueryResults(String query, int pageNumber) {
         List<QueryResult> results = new ArrayList<>();
 
         // Get <pageReference, snippet> pairs from query processor
-        Map<String, String> snippets = queryProcessor.getAllPagesSnippets(query);
+        Map<String, String> snippets = queryProcessor.getAllPagesSnippets(query, pageNumber);
 
         // Transform to QueryResult objects
         for (Map.Entry<String, String> entry : snippets.entrySet()) {
