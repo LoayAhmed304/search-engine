@@ -45,24 +45,31 @@ public interface UrlsFrontierRepository extends MongoRepository<UrlDocument, Str
      *         created
      */
     default boolean upsertUrl(String normalizedUrl, int MAX_URLS) {
-        if (existsByNormalizedUrl(normalizedUrl)) {
+        try {
+            if (existsByNormalizedUrl(normalizedUrl)) {
+                incrementFrequency(normalizedUrl);
+                return true;
+            } else {
+                if (count() < MAX_URLS) {
+                    UrlDocument newDocument = new UrlDocument(
+                        normalizedUrl,
+                        1L,
+                        false,
+                        null,
+                        "",
+                        new ArrayList<>(),
+                        ""
+                    );
+                    save(newDocument);
+                    return true;
+                }
+                return false;
+            }
+        } catch (org.springframework.dao.DuplicateKeyException e) {
+            // URL was inserted by another thread between our check and insert
+            // Just increment the frequency and continue
             incrementFrequency(normalizedUrl);
             return true;
-        } else {
-            if (count() < MAX_URLS) {
-                UrlDocument newDocument = new UrlDocument(
-                    normalizedUrl,
-                    1L,
-                    false,
-                    null,
-                    "",
-                    new ArrayList<>(),
-                    ""
-                );
-                save(newDocument);
-                return true;
-            }
-            return false;
         }
     }
 
