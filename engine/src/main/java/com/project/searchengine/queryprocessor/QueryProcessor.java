@@ -49,7 +49,6 @@ public class QueryProcessor {
         for (String token : tokenizedQuery) {
             List<PageReference> tokenPages = invertedIndexService.getTokenPages(token);
             queryPages.put(token, tokenPages);
-            resultPagesNumber += tokenPages.size();
         }
         return queryPages;
     }
@@ -169,7 +168,6 @@ public class QueryProcessor {
                 batchMap.put(entry.getKey(), entry.getValue());
             }
             result.add(batchMap);
-            System.out.println("Batch size: " + batchMap.size());
         }
 
         return result;
@@ -204,15 +202,13 @@ public class QueryProcessor {
 
             // filter the pages based on the phrase match first
             queryPages = phraseMatcher.filterPhraseMatchPages(queryPages, queryResult);
-            // update pages number
-            resultPagesNumber = 0;
-            for (Map.Entry<String, List<PageReference>> entry : queryPages.entrySet()) {
-                List<PageReference> pages = entry.getValue();
-                resultPagesNumber += pages.size();
-            }
         }
 
         Map<PageReference, String> rankedPages = ranker.rank(queryPages);
+
+        // get final result pages number after ranking
+        resultPagesNumber = rankedPages.size();
+        System.out.println("Result pages number: " + resultPagesNumber);
         this.rankedPageBatches = splitMap(rankedPages, pageSize);
 
         getBatchSnippets(query, pageNumber);
