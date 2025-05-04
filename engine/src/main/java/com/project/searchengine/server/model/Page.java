@@ -9,7 +9,9 @@ public class Page {
     @Id
     private String id;
 
+    @Indexed(unique = true)
     private String url;
+
     private String title;
     private String content;
     private int pageTokenCount;
