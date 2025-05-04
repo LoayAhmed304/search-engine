@@ -44,14 +44,6 @@ public class Indexer {
 
             // If there are no more documents to index, break the loop
             if (urlDocuments.isEmpty()) {
-                // Update the IDF for all tokens in the database
-                long start = System.currentTimeMillis();
-                invertedIndexService.updateIdf();
-                long duration = (System.currentTimeMillis() - start);
-                System.out.println(
-                    "Updating IDF took: " + duration + " ms, updated all tokens in the database"
-                );
-
                 System.out.println("No more documents to index");
                 return;
             }
