@@ -21,6 +21,11 @@ public class URLNormalizer {
      */
     public static String normalizeUrl(String url) {
         try {
+            // Best I can find check for double-encoded percent signs
+            if (url.contains("%25")) {
+                return null;
+            }
+
             // Replace unencoded spaces with %20
             String cleanedUrl = url.replace(" ", "%20");
 
@@ -72,6 +77,10 @@ public class URLNormalizer {
 
         String[] parts = host.split("\\.");
         if (parts.length < 2) return false;
+
+        // Prevent foreign wikipidea SPAMS
+        if(host.contains("wikipedia.org") && !host.startsWith("en."))
+            return false;
 
         // Check for language code in subdomain (e.g., en.wikipedia.org)
         String subdomain = parts[0].toLowerCase();
