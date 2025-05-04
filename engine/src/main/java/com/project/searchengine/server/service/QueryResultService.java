@@ -16,17 +16,22 @@ public class QueryResultService {
     @Autowired
     private PageService pageService;
 
+    private Map<String, Integer> queryTotalPagesCache = new HashMap<>();
+
     /**
      * Returns a list of QueryResult objects based on the given query.
      *
      * @param query The search query to process.
      * @return A list of QueryResult objects containing the URL, title, and snippet for each page.
      */
-    public List<QueryResult> getQueryResults(String query) {
+    public List<QueryResult> getQueryResults(String query, int pageNumber) {
         List<QueryResult> results = new ArrayList<>();
 
         // Get <pageReference, snippet> pairs from query processor
-        Map<String, String> snippets = queryProcessor.getAllPagesSnippets(query);
+        Map<String, String> snippets = queryProcessor.getAllPagesSnippets(query, pageNumber);
+
+        // Cache the total pages count for this query
+        queryTotalPagesCache.put(query, queryProcessor.getTotalPages());
 
         // Transform to QueryResult objects
         for (Map.Entry<String, String> entry : snippets.entrySet()) {
@@ -38,5 +43,19 @@ public class QueryResultService {
         }
 
         return results;
+    }
+
+    public int getTotalPages(String query) {
+        // If we've already processed this query, return the cached count
+        if (queryTotalPagesCache.containsKey(query)) {
+            return queryTotalPagesCache.get(query);
+        }
+
+        // If not in cache (shouldn't happen if controller calls getQueryResults first)
+        // Process the query at page 0 to get total pages
+        queryProcessor.getAllPagesSnippets(query, 0);
+        int totalPages = queryProcessor.getTotalPages();
+        queryTotalPagesCache.put(query, totalPages);
+        return totalPages;
     }
 }

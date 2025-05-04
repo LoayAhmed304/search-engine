@@ -2,7 +2,7 @@
   <div class="container">
     <div class="search-bar">
       <div class="search-bar__form-wrapper">
-        <img v-if="isIconShown" :src="iconSource" alt="icon" class="search-bar__dora-icon" />
+        <img v-if="isIconShown" :src="iconSource" alt="icon" class="search-bar__dora-icon" @click="goHome()" />
         <form @submit.prevent="submitSearchQuery" class="search-bar__form">
           <div class="search-bar__input-group">
             <font-awesome-icon
@@ -43,12 +43,15 @@
       </ul>
     </div>
   </div>
+  <div v-html="snippet"></div>
+
 </template>
 
 <script setup>
 import { ref, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { getSearchHistory } from '@/services/searchServices'
+import 'nprogress/nprogress.css'
 
 import BaseButton from './BaseButton.vue'
 
@@ -82,6 +85,8 @@ const changeTheme = (theme) => {
   console.log('Applied theme: ', selectedTheme.value, 'icon source', iconSource)
 }
 
+const snippet = ref('')
+
 onMounted(() => {
   // Set theme
   const savedTheme = localStorage.getItem('theme')
@@ -97,6 +102,10 @@ onMounted(() => {
 
   fetchSuggestions();
 })
+
+const goHome = () => {
+  router.push({ path: '/' })
+}
 
 const submitSearchQuery = () => {
   console.log('search query entered: ' + searchQuery.value)
@@ -114,7 +123,7 @@ const fetchSuggestions = () => {
   getSearchHistory()
     .then((data) => {
       allSuggestions.value = data;
-      console.log('Fetched search history:', allSuggestions.value);
+      // console.log('Fetched search history:', allSuggestions.value);
     })
     .catch((error) => {
       console.error('Error fetching search history:', error);
@@ -285,6 +294,13 @@ base-button {
   width: 60px;
   height: auto;
   object-fit: contain;
+  cursor: pointer;
+}
+
+.search-bar__dora-icon:hover {
+  cursor: pointer;
+  transform: scale(1.5);
+  transition: transform 0.2s;
 }
 
 @media (max-width: 650px) {
@@ -300,5 +316,43 @@ base-button {
   .search-bar__input {
     font-size: 0.9rem;
   }
+}
+
+.search-result {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.pagination__page {
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: all 0.2s ease;
+}
+
+.pagination__page:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.pagination__page--active {
+  background-color: var(--accent-color);
+  color: white !important;
+}
+
+.search-result {
+  padding: 16px;
+  margin-bottom: 16px;
+  border-radius: 8px;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.search-result:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 </style>

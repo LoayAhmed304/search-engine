@@ -32,6 +32,15 @@ defineProps({
   width: 100%;
   word-wrap: break-word;
   overflow-wrap: break-word;
+  transition: all 0.3s ease; 
+  border-radius: 8px;
+  border-left: 3px solid transparent;
+}
+
+.search-result:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+  border-left: 3px solid var(--accent-color, #4285f4);
+  padding-left: 10px;
 }
 
 .search-result__info {
@@ -44,6 +53,11 @@ defineProps({
   height: auto;
   object-fit: contain;
   margin-right: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.search-result:hover .search-result__icon {
+  animation: wiggle 1.5s ease-in-out infinite;
 }
 
 .search-result__text {
@@ -75,6 +89,7 @@ defineProps({
 .search-result__link:hover,
 .search-result__title-link:hover {
   text-decoration: underline;
+  color: var(--accent-color);
 }
 
 .search-result__content {
@@ -84,5 +99,13 @@ defineProps({
   margin-top: 0.1rem;
   line-height: 1.5;
   padding: 0 0.8rem;
+}
+
+@keyframes wiggle {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(4px); }
+  50% { transform: translateX(0); }
+  75% { transform: translateX(-4px); }
+  100% { transform: translateX(0); }
 }
 </style>
