@@ -153,11 +153,16 @@ public class Tokenizer {
      * @return The cleaned token.
      */
     private String cleanToken(String token) {
-        token = stemmer.stem(token);
-        String cleanedToken = token.replaceAll("[^a-z]", "");
+        if (stopWordFilter.isStopWord(token)) {
+            return "";
+        }
+
+        token = token.replaceAll("[^a-z]", "");
+
+        String cleanedToken = stemmer.stem(token);
 
         // Skip stop words
-        if (stopWordFilter.isStopWord(cleanedToken) || cleanedToken.length() < 2) {
+        if (cleanedToken.length() < 2) {
             return "";
         }
 
