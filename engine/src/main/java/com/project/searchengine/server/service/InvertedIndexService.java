@@ -1,9 +1,12 @@
 package com.project.searchengine.server.service;
 
 import com.mongodb.bulk.BulkWriteResult;
+import com.mongodb.client.result.UpdateResult;
 import com.project.searchengine.server.model.*;
 import com.project.searchengine.server.repository.InvertedIndexRepository;
+import com.project.searchengine.server.service.PageService;
 import java.util.*;
+import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.*;
 import org.springframework.data.mongodb.core.query.*;
@@ -18,6 +21,9 @@ public class InvertedIndexService {
     @Autowired
     private MongoTemplate mongoTemplate;
 
+    @Autowired
+    private PageService pageService;
+
     /**
      * Gets the inverted index for a given word.
      *
@@ -28,7 +34,6 @@ public class InvertedIndexService {
         InvertedIndex result = invertedIndexRepository.findByWord(word);
         return result;
     }
-
 
     /**
      * Saves a list of inverted indices in bulk to the database.
@@ -96,6 +101,59 @@ public class InvertedIndexService {
             return invertedIndex.getPages();
         } else {
             return Collections.emptyList();
+        }
+    }
+
+    public void updateIdf() {
+        try {
+            // Get the total number of pages from PageService
+            long totalPages = pageService.getTotalDocuments();
+            if (totalPages == 0) {
+                System.err.println("No pages found in the pages collection. Skipping IDF update.");
+                return;
+            }
+
+            // Retrieve all InvertedIndex documents
+            List<InvertedIndex> indices = invertedIndexRepository.findAll();
+            if (indices.isEmpty()) {
+                System.out.println("No inverted indices found. Skipping IDF update.");
+                return;
+            }
+
+            // Initialize bulk operations
+            BulkOperations bulkOps = mongoTemplate.bulkOps(
+                BulkOperations.BulkMode.UNORDERED,
+                InvertedIndex.class
+            );
+
+            // Calculate and update IDF for each InvertedIndex
+            int updateCount = 0;
+            for (InvertedIndex index : indices) {
+                int pageCount = index.getPages() != null ? index.getPages().size() : 0;
+                double idf;
+                if (pageCount == 0) {
+                    idf = 0.0; // Handle zero document frequency
+                } else {
+                    idf = Math.log10((double) totalPages / pageCount); // log10(totalPages / size of pages)
+                }
+
+                // Create update query for the specific word
+                Query query = new Query(Criteria.where("word").is(index.getWord()));
+                Update update = new Update().set("idf", idf);
+
+                bulkOps.updateOne(query, update);
+                updateCount++;
+            }
+
+            // Execute bulk updates
+            if (updateCount > 0) {
+                BulkWriteResult result = bulkOps.execute();
+                System.out.println("Updated IDF for " + result.getModifiedCount() + " documents");
+            } else {
+                System.out.println("No documents to update for IDF.");
+            }
+        } catch (Exception e) {
+            System.err.println("Error updating IDF: " + e.getMessage());
         }
     }
 }
