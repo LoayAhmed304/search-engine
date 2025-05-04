@@ -131,7 +131,7 @@ const loadPageResults = (pageNumber) => {
         results.value = data.results;
         
         if (data.totalPages) {
-          totalPagesNumber.value = Math.floor(data.totalPages / maxResultsPerPage);
+          totalPagesNumber.value = Math.ceil(data.totalPages / maxResultsPerPage);
         }
         
         // Cache the results
@@ -164,7 +164,7 @@ const performSearch = (searchQuery) => {
     .then((data) => {
       console.log(data)
       results.value = data.results;
-      totalPagesNumber.value = Math.floor(data.totalPages / maxResultsPerPage);
+      totalPagesNumber.value = Math.ceil(data.totalPages / maxResultsPerPage);
       
       // Cache the results for page 0
       const cacheKey = `${searchQuery}_0`;
