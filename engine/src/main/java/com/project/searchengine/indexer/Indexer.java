@@ -94,9 +94,9 @@ public class Indexer {
     }
 
     /**
-     * Indexes a single Url document by parsing the jsoup document, extracting its content and headers, 
+     * Indexes a single Url document by parsing the jsoup document, extracting its content and headers,
      * and tokenizing them.
-     * 
+     *
      * @param urlDocument The URL document to be indexed.
      * @param updatedUrlDocuments The list of URL documents to be updated.
      * @param savedPages The list of pages to be saved.
@@ -131,7 +131,15 @@ public class Indexer {
         int pageTokenCount;
         if (!pageService.existsById(pageId)) {
             pageTokenCount = tokenizer.getPageTokenCount(pageId);
-            savedPages.add(new Page(pageId, url, jsoupDocument.title(), document, pageTokenCount));
+            savedPages.add(
+                new Page(
+                    pageId,
+                    url,
+                    jsoupDocument.title(),
+                    jsoupDocument.body().text().toLowerCase(),
+                    pageTokenCount
+                )
+            );
         } else {
             System.out.println("Page already exists for URL: " + url + ", skipping save.");
             urlDocument.setIndexed(true);

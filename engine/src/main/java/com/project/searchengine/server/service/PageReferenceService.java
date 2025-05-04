@@ -3,10 +3,8 @@ package com.project.searchengine.server.service;
 import com.project.searchengine.server.model.Page;
 import com.project.searchengine.server.model.PageReference;
 import com.project.searchengine.server.repository.PageRepository;
-
 import java.util.*;
 import java.util.stream.Collectors;
-
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,10 +36,7 @@ public class PageReferenceService {
         Page page = pageRepository.getPageById(pageId);
 
         String content = page.getContent();
-        Document document = Jsoup.parse(content);
-        String bodyContent = document.body().text();
 
-        return bodyContent.toLowerCase();
+        return content.toLowerCase();
     }
-
 }
