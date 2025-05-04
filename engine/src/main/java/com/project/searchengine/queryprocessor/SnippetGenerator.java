@@ -30,6 +30,7 @@ public class SnippetGenerator {
         boolean isPhraseMatch = queryResult.getIsPhraseMatch();
         List<String> queryWords = queryResult.getOriginalWords();
         List<String> tokenizedQuery = queryResult.getTokenizedQuery();
+        Map<String, String> tokenizedToOriginal = queryResult.getTokenizedToOriginal();
 
         // Calculate the range of tokens to include in the snippet
         int startIndex = Math.max(0, matchPosition - halfSnippetSize);
@@ -47,33 +48,50 @@ public class SnippetGenerator {
             // For phrase matching, we need to highlight multiple consecutive words
             boolean isMatchFound = phraseMatcher.isPhraseMatchFound(bodyTokens,
                     queryWords,
-                    token,
+                    tokenizedToOriginal.get(token),
                     matchPosition);
 
             // If a match is found, highlight the positions of the words in the phrase
 
             if (isMatchFound) {
                 int phraseLength = queryWords.size();
-                int tokenIndex = queryWords.indexOf(token);
+                // get index of original word in query before tokenization
+                int tokenIndex = queryWords.indexOf(tokenizedToOriginal.get(token));
+
+                System.out.println("original query size: " + phraseLength);
+                System.out.println("token provided: " + tokenizedToOriginal.get(token));
+
+                System.out.println("token index in original query: " + tokenIndex);
+                System.out.println("match pos in body: " + matchPosition);
 
                 int start = Math.max(0, matchPosition - tokenIndex);
-                int end = Math.min(bodyTokens.length - 1, start + phraseLength - 1);
+                int end = Math.min(bodyTokens.length, start + phraseLength);
 
                 highlightPositions.add(matchPosition);
 
                 // add them to highlight positions
-                for (int i = start; i <= end; i++) {
+                for (int i = start; i < end; i++) {
+                    System.out.print(i + " ");
                     highlightPositions.add(i);
                 }
+                System.out.println();
             }
         }
 
         for (int i = startIndex; i < endIndex; i++) {
             String bodyToken = bodyTokens[i];
 
-            String stemmedToken = bodyToken.matches("[a-zA-Z]+")
-                    ? stemmer.stem(bodyToken.toLowerCase())
-                    : bodyToken.toLowerCase();
+            // String stemmedToken = bodyToken.matches("[a-zA-Z]+")
+            // ? stemmer.stem(bodyToken.toLowerCase())
+            // : bodyToken.toLowerCase();
+            String stemmedToken;
+            try {
+                stemmedToken = (bodyToken != null && !bodyToken.isEmpty() && bodyToken.matches("[a-zA-Z]+"))
+                        ? stemmer.stem(bodyToken.toLowerCase())
+                        : bodyToken.toLowerCase();
+            } catch (Exception e) {
+                stemmedToken = bodyToken.toLowerCase(); // fallback
+            }
 
             String nextToken = (i + 1 < bodyTokens.length) ? bodyTokens[i + 1] : null;
 
@@ -105,7 +123,7 @@ public class SnippetGenerator {
      *
      * @param token       A stemmed token from the search query
      * @param page        page reference to get snippet for
-     * @param queryResult query result data 
+     * @param queryResult query result data
      * @return A map of page ID to its snippet
      */
     public Map<String, String> getPagesSnippets(
@@ -119,6 +137,9 @@ public class SnippetGenerator {
         String bodyContent = pageReferenceService.getPageBodyContent(page);
         String[] bodyTokens = tokenizer.tokenize(bodyContent.toLowerCase());
         String pageId = page.getPageId();
+        boolean isPhraseMatch = queryResult.getIsPhraseMatch();
+
+        // map of matched positions and mintoken pages
 
         // get one snippet only for each page
         for (Integer pos : positions) {
@@ -132,6 +153,11 @@ public class SnippetGenerator {
                 continue;
             }
 
+            // not getting which position it initially matched at again yekhrebt el habal
+            // make a map in phrase matcher
+
+            if (isPhraseMatch)
+                pos = phraseMatcher.getMatchPosition(pageId);
             String snippet = generateSnippet(token, bodyTokens, pos, queryResult);
             pageSnippet.put(pageId, snippet);
             break;
