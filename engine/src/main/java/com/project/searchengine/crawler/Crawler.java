@@ -24,7 +24,6 @@ public class Crawler {
         this.robotsHandler = new RobotsHandler();
     }
 
-    // Setter for numThreads
     public void setNumThreads(int numThreads) {
         this.numThreads = numThreads;
     }
@@ -45,12 +44,6 @@ public class Crawler {
     public void crawl() {
         System.out.println("Starting the crawling process...");
         initCrawling();
-
-        // Validate numThreads
-        if (numThreads <= 0) {
-            System.err.println("Invalid number of threads: " + numThreads + ". Defaulting to 1 thread.");
-            numThreads = 1;
-        }
 
         ExecutorService executor = Executors.newFixedThreadPool(numThreads);
 
