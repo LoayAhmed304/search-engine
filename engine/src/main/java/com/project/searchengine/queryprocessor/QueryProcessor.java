@@ -127,7 +127,7 @@ public class QueryProcessor {
     }
 
     /**
-     * Helper function to displays snippets for the given pages and their associated
+     * Helper function to display snippets for the given pages and their associated
      * snippets
      *
      * @param pageSnippet A map where the key is a page reference, and the value is
