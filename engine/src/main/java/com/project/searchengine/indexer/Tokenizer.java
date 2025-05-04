@@ -28,7 +28,7 @@ public class Tokenizer {
 
     public Tokenizer(StopWordFilter stopWordFilter) {
         this.stopWordFilter = stopWordFilter;
-        loadTokenizerModel(getClass().getResourceAsStream("/models/en-token.bin"));
+        loadTokenizerModel();
     }
 
     /**
@@ -169,8 +169,6 @@ public class Tokenizer {
      * Reset the tokenizer for a new batch of documents.
      *
      * This method clears the index buffer and the pages tokens count.
-     *
-     *
      */
     public void resetForNewBatch() {
         indexBuffer.clear();
@@ -183,7 +181,7 @@ public class Tokenizer {
      *
      * @param modelInputStream The input stream containing the tokenizer model.
      */
-    void loadTokenizerModel(InputStream modelInputStream) {
+    void loadTokenizerModel() {
         try (InputStream modelIn = getClass().getResourceAsStream("/models/en-token.bin")) {
             if (modelIn == null) {
                 throw new IllegalArgumentException("Model file not found");
@@ -210,6 +208,9 @@ public class Tokenizer {
         return tokenCount;
     }
 
+    /**
+     * Return the count of tokens for each page reference in the index buffer
+     */
     Map<String, Integer> getPagesTokensCount() {
         return pagesTokensCount;
     }
