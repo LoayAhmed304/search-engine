@@ -73,13 +73,13 @@ public class QueryProcessor {
      *         for that page.
      */
     private Map<String, String> getBatchSnippets(String query, int pageNumber) {
-        
+
         // check if the page number is valid
-        if(rankedPageBatches == null || rankedPageBatches.isEmpty()) {
+        if (rankedPageBatches == null || rankedPageBatches.isEmpty()) {
             System.out.println("No pages found for the query: " + query);
             return allPagesSnippets;
         }
-        
+
         // based on page number get map
         Map<PageReference, String> rankedPages = rankedPageBatches.get(pageNumber);
 
@@ -147,7 +147,8 @@ public class QueryProcessor {
      *
      * @param originalMap The original map to be split
      * @param size        Size of each partiition
-     * @return A list of smaller maps, where each map contains at most {@code size} entries
+     * @return A list of smaller maps, where each map contains at most {@code size}
+     *         entries
      */
     public static List<Map<PageReference, String>> splitMap(Map<PageReference, String> originalMap, int size) {
         List<Map<PageReference, String>> result = new ArrayList<>();
@@ -192,8 +193,16 @@ public class QueryProcessor {
         boolean isPhraseMatch = phraseMatcher.isPhraseMatchQuery(query);
 
         if (isPhraseMatch) {
+            System.out.println("phrase match query");
+
             // filter the pages based on the phrase match first
             queryPages = phraseMatcher.filterPhraseMatchPages(queryPages, queryResult);
+            // update pages number
+            resultPagesNumber = 0;
+            for (Map.Entry<String, List<PageReference>> entry : queryPages.entrySet()) {
+                List<PageReference> pages = entry.getValue();
+                resultPagesNumber += pages.size();
+            }
         }
 
         Map<PageReference, String> rankedPages = ranker.rank(queryPages);
@@ -216,7 +225,8 @@ public class QueryProcessor {
 
     /**
      * Returns the total number of result pages based on the last processed query.
-     * This represents the actual number of page batches after ranking and filtering.
+     * This represents the actual number of page batches after ranking and
+     * filtering.
      *
      * @return The total number of page batches available.
      */

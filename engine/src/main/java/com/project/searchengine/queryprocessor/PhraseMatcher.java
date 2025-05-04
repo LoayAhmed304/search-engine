@@ -1,9 +1,15 @@
 package com.project.searchengine.queryprocessor;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -19,6 +25,10 @@ public class PhraseMatcher {
     @Autowired
     private PageReferenceService pageReferenceService;
     private final SimpleTokenizer tokenizer = SimpleTokenizer.INSTANCE;
+
+    private String tokenWithMinPages = null;
+    private List<PageReference> minTokenPages = null;
+    private Map<String, Integer> matchPositions = new HashMap<String, Integer>();
 
     /**
      * @param query
@@ -46,6 +56,10 @@ public class PhraseMatcher {
         return offset >= 0 && offset < bodyTokensLength;
     }
 
+    public Integer getMatchPosition(String pageId) {
+        return matchPositions.get(pageId);
+    }
+
     /**
      * Find if the words before or after a specific token (depending on
      * isBeforeToken) match or not
@@ -63,23 +77,22 @@ public class PhraseMatcher {
             int tokenIndex, int pos, boolean isBeforeToken) {
 
         boolean found = true;
-        int offset = isBeforeToken ? pos - 1 : pos + 1;
+        int currentOffset = isBeforeToken ? pos - 1 : pos + 1;
         int currentTokenIndex = isBeforeToken ? tokenIndex - 1 : tokenIndex + 1;
         int querySize = originalWords.size();
 
         while (found &&
-                isValidOffset(offset, bodyTokens.length)
+                isValidOffset(currentOffset, bodyTokens.length)
                 && isValidTokenIndex(currentTokenIndex, querySize)) {
 
             String currentToken = originalWords.get(currentTokenIndex);
 
-            if (!currentToken.equals(bodyTokens[offset])) {
+            if (!currentToken.toLowerCase().equals(bodyTokens[currentOffset])) {
                 found = false;
             }
 
-            offset = isBeforeToken ? offset - 1 : offset + 1;
+            currentOffset = isBeforeToken ? currentOffset - 1 : currentOffset + 1;
             currentTokenIndex = isBeforeToken ? currentTokenIndex - 1 : currentTokenIndex + 1;
-            currentTokenIndex++;
         }
 
         return found;
@@ -102,6 +115,10 @@ public class PhraseMatcher {
         if (tokenIndex == -1)
             return false;
 
+        // check current
+        if (!token.equals(bodyTokens[pos]))
+            return false;
+
         boolean isMatchFound = false;
         boolean isBeforeToken = true;
 
@@ -121,23 +138,25 @@ public class PhraseMatcher {
      *                   of pages containing that token
      * @return The token with the fewest associated pages
      */
-    private String getMinPagesToken(Map<String, List<PageReference>> queryPages) {
+    private void getMinPagesToken(Map<String, List<PageReference>> queryPages, QueryResult queryResult) {
         String minToken = "";
         int minPagesNumber = Integer.MAX_VALUE;
+        Map<String, String> tokenizedToOriginal = queryResult.getTokenizedToOriginal();
 
         for (String token : queryPages.keySet()) {
             List<PageReference> pages = queryPages.get(token);
             if (pages.size() < minPagesNumber) {
                 minToken = token;
+                minTokenPages = pages;
                 minPagesNumber = pages.size();
             }
         }
 
-        return minToken;
+        tokenWithMinPages = minToken;
     }
 
     /**
-     * Filters pages for phrase matching by going through the  token with the
+     * Filters pages for phrase matching by going through the token with the
      * fewest pages to speed things up
      *
      * @param queryPages  A map where the key is the token, and the value is a list
@@ -145,36 +164,47 @@ public class PhraseMatcher {
      * @param queryResult query result data
      * @return The new filtered query pages map to pass to ranker
      */
-    public Map<String, List<PageReference>> filterPhraseMatchPages(Map<String, List<PageReference>> queryPages,
-            QueryResult queryResult) {
-        // get token which has min number of pages first
-        String minPagesToken = getMinPagesToken(queryPages);
-        List<PageReference> minPages = queryPages.get(minPagesToken);
 
-        // filter phrase searching based on it
-        Map<String, List<PageReference>> filteredQueryPages = new HashMap<>();
-        List<PageReference> filteredPagesTokn = new ArrayList<>();
-        List<String> originalWords = queryResult.getOriginalWords();
+    public Map<String, List<PageReference>> filterPhraseMatchPages(Map<String,
+    List<PageReference>> queryPages,
+    QueryResult queryResult) {
+    // get token which has min number of pages first
+    getMinPagesToken(queryPages, queryResult);
 
-        for (PageReference page : minPages) {
-            List<Integer> positions = page.getWordPositions();
+    Map<String, String> tokenizedToOriginal =
+    queryResult.getTokenizedToOriginal();
+    System.out.println("original word with min pages: " +
+    tokenizedToOriginal.get(tokenWithMinPages));
+    System.out.println("size of min pages: " + minTokenPages.size());
 
-            String bodyContent = pageReferenceService.getPageBodyContent(page);
-            String[] bodyTokens = tokenizer.tokenize(bodyContent.toLowerCase());
+    // filter phrase searching based on it
+    Map<String, List<PageReference>> filteredQueryPages = new HashMap<>();
+    List<PageReference> filteredPages = new ArrayList<>();
+    List<String> originalWords = queryResult.getOriginalWords();
 
-            for (Integer pos : positions) {
-                boolean isMatchFound = isPhraseMatchFound(bodyTokens, originalWords, minPagesToken, pos);
+    for (PageReference page : minTokenPages) {
+    List<Integer> positions = page.getWordPositions();
 
-                // if one match is found, add the page to the filtered list
-                if (isMatchFound) {
-                    filteredPagesTokn.add(page);
-                    // pageTokensCache.put(page.getPageId(), bodyTokens);
-                    break;
-                }
-            }
-        }
+    String bodyContent = pageReferenceService.getPageBodyContent(page);
+    String[] bodyTokens = tokenizer.tokenize(bodyContent.toLowerCase());
 
-        filteredQueryPages.put(minPagesToken, filteredPagesTokn);
-        return filteredQueryPages;
+    for (Integer pos : positions) {
+    boolean isMatchFound = isPhraseMatchFound(bodyTokens, originalWords,
+    tokenizedToOriginal.get(tokenWithMinPages), pos);
+
+    // if one match is found, add the page to the filtered list
+    if (isMatchFound) {
+    System.out.println("matched:" + bodyTokens[pos] + " | at " + pos + " | id:" +
+    page.getPageId());
+    // add it
+    matchPositions.put(page.getPageId(), pos);
+    filteredPages.add(page);
+    break;
+    }
+    }
+    }
+
+    filteredQueryPages.put(tokenWithMinPages, filteredPages);
+    return filteredQueryPages;
     }
 }
