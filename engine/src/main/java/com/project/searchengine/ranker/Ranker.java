@@ -55,9 +55,10 @@ public class Ranker {
      *                page (<pageId, score>)
      */
     void processToken(
-            List<PageReference> prs,
-            Map<String, Double> scores,
-            Map<String, Double> pagesRanks) {
+        List<PageReference> prs,
+        Map<String, Double> scores,
+        Map<String, Double> pagesRanks
+    ) {
         double idf = RankCalculator.getIDF(totalDocuments, prs.size());
         for (PageReference pr : prs) {
             String pageId = pr.getPageId();
@@ -67,20 +68,17 @@ public class Ranker {
             double tf = pr.getTf();
             double score = RankCalculator.calculateScore(tf, idf, pageRank);
             Map<String, Integer> fieldWordCount = pr.getFieldWordCount();
-            double multiplier = 1.0;
-
-            multiplier += 1.0 * Math.log(1.0 + fieldWordCount.getOrDefault("title", 0));
-            multiplier += 0.5 * Math.log(1.0 + fieldWordCount.getOrDefault("h1", 0));
-            multiplier += 0.25 * Math.log(1.0 + fieldWordCount.getOrDefault("h2", 0));
+            double baseScore = score;
+            score += tf * idf * 2.0 * fieldWordCount.getOrDefault("title", 0);
+            score += tf * idf * 1.0 * fieldWordCount.getOrDefault("h1", 0);
 
             // penalize pages without h1
             if (fieldWordCount.getOrDefault("h1", 0).equals(0)) {
-                multiplier *= 0.6;
+                score *= 0.6;
             }
 
-            // cap the multiplier at 10x boost
-            multiplier = Math.min(multiplier, 10.0);
-            score *= multiplier;
+            // cap the boosted score
+            score = Math.min(baseScore * 10, score);
             scores.merge(pageId, score, Double::sum);
         }
     }
