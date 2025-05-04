@@ -2,13 +2,12 @@ package com.project.searchengine.crawler;
 
 import crawlercommons.robots.BaseRobotRules;
 import crawlercommons.robots.SimpleRobotRulesParser;
-import org.jsoup.Connection;
-import org.jsoup.Jsoup;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.concurrent.*;
+import org.jsoup.Connection;
+import org.jsoup.Jsoup;
 
 /**
  * This class is responsible for handling robots.txt files with shared caching.
@@ -17,12 +16,14 @@ import java.util.concurrent.*;
  * Assumes that the passed url is already normalized.
  */
 public class RobotsHandler {
+
     private static final String USER_AGENT = "*";
     private final SimpleRobotRulesParser parser = new SimpleRobotRulesParser();
 
     // Static shared cache across all instances
-    private static final ConcurrentMap<String, BaseRobotRules> SHARED_CACHE = new ConcurrentHashMap<>();
-    private static final int MAX_CACHE_SIZE = 6000;
+    private static final ConcurrentMap<String, BaseRobotRules> SHARED_CACHE =
+        new ConcurrentHashMap<>();
+    private static final int MAX_CACHE_SIZE = 7000;
 
     /**
      * @param url the URL to check
@@ -37,7 +38,9 @@ public class RobotsHandler {
 
             return rules.isAllowed(url);
         } catch (Exception e) {
-            System.err.println("Error checking robots.txt for URL: " + url + " - " + e.getMessage());
+            System.err.println(
+                "Error checking robots.txt for URL: " + url + " - " + e.getMessage()
+            );
             return true; // Assume allowed if any error occurs (permissive default)
         }
     }
@@ -51,10 +54,10 @@ public class RobotsHandler {
      */
     private Connection.Response fetchRobotsTxt(String robotsTxtUrl) throws IOException {
         return Jsoup.connect(robotsTxtUrl)
-                .ignoreContentType(true)
-                .userAgent(USER_AGENT)
-                .timeout(10_000)
-                .execute();
+            .ignoreContentType(true)
+            .userAgent(USER_AGENT)
+            .timeout(10_000)
+            .execute();
     }
 
     /**
@@ -85,10 +88,11 @@ public class RobotsHandler {
                 String robotsTxtUrl = getRobotsTxtUrl(uri);
                 Connection.Response response = fetchRobotsTxt(robotsTxtUrl);
                 rules = parser.parseContent(
-                        robotsTxtUrl,
-                        response.bodyAsBytes(),
-                        response.contentType(),
-                        USER_AGENT);
+                    robotsTxtUrl,
+                    response.bodyAsBytes(),
+                    response.contentType(),
+                    USER_AGENT
+                );
 
                 addToCache(domainKey, rules);
             } catch (IOException | URISyntaxException e) {
@@ -105,8 +109,7 @@ public class RobotsHandler {
      *              Works as a cache manager for the class
      */
     public static void addToCache(String key, BaseRobotRules rules) {
-        if (SHARED_CACHE.size() < MAX_CACHE_SIZE)
-            SHARED_CACHE.putIfAbsent(key, rules);
+        if (SHARED_CACHE.size() < MAX_CACHE_SIZE) SHARED_CACHE.putIfAbsent(key, rules);
         else {
             clearSharedCache();
             SHARED_CACHE.putIfAbsent(key, rules);

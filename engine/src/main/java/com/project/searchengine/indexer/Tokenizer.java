@@ -2,6 +2,7 @@ package com.project.searchengine.indexer;
 
 import com.project.searchengine.server.model.InvertedIndex;
 import com.project.searchengine.server.model.PageReference;
+import java.io.InputStream;
 import java.util.*;
 import opennlp.tools.stemmer.PorterStemmer;
 import opennlp.tools.tokenize.*;
@@ -18,15 +19,16 @@ public class Tokenizer {
 
     private final PorterStemmer stemmer = new PorterStemmer();
 
-    SimpleTokenizer tokenizer = SimpleTokenizer.INSTANCE;
+    // SimpleTokenizer tokenizer = SimpleTokenizer.INSTANCE;
 
-    //   private final TokenizerME tokenizer;
+    TokenizerME tokenizer;
 
     @Autowired
     private final StopWordFilter stopWordFilter;
 
     public Tokenizer(StopWordFilter stopWordFilter) {
         this.stopWordFilter = stopWordFilter;
+        loadTokenizerModel();
     }
 
     /**
@@ -35,28 +37,35 @@ public class Tokenizer {
      * @param pageId The current page id
      * @param fieldType The field type (e.g., body, title, h1, h2)
      */
-    public void tokenizeContent(String text, String pageId, String fieldType) {
+    public void tokenizeContent(String text, String pageId) {
+        long startTime = System.currentTimeMillis();
         int position = 0;
 
+        // Tokenize the text
         String tokens[] = tokenizer.tokenize(text.toLowerCase());
 
         for (String token : tokens) {
             String cleanedToken = cleanToken(token);
             if (!cleanedToken.isEmpty()) {
                 // Build the inverted index and add it to the index buffer
-                buildInvertedIndex(cleanedToken, pageId, position, fieldType);
+                buildInvertedIndex(cleanedToken, pageId, position);
 
                 // Increment token count for page id
                 pagesTokensCount.merge(pageId, 1, Integer::sum);
-
-                // Increment position to the next token
             }
+            // Increment position to the next token
             position++;
         }
+
+        long endTime = System.currentTimeMillis();
+        System.out.println(
+            "Tokenized " + tokens.length + " tokens in " + (endTime - startTime) + " ms"
+        );
     }
 
     /**
-     * Tokenizes the headers
+     * Tokenizes the headers of the page and updates the field count
+     * for each header type (h1, h2, title)
      * @param fieldTags The field tags to tokenize.
      * @param pageId The page id.
      */
@@ -66,7 +75,16 @@ public class Tokenizer {
             String headerText = header.text();
             if (headerText == null || headerText.isBlank()) continue;
             String headerType = header.tagName();
-            tokenizeContent(headerText, pageId, headerType);
+
+            String tokens[] = tokenizer.tokenize(headerText.toLowerCase());
+
+            for (String token : tokens) {
+                String cleanedToken = cleanToken(token);
+                if (!cleanedToken.isEmpty()) {
+                    //  Update field count for the header type
+                    updateFieldCount(cleanedToken, pageId, headerType);
+                }
+            }
         }
     }
 
@@ -79,12 +97,7 @@ public class Tokenizer {
      * @param position The position of the word in the page
      * @param fieldType  The field type (e.g., body, title, h1, h2)
      */
-    private void buildInvertedIndex(
-        String word,
-        String pageId,
-        Integer position,
-        String fieldType
-    ) {
+    private void buildInvertedIndex(String word, String pageId, Integer position) {
         // Get or create inverted index from buffer
         InvertedIndex invertedIndex = indexBuffer.computeIfAbsent(word, w -> new InvertedIndex(word)
         );
@@ -103,9 +116,33 @@ public class Tokenizer {
 
         // Update positions
         pageReference.getWordPositions().add(position);
+    }
 
-        // Update fieldsCount
-        pageReference.getFieldWordCount().merge(fieldType, 1, Integer::sum);
+    /**
+     * Update the field count for the given word and page id
+     *
+     * @param word The word to update.
+     * @param pageId The page id.
+     * @param fieldType The field type (title, h1, h2).
+     */
+    public void updateFieldCount(String word, String pageId, String fieldType) {
+        // Get the inverted index from the buffer
+        InvertedIndex invertedIndex = indexBuffer.get(word);
+
+        if (invertedIndex != null) {
+            // Get the page reference
+            PageReference pageReference = invertedIndex
+                .getPages()
+                .stream()
+                .filter(p -> p.getPageId().equals(pageId))
+                .findFirst()
+                .orElse(null);
+
+            if (pageReference != null) {
+                // Update the field count
+                pageReference.getFieldWordCount().merge(fieldType, 1, Integer::sum);
+            }
+        }
     }
 
     /**
@@ -116,19 +153,28 @@ public class Tokenizer {
      * @return The cleaned token.
      */
     private String cleanToken(String token) {
-        // Skip stop words
         if (stopWordFilter.isStopWord(token)) {
             return "";
         }
 
+        token = token.replaceAll("[^a-z]", "");
+
+        String cleanedToken = stemmer.stem(token);
+
+        // Skip stop words
+        if (cleanedToken.length() < 2) {
+            return "";
+        }
+
         // Apply stemming to regural words
-        token = stemmer.stem(token);
-
-        String cleanedToken = token.replaceAll("[^a-z]", "");
-
         return cleanedToken;
     }
 
+    /**
+     * Reset the tokenizer for a new batch of documents.
+     *
+     * This method clears the index buffer and the pages tokens count.
+     */
     public void resetForNewBatch() {
         indexBuffer.clear();
         pagesTokensCount.clear();
@@ -139,8 +185,8 @@ public class Tokenizer {
      * Load the tokenizer model from the specified input stream.
      *
      * @param modelInputStream The input stream containing the tokenizer model.
-     
-    void loadTokenizerModel(InputStream modelInputStream) {
+     */
+    void loadTokenizerModel() {
         try (InputStream modelIn = getClass().getResourceAsStream("/models/en-token.bin")) {
             if (modelIn == null) {
                 throw new IllegalArgumentException("Model file not found");
@@ -151,7 +197,6 @@ public class Tokenizer {
             throw new RuntimeException("Error loading tokenizer model", e);
         }
     }
-    */
 
     /**
      * Return index buffer of all tokens of the current document
@@ -168,6 +213,9 @@ public class Tokenizer {
         return tokenCount;
     }
 
+    /**
+     * Return the count of tokens for each page reference in the index buffer
+     */
     Map<String, Integer> getPagesTokensCount() {
         return pagesTokensCount;
     }

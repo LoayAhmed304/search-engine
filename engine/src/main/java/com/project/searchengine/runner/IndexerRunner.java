@@ -18,6 +18,8 @@ public class IndexerRunner implements CommandLineRunner {
         System.out.println("Starting the indexer...");
         long start = System.currentTimeMillis();
         indexer.startIndexing();
-        System.out.println("Indexing took: " + (System.currentTimeMillis() - start) + "ms");
+        System.out.println(
+            "Indexing took: " + (System.currentTimeMillis() - start) / 60000 + " minutes"
+        );
     }
 }

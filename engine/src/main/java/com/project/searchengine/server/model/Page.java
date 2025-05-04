@@ -1,6 +1,7 @@
 package com.project.searchengine.server.model;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document(collection = "pages")
@@ -9,7 +10,9 @@ public class Page {
     @Id
     private String id;
 
+    @Indexed(unique = true)
     private String url;
+
     private String title;
     private String content;
     private int pageTokenCount;

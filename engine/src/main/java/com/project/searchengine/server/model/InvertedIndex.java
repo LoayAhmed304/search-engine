@@ -7,11 +7,13 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class InvertedIndex {
 
     private String word;
+    private double idf;
     private List<PageReference> pages;
 
     public InvertedIndex(String word) {
         this.word = word;
         this.pages = new ArrayList<>();
+        idf = 0.0;
     }
 
     public String getWord() {
