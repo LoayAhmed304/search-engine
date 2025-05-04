@@ -80,6 +80,10 @@ public class QueryProcessor {
             return allPagesSnippets;
         }
 
+        if(pageNumber >= rankedPageBatches.size()) {
+            System.out.println("Invalid page number: " + pageNumber);
+            return allPagesSnippets;
+        }
         // based on page number get map
         Map<PageReference, String> rankedPages = rankedPageBatches.get(pageNumber);
 
@@ -131,10 +135,12 @@ public class QueryProcessor {
      *                    the snippet for that page
      */
     private void displaySnippets(Map<String, String> pageSnippet) {
+        int i = 1;
         for (Map.Entry<String, String> entry : pageSnippet.entrySet()) {
             String pageID = entry.getKey();
             String snippet = entry.getValue();
 
+            System.out.println("Page no: " + i++ + ":");
             System.out.println("Page: " + pageID);
             System.out.println("-> Snippet: " + snippet);
 
@@ -163,6 +169,7 @@ public class QueryProcessor {
                 batchMap.put(entry.getKey(), entry.getValue());
             }
             result.add(batchMap);
+            System.out.println("Batch size: " + batchMap.size());
         }
 
         return result;

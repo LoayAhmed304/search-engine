@@ -84,6 +84,7 @@ public class SnippetGenerator {
             // String stemmedToken = bodyToken.matches("[a-zA-Z]+")
             // ? stemmer.stem(bodyToken.toLowerCase())
             // : bodyToken.toLowerCase();
+            
             String stemmedToken;
             try {
                 stemmedToken = (bodyToken != null && !bodyToken.isEmpty() && bodyToken.matches("[a-zA-Z]+"))
@@ -143,21 +144,13 @@ public class SnippetGenerator {
 
         // get one snippet only for each page
         for (Integer pos : positions) {
-            if (pos < 0 || pos >= bodyTokens.length) {
-                continue;
-            }
-
-            // exclude header positions for now
-            String stemmedToken = stemmer.stem(bodyTokens[pos]);
-            if (!stemmedToken.equals(token)) {
-                continue;
-            }
-
-            // not getting which position it initially matched at again yekhrebt el habal
-            // make a map in phrase matcher
+            // if (pos < 0 || pos >= bodyTokens.length) {
+            //     continue;
+            // }
 
             if (isPhraseMatch)
                 pos = phraseMatcher.getMatchPosition(pageId);
+
             String snippet = generateSnippet(token, bodyTokens, pos, queryResult);
             pageSnippet.put(pageId, snippet);
             break;
