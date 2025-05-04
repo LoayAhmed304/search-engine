@@ -33,7 +33,7 @@ public class QueryProcessor {
     private int pageSize = 20;
 
     private Integer resultPagesNumber = 0;
-    private final Map<String, String> allPagesSnippets = Collections.synchronizedMap(new LinkedHashMap<>());
+    private final Map<String, String> allPagesSnippets = new ConcurrentHashMap<>();
     private List<Map<PageReference, String>> rankedPageBatches;
 
     /**
@@ -49,7 +49,6 @@ public class QueryProcessor {
         for (String token : tokenizedQuery) {
             List<PageReference> tokenPages = invertedIndexService.getTokenPages(token);
             queryPages.put(token, tokenPages);
-            resultPagesNumber += tokenPages.size();
         }
         return queryPages;
     }
@@ -73,13 +72,17 @@ public class QueryProcessor {
      *         for that page.
      */
     private Map<String, String> getBatchSnippets(String query, int pageNumber) {
-        
         // check if the page number is valid
-        if(rankedPageBatches == null || rankedPageBatches.isEmpty()) {
+        if (rankedPageBatches == null || rankedPageBatches.isEmpty()) {
             System.out.println("No pages found for the query: " + query);
             return allPagesSnippets;
         }
-        
+
+        if(pageNumber >= rankedPageBatches.size()) {
+            System.out.println("Invalid page number: " + pageNumber);
+            return allPagesSnippets;
+        }
+
         // based on page number get map
         Map<PageReference, String> rankedPages = rankedPageBatches.get(pageNumber);
 
@@ -124,17 +127,19 @@ public class QueryProcessor {
     }
 
     /**
-     * Helper function to displays snippets for the given pages and their associated
+     * Helper function to display snippets for the given pages and their associated
      * snippets
      *
      * @param pageSnippet A map where the key is a page reference, and the value is
      *                    the snippet for that page
      */
     private void displaySnippets(Map<String, String> pageSnippet) {
+        int i = 1;
         for (Map.Entry<String, String> entry : pageSnippet.entrySet()) {
             String pageID = entry.getKey();
             String snippet = entry.getValue();
 
+            System.out.println("Page no: " + i++ + ":");
             System.out.println("Page: " + pageID);
             System.out.println("-> Snippet: " + snippet);
 
@@ -147,7 +152,8 @@ public class QueryProcessor {
      *
      * @param originalMap The original map to be split
      * @param size        Size of each partiition
-     * @return A list of smaller maps, where each map contains at most {@code size} entries
+     * @return A list of smaller maps, where each map contains at most {@code size}
+     *         entries
      */
     public static List<Map<PageReference, String>> splitMap(Map<PageReference, String> originalMap, int size) {
         List<Map<PageReference, String>> result = new ArrayList<>();
@@ -192,11 +198,17 @@ public class QueryProcessor {
         boolean isPhraseMatch = phraseMatcher.isPhraseMatchQuery(query);
 
         if (isPhraseMatch) {
+            System.out.println("phrase match query");
+
             // filter the pages based on the phrase match first
             queryPages = phraseMatcher.filterPhraseMatchPages(queryPages, queryResult);
         }
 
         Map<PageReference, String> rankedPages = ranker.rank(queryPages);
+
+        // get final result pages number after ranking
+        resultPagesNumber = rankedPages.size();
+        System.out.println("Result pages number: " + resultPagesNumber);
         this.rankedPageBatches = splitMap(rankedPages, pageSize);
 
         getBatchSnippets(query, pageNumber);
@@ -216,8 +228,8 @@ public class QueryProcessor {
 
     /**
      * Returns the total number of result pages based on the last processed query.
-     * This represents the actual number of page batches after ranking and filtering.
-     *
+     * This represents the actual number of page batches after ranking and
+     * filtering.
      * @return The total number of page batches available.
      */
     public int getTotalPages() {

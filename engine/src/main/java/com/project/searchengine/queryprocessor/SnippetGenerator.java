@@ -12,9 +12,10 @@ import opennlp.tools.tokenize.SimpleTokenizer;
 
 @Component
 public class SnippetGenerator {
-    private static Integer halfSnippetSize = 50;
     private final SimpleTokenizer tokenizer = SimpleTokenizer.INSTANCE;
     private final PorterStemmer stemmer = new PorterStemmer();
+
+    private static Integer halfSnippetSize = 50;
 
     @Autowired
     private PageReferenceService pageReferenceService;
@@ -22,6 +23,18 @@ public class SnippetGenerator {
     @Autowired
     private PhraseMatcher phraseMatcher;
 
+    /**
+     * Generates a snippet from the body of text by extracting a range of tokens
+     * and optionally highlights query words and phrases
+     * 
+     * @param token         The token from the query that was matched in the body
+     *                      text
+     * @param bodyTokens    The array of body tokens from the page
+     * @param matchPosition The match position of the token in the body
+     * @param queryResult   The query result data
+     * @return A formatted snippet string from the body of text, highlighting the
+     *         matched tokens
+     */
     private String generateSnippet(String token,
             String[] bodyTokens,
             int matchPosition,
@@ -30,6 +43,7 @@ public class SnippetGenerator {
         boolean isPhraseMatch = queryResult.getIsPhraseMatch();
         List<String> queryWords = queryResult.getOriginalWords();
         List<String> tokenizedQuery = queryResult.getTokenizedQuery();
+        Map<String, String> tokenizedToOriginal = queryResult.getTokenizedToOriginal();
 
         // Calculate the range of tokens to include in the snippet
         int startIndex = Math.max(0, matchPosition - halfSnippetSize);
@@ -47,33 +61,48 @@ public class SnippetGenerator {
             // For phrase matching, we need to highlight multiple consecutive words
             boolean isMatchFound = phraseMatcher.isPhraseMatchFound(bodyTokens,
                     queryWords,
-                    token,
+                    tokenizedToOriginal.get(token),
                     matchPosition);
 
             // If a match is found, highlight the positions of the words in the phrase
-
             if (isMatchFound) {
+                // Get the length of the phrase
                 int phraseLength = queryWords.size();
-                int tokenIndex = queryWords.indexOf(token);
+                // Get index of original word in query before tokenization
+                int tokenIndex = queryWords.indexOf(tokenizedToOriginal.get(token));
+
+                // debug lines not removing now
+                System.out.println("original query size: " + phraseLength);
+                System.out.println("token provided: " + tokenizedToOriginal.get(token));
+                System.out.println("token index in original query: " + tokenIndex);
+                System.out.println("match pos in body: " + matchPosition);
 
                 int start = Math.max(0, matchPosition - tokenIndex);
-                int end = Math.min(bodyTokens.length - 1, start + phraseLength - 1);
+                int end = Math.min(bodyTokens.length, start + phraseLength);
 
                 highlightPositions.add(matchPosition);
 
-                // add them to highlight positions
-                for (int i = start; i <= end; i++) {
+                // Add phrase words to highlight positions
+                for (int i = start; i < end; i++) {
+                    System.out.print(i + " ");
                     highlightPositions.add(i);
                 }
+                System.out.println();
             }
         }
 
         for (int i = startIndex; i < endIndex; i++) {
             String bodyToken = bodyTokens[i];
 
-            String stemmedToken = bodyToken.matches("[a-zA-Z]+")
-                    ? stemmer.stem(bodyToken.toLowerCase())
-                    : bodyToken.toLowerCase();
+            // get stemmed token for highlighting any other query tokens
+            String stemmedToken;
+            try {
+                stemmedToken = (bodyToken != null && !bodyToken.isEmpty() && bodyToken.matches("[a-zA-Z]+"))
+                        ? stemmer.stem(bodyToken.toLowerCase())
+                        : bodyToken.toLowerCase();
+            } catch (Exception e) {
+                stemmedToken = bodyToken.toLowerCase();
+            }
 
             String nextToken = (i + 1 < bodyTokens.length) ? bodyTokens[i + 1] : null;
 
@@ -82,16 +111,16 @@ public class SnippetGenerator {
                     nextToken.matches(closingPunctuation);
 
             // Check if current token should be highlighted
-            boolean shouldHighlight = highlightPositions.contains(i);
+            boolean shouldHighlight = highlightPositions.contains(i)
+                    || (!isPhraseMatch && tokenizedQuery.contains(stemmedToken));
 
-            if (shouldHighlight || (!isPhraseMatch &&
-                    tokenizedQuery.contains(stemmedToken))) {
+            if (shouldHighlight) {
                 snippet.append("<strong>").append(bodyToken).append("</strong>");
             } else {
                 snippet.append(bodyToken);
             }
 
-            // Add spacing as needed
+            // Add spacing as needed for punctuation
             if (!isOpeningPunctuation && !isClosingNextPunctuation) {
                 snippet.append(" ");
             }
@@ -104,8 +133,8 @@ public class SnippetGenerator {
      * Retrieve the snippet for the given page based on a search token
      *
      * @param token       A stemmed token from the search query
-     * @param page        page reference to get snippet for
-     * @param queryResult query result data 
+     * @param page        The page reference to get snippet for
+     * @param queryResult The query result data
      * @return A map of page ID to its snippet
      */
     public Map<String, String> getPagesSnippets(
@@ -116,21 +145,18 @@ public class SnippetGenerator {
         Map<String, String> pageSnippet = new HashMap<>();
 
         List<Integer> positions = page.getWordPositions();
+
         String bodyContent = pageReferenceService.getPageBodyContent(page);
         String[] bodyTokens = tokenizer.tokenize(bodyContent.toLowerCase());
         String pageId = page.getPageId();
+        boolean isPhraseMatch = queryResult.getIsPhraseMatch();
 
-        // get one snippet only for each page
+        // Get one snippet only for each page
         for (Integer pos : positions) {
-            if (pos < 0 || pos >= bodyTokens.length) {
-                continue;
-            }
 
-            // exclude header positions for now
-            String stemmedToken = stemmer.stem(bodyTokens[pos]);
-            if (!stemmedToken.equals(token)) {
-                continue;
-            }
+            // Get the match position directly for the token for phrase match queries
+            if (isPhraseMatch)
+                pos = phraseMatcher.getMatchPosition(pageId);
 
             String snippet = generateSnippet(token, bodyTokens, pos, queryResult);
             pageSnippet.put(pageId, snippet);
