@@ -73,7 +73,6 @@ public class QueryProcessor {
      *         for that page.
      */
     private Map<String, String> getBatchSnippets(String query, int pageNumber) {
-
         // check if the page number is valid
         if (rankedPageBatches == null || rankedPageBatches.isEmpty()) {
             System.out.println("No pages found for the query: " + query);
@@ -84,6 +83,7 @@ public class QueryProcessor {
             System.out.println("Invalid page number: " + pageNumber);
             return allPagesSnippets;
         }
+
         // based on page number get map
         Map<PageReference, String> rankedPages = rankedPageBatches.get(pageNumber);
 
@@ -234,7 +234,6 @@ public class QueryProcessor {
      * Returns the total number of result pages based on the last processed query.
      * This represents the actual number of page batches after ranking and
      * filtering.
-     *
      * @return The total number of page batches available.
      */
     public int getTotalPages() {

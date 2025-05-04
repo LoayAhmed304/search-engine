@@ -20,7 +20,6 @@ public class QueryRunner implements CommandLineRunner {
 
         // String testQuery = "\"coding problems\"";
         String testQuery = "role";
-
         queryProcessor.process(testQuery, 0);
         System.out.println("quering took: " + (System.currentTimeMillis() - start) + "ms");
     }
