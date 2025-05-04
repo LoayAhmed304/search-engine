@@ -29,6 +29,7 @@ public class PhraseMatcher {
     private String tokenWithMinPages = null;
     private List<PageReference> minTokenPages = null;
     private Map<String, Integer> matchPositions = new HashMap<String, Integer>();
+    private final int threadsNum = 20;
 
     /**
      * @param query
@@ -165,46 +166,62 @@ public class PhraseMatcher {
      * @return The new filtered query pages map to pass to ranker
      */
 
-    public Map<String, List<PageReference>> filterPhraseMatchPages(Map<String,
-    List<PageReference>> queryPages,
-    QueryResult queryResult) {
-    // get token which has min number of pages first
-    getMinPagesToken(queryPages, queryResult);
+    public Map<String, List<PageReference>> filterPhraseMatchPages(Map<String, List<PageReference>> queryPages,
+            QueryResult queryResult) {
 
-    Map<String, String> tokenizedToOriginal =
-    queryResult.getTokenizedToOriginal();
-    System.out.println("original word with min pages: " +
-    tokenizedToOriginal.get(tokenWithMinPages));
-    System.out.println("size of min pages: " + minTokenPages.size());
+        // get token which has min number of pages first
+        getMinPagesToken(queryPages, queryResult);
 
-    // filter phrase searching based on it
-    Map<String, List<PageReference>> filteredQueryPages = new HashMap<>();
-    List<PageReference> filteredPages = new ArrayList<>();
-    List<String> originalWords = queryResult.getOriginalWords();
+        Map<String, String> tokenizedToOriginal = queryResult.getTokenizedToOriginal();
+        System.out.println("original word with min pages: " + tokenizedToOriginal.get(tokenWithMinPages));
+        System.out.println("size of min pages: " + minTokenPages.size());
 
-    for (PageReference page : minTokenPages) {
-    List<Integer> positions = page.getWordPositions();
+        Map<String, List<PageReference>> filteredQueryPages = new HashMap<>();
+        List<String> originalWords = queryResult.getOriginalWords();
 
-    String bodyContent = pageReferenceService.getPageBodyContent(page);
-    String[] bodyTokens = tokenizer.tokenize(bodyContent.toLowerCase());
+        // Thread-safe collections
+        List<PageReference> filteredPages = Collections.synchronizedList(new ArrayList<>());
+        Map<String, Integer> threadSafeMatchPositions = new ConcurrentHashMap<>();
 
-    for (Integer pos : positions) {
-    boolean isMatchFound = isPhraseMatchFound(bodyTokens, originalWords,
-    tokenizedToOriginal.get(tokenWithMinPages), pos);
+        // Executor setup
+        ExecutorService executor = Executors.newFixedThreadPool(threadsNum);
+        List<Future<?>> futures = new ArrayList<>();
 
-    // if one match is found, add the page to the filtered list
-    if (isMatchFound) {
-    System.out.println("matched:" + bodyTokens[pos] + " | at " + pos + " | id:" +
-    page.getPageId());
-    // add it
-    matchPositions.put(page.getPageId(), pos);
-    filteredPages.add(page);
-    break;
-    }
-    }
-    }
+        for (PageReference page : minTokenPages) {
+            futures.add(executor.submit(() -> {
+                List<Integer> positions = page.getWordPositions();
+                String bodyContent = pageReferenceService.getPageBodyContent(page);
+                String[] bodyTokens = tokenizer.tokenize(bodyContent.toLowerCase());
 
-    filteredQueryPages.put(tokenWithMinPages, filteredPages);
-    return filteredQueryPages;
+                for (Integer pos : positions) {
+                    boolean isMatchFound = isPhraseMatchFound(bodyTokens, originalWords,
+                            tokenizedToOriginal.get(tokenWithMinPages), pos);
+
+                    if (isMatchFound) {
+                        System.out.println("matched:" + bodyTokens[pos] + " | at " + pos + " | id:" + page.getPageId());
+                        threadSafeMatchPositions.put(page.getPageId(), pos);
+                        filteredPages.add(page);
+                        break;
+                    }
+                }
+            }));
+        }
+
+        // Wait for all threads to finish
+        for (Future<?> future : futures) {
+            try {
+                future.get(); // block until done
+            } catch (InterruptedException | ExecutionException e) {
+                e.printStackTrace(); // or better: log error
+            }
+        }
+
+        executor.shutdown();
+
+        // Assign final results
+        matchPositions.putAll(threadSafeMatchPositions);
+        filteredQueryPages.put(tokenWithMinPages, filteredPages);
+
+        return filteredQueryPages;
     }
 }
