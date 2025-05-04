@@ -33,7 +33,7 @@ public class QueryProcessor {
     private int pageSize = 20;
 
     private Integer resultPagesNumber = 0;
-    private final Map<String, String> allPagesSnippets = Collections.synchronizedMap(new LinkedHashMap<>());
+    private final Map<String, String> allPagesSnippets = new ConcurrentHashMap<>();
     private List<Map<PageReference, String>> rankedPageBatches;
 
     /**
