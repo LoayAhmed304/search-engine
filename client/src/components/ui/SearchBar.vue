@@ -1,6 +1,26 @@
 <template>
   <div class="container">
     <div class="search-bar">
+      <div class="theme-selector">
+        <font-awesome-icon 
+          icon="fa-solid fa-palette" 
+          class="theme-selector__palette-icon" 
+          @click="toggleDropdown" 
+        />
+
+        <div v-if="isDropdownVisible" class="theme-selector__dropdown">
+          <h4>Select theme</h4>
+          <div 
+            v-for="theme in themes" 
+            :key="theme" 
+            @click="applyTheme(theme)"
+            :class="{ 'active-theme': selectedTheme === theme }"
+          >
+            {{ theme }}
+          </div>
+        </div>
+      </div>
+
       <div class="search-bar__form-wrapper">
         <img v-if="isIconShown" :src="iconSource" alt="icon" class="search-bar__dora-icon" @click="goHome()" />
         <form @submit.prevent="submitSearchQuery" class="search-bar__form">
@@ -48,19 +68,37 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { getSearchHistory } from '@/services/searchServices'
-import 'nprogress/nprogress.css'
-
+import { useTheme } from '@/composables/useTheme'
 import BaseButton from './BaseButton.vue'
 
+// Import theme composable
+const { 
+  themes, 
+  selectedTheme, 
+  isDropdownVisible, 
+  toggleDropdown, 
+  applyTheme, 
+  initTheme 
+} = useTheme()
+
+// Rest of your existing setup code
 const props = defineProps({
   isIconShown: Boolean,
   defaultQuery: {
     type: String,
     default: ''
   }
+})
+
+// Update iconSource ref to use the selectedTheme from composable
+const iconSource = ref(`/images/${selectedTheme.value}.png`)
+
+// Watch for theme changes to update icon
+watch(selectedTheme, (newTheme) => {
+  iconSource.value = `/images/${newTheme}.png`
 })
 
 const router = useRouter()
@@ -72,36 +110,36 @@ const suggestions = ref([]) // Store filtered suggestions based on user input
 const showSuggestions = ref(false)
 const highlightedQueryIndex = ref(-1)
 
-const selectedTheme = ref('dora')
-const iconSource = ref(`/images/${selectedTheme.value}.png`)
-
-document.documentElement.setAttribute('data-theme', selectedTheme.value)
-
-const changeTheme = (theme) => {
-  selectedTheme.value = theme
-  document.documentElement.setAttribute('data-theme', selectedTheme.value)
-  localStorage.setItem('theme', selectedTheme.value)
-  iconSource.value = `/images/${selectedTheme.value}.png`
-  console.log('Applied theme: ', selectedTheme.value, 'icon source', iconSource)
-}
-
 const snippet = ref('')
 
 onMounted(() => {
-  // Set theme
-  const savedTheme = localStorage.getItem('theme')
-  if (savedTheme) selectedTheme.value = savedTheme
-  changeTheme(selectedTheme.value)
+  // Initialize theme
+  initTheme()
   
-  // Set initial search query from props or URL
+  // Rest of your onMounted code
   if (props.defaultQuery) {
     searchQuery.value = props.defaultQuery
   } else if (route.query.q) {
     searchQuery.value = route.query.q
   }
 
-  fetchSuggestions();
+  fetchSuggestions()
+  
+  // Add click outside to close dropdown
+  document.addEventListener('click', handleClickOutside)
 })
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
+
+// Add handler to close dropdown when clicking outside
+const handleClickOutside = (event) => {
+  const themeSelector = document.querySelector('.theme-selector')
+  if (themeSelector && !themeSelector.contains(event.target) && isDropdownVisible.value) {
+    isDropdownVisible.value = false
+  }
+}
 
 const goHome = () => {
   router.push({ path: '/' })
@@ -187,8 +225,66 @@ const voiceSearchQuery = () => {
 </script>
 
 <style scoped>
+.theme-selector {
+  position: absolute;
+  top: 50%; 
+  left: -200px;
+  transform: translateY(-50%);
+  z-index: 20;
+}
+
+.theme-selector__palette-icon {
+  font-size: 2.5rem;
+  color: var(--accent-color);
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.theme-selector__palette-icon:hover {
+  transform: rotate(15deg);
+}
+
+.theme-selector__dropdown {
+  position: absolute;
+  top: 100%; 
+  left: -15px; 
+  background: var(--background-color);
+  border: 1px solid var(--secondary-green-color);
+  padding: 15px 20px;
+  border-radius: 5px;
+  width: 180px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+  z-index: 30;
+}
+
+.theme-selector__dropdown h4 {
+  margin-bottom: 10px;
+  color: var(--accent-color);
+}
+
+.theme-selector__dropdown div {
+  padding: 8px 10px;
+  margin: 3px 0;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+  text-transform: capitalize;
+}
+
+.theme-selector__dropdown div:hover {
+  background: var(--search-bar-background);
+}
+
+.theme-selector__dropdown div.active-theme {
+  background: var(--accent-color);
+  color: white;
+}
+
 .container { 
   position: relative;
+  padding-left: 20px; 
+  max-width: 840px;
+  margin: 0 auto;
 }
 
 .container,
