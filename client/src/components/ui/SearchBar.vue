@@ -1,7 +1,7 @@
 <template>
   <div class="container">
     <div class="search-bar">
-      <div class="theme-selector">
+      <div class="theme-selector" v-if="route.path !== '/'">
         <font-awesome-icon 
           icon="fa-solid fa-palette" 
           class="theme-selector__palette-icon" 
