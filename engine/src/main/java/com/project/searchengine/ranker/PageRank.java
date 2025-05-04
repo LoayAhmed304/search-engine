@@ -14,7 +14,7 @@ public class PageRank {
 
     private static final double DAMPING_FACTOR = 0.85;
     private static final short MAX_ITERATIONS = 100;
-    private static final double CONVERGE_THRESHOLD = 1e-7;
+    private static final double CONVERGE_THRESHOLD = 1e-9;
 
     private final UrlsFrontierService urlFrontier;
     private final PageService pageService;
@@ -91,7 +91,12 @@ public class PageRank {
      */
     Map<String, Double> computePagesRank(Map<String, List<String>> incomingLinks) {
         Map<String, Double> newRanks = new ConcurrentHashMap<>();
-
+        double danglingSum = currentRanks
+            .entrySet()
+            .stream()
+            .filter(entry -> outgoingLinksCount.getOrDefault(entry.getKey(), 0) == 0)
+            .mapToDouble(Map.Entry::getValue)
+            .sum();
         currentRanks
             .keySet()
             .parallelStream()
@@ -107,9 +112,10 @@ public class PageRank {
                         curRank += currentRanks.get(incoming) / outLinksCount;
                     }
                 }
+                double danglingContribution = danglingSum / currentRanks.size();
+                curRank = DAMPING_FACTOR * (curRank + danglingContribution);
 
-                curRank *= DAMPING_FACTOR;
-                curRank += 1 - DAMPING_FACTOR;
+                curRank += (1 - DAMPING_FACTOR) / currentRanks.size();
                 newRanks.put(url, curRank);
             });
 
@@ -141,15 +147,19 @@ public class PageRank {
     Map<String, List<String>> computeIncomingLinks(Map<String, UrlDocument> allUrls) {
         Map<String, List<String>> incomingLinks = new HashMap<>(allUrls.size());
 
-        // for every page, add it to the outgoing links from the url frontier
-        for (UrlDocument urlDoc : allUrls.values()) { // loop over every url in the url frontier (not all necessarily crawled)
-            String curUrl = urlDoc.getNormalizedUrl(); // extract its url
+        Set<String> knownUrls = allUrls.keySet(); // Only keep track of known (crawled) URLs
 
-            // loop over every link in the outgoing links array, and add current url to its incoming urls map
+        for (UrlDocument urlDoc : allUrls.values()) {
+            String curUrl = urlDoc.getNormalizedUrl();
+
             for (String pageLink : urlDoc.getLinkedPages()) {
-                incomingLinks.computeIfAbsent(pageLink, k -> new ArrayList<>()).add(curUrl);
+                // Only add links to known/crawled pages
+                if (knownUrls.contains(pageLink)) {
+                    incomingLinks.computeIfAbsent(pageLink, k -> new ArrayList<>()).add(curUrl);
+                }
             }
         }
+
         return incomingLinks;
     }
 
@@ -160,7 +170,14 @@ public class PageRank {
      */
     void computeOutgoingLinksCount(Map<String, UrlDocument> allUrls) {
         for (UrlDocument doc : allUrls.values()) {
-            outgoingLinksCount.put(doc.getNormalizedUrl(), doc.getLinkedPages().size());
+            // Count only outgoing links that point to crawled pages
+            long validOutgoingLinks = doc
+                .getLinkedPages()
+                .stream()
+                .filter(link -> allUrls.containsKey(link)) // Only count links to crawled pages
+                .count();
+
+            outgoingLinksCount.put(doc.getNormalizedUrl(), (int) validOutgoingLinks);
         }
     }
 
