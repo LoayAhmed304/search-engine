@@ -1,5 +1,6 @@
 package com.project.searchengine.queryprocessor;
 
+import java.io.InputStream;
 import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -8,11 +9,12 @@ import com.project.searchengine.server.model.PageReference;
 import com.project.searchengine.server.service.PageReferenceService;
 
 import opennlp.tools.stemmer.PorterStemmer;
-import opennlp.tools.tokenize.SimpleTokenizer;
+import opennlp.tools.tokenize.TokenizerME;
+import opennlp.tools.tokenize.TokenizerModel;
 
 @Component
 public class SnippetGenerator {
-    private final SimpleTokenizer tokenizer = SimpleTokenizer.INSTANCE;
+    private ThreadLocal<TokenizerME> tokenizerLocal;
     private final PorterStemmer stemmer = new PorterStemmer();
 
     private static Integer halfSnippetSize = 50;
@@ -22,6 +24,23 @@ public class SnippetGenerator {
 
     @Autowired
     private PhraseMatcher phraseMatcher;
+
+    SnippetGenerator() {
+        // Load the tokenizer model
+        loadTokenizerModel();
+    }
+
+    void loadTokenizerModel() {
+        try (InputStream modelIn = getClass().getResourceAsStream("/models/en-token.bin")) {
+            if (modelIn == null) {
+                throw new IllegalArgumentException("Model file not found");
+            }
+            TokenizerModel model = new TokenizerModel(modelIn);
+            tokenizerLocal = ThreadLocal.withInitial(() -> new TokenizerME(model));
+        } catch (Exception e) {
+            throw new RuntimeException("Error loading tokenizer model", e);
+        }
+    }
 
     /**
      * Generates a snippet from the body of text by extracting a range of tokens
@@ -145,15 +164,15 @@ public class SnippetGenerator {
         Map<String, String> pageSnippet = new HashMap<>();
 
         List<Integer> positions = page.getWordPositions();
-
         String bodyContent = pageReferenceService.getPageBodyContent(page);
-        String[] bodyTokens = tokenizer.tokenize(bodyContent.toLowerCase());
+
+        String[] bodyTokens = tokenizerLocal.get().tokenize(bodyContent.toLowerCase());
+
         String pageId = page.getPageId();
         boolean isPhraseMatch = queryResult.getIsPhraseMatch();
 
         // Get one snippet only for each page
         for (Integer pos : positions) {
-
             // Get the match position directly for the token for phrase match queries
             if (isPhraseMatch)
                 pos = phraseMatcher.getMatchPosition(pageId);
@@ -163,6 +182,8 @@ public class SnippetGenerator {
             break;
         }
 
+        // Clean up the tokenizer
+        tokenizerLocal.remove();
         return pageSnippet;
     }
 }

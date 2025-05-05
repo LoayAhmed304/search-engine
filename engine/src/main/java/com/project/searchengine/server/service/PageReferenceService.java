@@ -5,8 +5,6 @@ import com.project.searchengine.server.model.PageReference;
 import com.project.searchengine.server.repository.PageRepository;
 import java.util.*;
 import java.util.stream.Collectors;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;

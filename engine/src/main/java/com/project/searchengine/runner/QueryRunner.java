@@ -18,8 +18,8 @@ public class QueryRunner implements CommandLineRunner {
         System.out.println("Starting the query processor...");
         long start = System.currentTimeMillis();
 
-        // String testQuery = "\"coding problems\"";
-        String testQuery = "role";
+        String testQuery = "\"finding nemo\"";
+        // String testQuery = "role";
         queryProcessor.process(testQuery, 0);
         System.out.println("quering took: " + (System.currentTimeMillis() - start) + "ms");
     }

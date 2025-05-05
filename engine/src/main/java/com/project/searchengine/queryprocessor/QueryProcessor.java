@@ -29,7 +29,6 @@ public class QueryProcessor {
     private Ranker ranker;
 
     private final int threadsNum = 20;
-
     private int pageSize = 20;
 
     private Integer resultPagesNumber = 0;
