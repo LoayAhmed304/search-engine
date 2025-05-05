@@ -18,10 +18,7 @@ public class PhraseMatcher {
     private PageReferenceService pageReferenceService;
     private final SimpleTokenizer tokenizer = SimpleTokenizer.INSTANCE;
 
-    private final int threadsNum = 20;
-
-    private String tokenWithMinPages = null; // store tokenized word that has min number of pages
-    private List<PageReference> minTokenPages = null; // store pages for that token
+    private final int threadsNum = 40; 
     private final Map<String, Integer> matchPositions = new ConcurrentHashMap<>(); // store match positions for each
                                                                                    // page when filtering
 
@@ -131,26 +128,6 @@ public class PhraseMatcher {
         return isMatchFound;
     }
 
-    /**
-     * Finds the token with the minimum number of associated pages
-     *
-     * @param queryPages A map where the key is the token, and the value is a list
-     *                   of pages containing that token
-     * @return The token with the fewest associated pages
-     */
-    private void getMinPagesToken(Map<String, List<PageReference>> queryPages) {
-        int minPagesNumber = Integer.MAX_VALUE;
-
-        for (String token : queryPages.keySet()) {
-            List<PageReference> pages = queryPages.get(token);
-            if (pages.size() < minPagesNumber) {
-                tokenWithMinPages = token;
-                minTokenPages = pages;
-                minPagesNumber = pages.size();
-            }
-        }
-    }
-
     private void processPageForPhraseMatch(PageReference page,
             List<String> originalWords,
             String originalToken,
@@ -174,6 +151,12 @@ public class PhraseMatcher {
         }
     }
 
+    private Map.Entry<String, List<PageReference>> findMinPagesToken(Map<String, List<PageReference>> queryPages) {
+        return queryPages.entrySet().stream()
+                .min(Comparator.comparingInt(entry -> entry.getValue().size()))
+                .orElseThrow(() -> new IllegalArgumentException("No pages found"));
+    }
+
     /**
      * Filters pages for phrase matching by going through the token with the
      * fewest pages to speed things up
@@ -190,8 +173,10 @@ public class PhraseMatcher {
         List<String> originalWords = queryResult.getOriginalWords();
         Map<String, String> tokenizedToOriginal = queryResult.getTokenizedToOriginal();
 
-        // Find token with minimum pages
-        getMinPagesToken(queryPages);
+
+        Map.Entry<String, List<PageReference>> minEntry = findMinPagesToken(queryPages);
+        String tokenWithMinPages = minEntry.getKey();
+        List<PageReference> minTokenPages = minEntry.getValue();
         String originalWord = tokenizedToOriginal.get(tokenWithMinPages);
 
         // debug lines

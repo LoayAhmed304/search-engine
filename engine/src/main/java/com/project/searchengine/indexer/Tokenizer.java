@@ -19,16 +19,16 @@ public class Tokenizer {
 
     private final PorterStemmer stemmer = new PorterStemmer();
 
-    // SimpleTokenizer tokenizer = SimpleTokenizer.INSTANCE;
+    SimpleTokenizer tokenizer = SimpleTokenizer.INSTANCE;
 
-    TokenizerME tokenizer;
+    // TokenizerME tokenizer;
 
     @Autowired
     private final StopWordFilter stopWordFilter;
 
     public Tokenizer(StopWordFilter stopWordFilter) {
         this.stopWordFilter = stopWordFilter;
-        loadTokenizerModel();
+        // loadTokenizerModel();
     }
 
     /**
@@ -186,17 +186,17 @@ public class Tokenizer {
      *
      * @param modelInputStream The input stream containing the tokenizer model.
      */
-    void loadTokenizerModel() {
-        try (InputStream modelIn = getClass().getResourceAsStream("/models/en-token.bin")) {
-            if (modelIn == null) {
-                throw new IllegalArgumentException("Model file not found");
-            }
-            TokenizerModel model = new TokenizerModel(modelIn);
-            tokenizer = new TokenizerME(model);
-        } catch (Exception e) {
-            throw new RuntimeException("Error loading tokenizer model", e);
-        }
-    }
+    // void loadTokenizerModel() {
+    //     try (InputStream modelIn = getClass().getResourceAsStream("/models/en-token.bin")) {
+    //         if (modelIn == null) {
+    //             throw new IllegalArgumentException("Model file not found");
+    //         }
+    //         TokenizerModel model = new TokenizerModel(modelIn);
+    //         tokenizer = new TokenizerME(model);
+    //     } catch (Exception e) {
+    //         throw new RuntimeException("Error loading tokenizer model", e);
+    //     }
+    // }
 
     /**
      * Return index buffer of all tokens of the current document
