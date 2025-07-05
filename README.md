@@ -75,6 +75,10 @@ This is a high-performance search engine that crawls web pages, indexes content,
 
 #### Flow
 
+<div> 
+	<img src="https://github.com/user-attachments/assets/c93d6428-d2cd-442c-9861-3c01caa7c3c2" width="500" height="auto" />
+</div>
+
 
 ## 📝 Development Guidelines
 - Follow the conventions outlined in `Project-Guidelines.md`
