@@ -13,6 +13,12 @@
 
 This is a high-performance search engine that crawls web pages, indexes content, calculates PageRank scores, and provides a modern web interface for searching. The system is designed with scalability and performance in mind, featuring multi-threaded crawling, efficient indexing, and intelligent ranking algorithms.
 
+## Video Preview
+
+https://github.com/user-attachments/assets/2c2071b9-f7cc-4c47-91e2-fb824069e937
+
+
+
 
 ## ✨ Features
 ### 🕷️ Web Crawler
