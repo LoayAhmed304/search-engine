@@ -1,6 +1,5 @@
-<h2 align="center">
-  Hola! Can you say "The best search engine ever" with me?
-</h2>
+## $\color{rgba(240, 171, )}{\textsf{Hola! Can you say "The best search engine ever" with me? }}$ 
+
 
 <div align="center">
   <img src="https://media.tenor.com/TdUkba4lsP0AAAAM/dora.gif" width="300" height="300" />
@@ -163,7 +162,7 @@ make rank QUERY="your search terms"
     <a href="https://git.io/typing-svg"><img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=16&pause=1000&color=D96C92&width=500&lines=Can+you+say+%22the+best+search+engine+ever%22%3F" alt="Typing SVG" /></a>
 </div>
 
-<table>
+<table align="center">
 <tr>
   <td align = "center"> 
 	<a href = "https://github.com/habibayman">
