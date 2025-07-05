@@ -7,7 +7,11 @@
     </div>
     <div v-else class="results">
       <div v-if="fetchTime !== null" class="fetch-time-counter">
-        Exploring took: {{ fetchTime.toFixed(2) }} seconds
+        <span>{{ totalResults }} results</span>
+        <span class="stats-divider">•</span>
+        <span>Page {{ currentPage + 1 }}: {{ results.length }} items</span>
+        <span class="stats-divider">•</span>
+        <span>{{ fetchTime.toFixed(2) }}s</span>
       </div>
       
       <SearchResult
@@ -74,6 +78,7 @@ const currentPage = ref(0)
 const maxResultsPerPage = 20
 const totalPagesNumber = ref(0)
 const results = ref([])
+const totalResults = ref(0);
 const isLoading = ref(true)
 const fetchTime = ref(null)
 const fetchStartTime = ref(null)
@@ -164,6 +169,7 @@ const performSearch = (searchQuery) => {
     .then((data) => {
       console.log(data)
       results.value = data.results;
+      totalResults.value = data.totalPages * maxResultsPerPage;
       totalPagesNumber.value = Math.ceil(data.totalPages / maxResultsPerPage);
       
       // Cache the results for page 0
@@ -310,16 +316,21 @@ const totalPages = computed(() => totalPagesNumber.value || 1)
 }
 
 .fetch-time-counter {
-  background-color: #f8f9fa;
-  padding: 8px 16px;
-  border-radius: 4px;
+  font-size: 0.85rem;
+  color: #777;
   margin-bottom: 16px;
-  text-align: left;
-  color: #555;
-  font-size: 0.9rem;
-  border-left: 3px solid var(--accent-color);
-  align-self: flex-start; 
-  width: 100%; 
+  padding: 8px 0;
+  border-bottom: 1px solid #eaeaea;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.stats-divider {
+  color: #ccc;
+  font-size: 0.8rem;
 }
 
 .changing-page {
