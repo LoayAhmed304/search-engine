@@ -135,7 +135,7 @@ make index
 make pagerank
 ```
 
-4, Run the Ranker (with an optional query)
+4. Run the Ranker (with an optional query)
 
 ```bash
 make rank QUERY="your search terms"
